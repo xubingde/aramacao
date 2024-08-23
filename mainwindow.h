@@ -200,6 +200,16 @@ public:
     void  addCopyTplCoexFnsInsert_triggered();
     void  addCopyTplCoexFnsFollow_triggered();
     void  fnsAddNewFn_triggered();
+    void  addNewFunctionTail_triggered();
+    void  addNewFunctionInsert_triggered();
+    void  addNewFunctionFollow_triggered();
+    void  addCopyFunctionTail_triggered();
+    void  addCopyFunctionInsert_triggered();
+    void  addCopyFunctionFollow_triggered();
+    void  deleteRowFunction_triggered();
+    void  upRowFunction_triggered();
+    void  downRowFunction_triggered();
+    void  moveToRowFunction_triggered();
 
 protected:
 
@@ -219,6 +229,9 @@ private:
     void  insertModule(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, Module const &  mouldVal = Module());
     void  insertBasicBlock(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, BasicBlock const &  mouldVal = BasicBlock());
     void  insertFunction(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, Function const &  mouldVal = Function());
+    std::shared_ptr<Function>  addNewFunction(void *  fnsPtr, Etype const  etp);
+    std::shared_ptr<Function>  addMouldValFunction(void *  fnsPtr, Etype const  etp, Function const &  mouldVal);
+    void  insertMouldValFunction(void *  fnsPtr, Etype const  etp, Function const &  mouldVal, int  row);
     void  deleteRowValue(QModelIndex const &  index);
     void  deleteRowValueFunction(QModelIndex const &  index);
     void  upRowValue(QModelIndex const &  index);
@@ -295,6 +308,9 @@ MainWindow::insertValue(QModelIndex const &  index,
             setItemProperty(item, etpValue, newMePtr);
             QStandardItem *  parentItem = vecItemStack[0].getParentItem();
             parentItem->insertRow(selfRow, item);
+            if (isFromMould && etpValue == Etype::eClass) {
+                fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
+            }
         }
         break;
     case AddMethod::follow :
@@ -311,6 +327,9 @@ MainWindow::insertValue(QModelIndex const &  index,
             setItemProperty(item, etpValue, newMePtr);
             QStandardItem *  parentItem = vecItemStack[0].getParentItem();
             parentItem->insertRow(selfRow + 1, item);
+            if (isFromMould && etpValue == Etype::eClass) {
+                fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
+            }
         }
         break;
     case AddMethod::child :
@@ -326,6 +345,9 @@ MainWindow::insertValue(QModelIndex const &  index,
                     QString::fromStdString(newMePtr->getTreeLabel()));
             setItemProperty(item, etpValue, newMePtr);
             selfItem->appendRow(item);
+            if (isFromMould && etpValue == Etype::eClass) {
+                fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
+            }
 
             if (!m_mainTreeView->isExpanded(index)) {
                 m_mainTreeView->expand(index);

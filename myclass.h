@@ -194,7 +194,10 @@ public:
     virtual void  setToStringFunction(const bool  value);
 
     bool  isInternal() const;
-    void  setInternal(const bool  value);
+    virtual void  setInternal(const bool  value);
+
+    bool  isIndPublicLabel() const;
+    virtual void  setIndPublicLabel(const bool  value);
 
 protected:
 
@@ -225,6 +228,7 @@ private:
     std::string  class_end(std::string const &  tabStr = std::string()) const;
     std::string  class_friend(std::string const &  tabStr = std::string()) const;
     std::string  class_tplStringNotDefVal(const size_t  index = 0) const;
+    void  classToInternal(MyClass *  myClass, bool const  isInternal);
 
     std::vector<size_t>     m_stringErr;
     Module *        m_parentModulePtr;
@@ -263,6 +267,7 @@ private:
     bool            m_swapFunction;
     bool            m_toStringFunction;
     bool            m_internal;
+    bool            m_indPublicLabel;
 };
 
 }

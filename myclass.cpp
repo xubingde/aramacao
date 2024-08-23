@@ -72,10 +72,12 @@ MyClass::MyClass():
         m_eqFunction(false),
         m_swapFunction(false),
         m_toStringFunction(false),
-        m_internal(false)
+        m_internal(false),
+        m_indPublicLabel(false)
 {
     setBaseType(Etype::eClass);
     setClassName("MyClass1");
+    setIndPublicLabel(true);
 }
 
 MyClass::MyClass(const MyClass &  other):
@@ -116,7 +118,8 @@ MyClass::MyClass(const MyClass &  other):
         m_eqFunction(other.m_eqFunction),
         m_swapFunction(other.m_swapFunction),
         m_toStringFunction(other.m_toStringFunction),
-        m_internal(other.m_internal)
+        m_internal(other.m_internal),
+        m_indPublicLabel(other.m_indPublicLabel)
 {
 }
 
@@ -158,7 +161,8 @@ MyClass::MyClass(MyClass &&  other) noexcept:
         m_eqFunction(std::move(other.m_eqFunction)),
         m_swapFunction(std::move(other.m_swapFunction)),
         m_toStringFunction(std::move(other.m_toStringFunction)),
-        m_internal(std::move(other.m_internal))
+        m_internal(std::move(other.m_internal)),
+        m_indPublicLabel(std::move(other.m_indPublicLabel))
 {
 }
 
@@ -210,6 +214,7 @@ MyClass::operator=(const MyClass &  other)
     m_swapFunction = other.m_swapFunction;
     m_toStringFunction = other.m_toStringFunction;
     m_internal = other.m_internal;
+    m_indPublicLabel = other.m_indPublicLabel;
 
     return *this;
 }
@@ -258,6 +263,7 @@ MyClass::operator=(MyClass &&  other) noexcept
     m_swapFunction = std::move(other.m_swapFunction);
     m_toStringFunction = std::move(other.m_toStringFunction);
     m_internal = std::move(other.m_internal);
+    m_indPublicLabel = std::move(other.m_indPublicLabel);
 
     return *this;
 }
@@ -375,19 +381,24 @@ MyClass::definition(std::string const &  tabStr /* = std::string() */) const
     res += class_begin(tabStr);
     res += class_friend(tabStr);
 
-    bool  pubLabel = true;
-    for (auto const &  it: m_eobjList) {
-        res += it.second->toHBlock(tabStr);
-        Etype const  etp = it.second->getBaseType();
-        if (etp == Etype::ePublicLabel) {
-            pubLabel = false;
-        } else if (etp == Etype::eProtectedLabel ||
-                   etp == Etype::ePrivateLabel ) {
-            pubLabel = true;
-       }
+    if (m_indPublicLabel) {
+        res += class_field_FnDcl(m_indPublicLabel, tabStr);
+    } else {
+        bool  pubLabel = true;
+        for (auto const &  it: m_eobjList) {
+            res += it.second->toHBlock(tabStr);
+            Etype const  etp = it.second->getBaseType();
+            if (etp == Etype::ePublicLabel) {
+                pubLabel = false;
+            } else if (etp == Etype::eProtectedLabel ||
+                       etp == Etype::ePrivateLabel ) {
+                pubLabel = true;
+           }
+        }
+
+        res += class_field_FnDcl(pubLabel, tabStr);
     }
 
-    res += class_field_FnDcl(pubLabel, tabStr);
     res += class_field_toHBlock(tabStr);
     res += class_end(tabStr);
 
@@ -2146,6 +2157,45 @@ MyClass::class_tplStringNotDefVal(const size_t  index /* = 0 */) const
     return res;
 }
 
+void
+MyClass::classToInternal(MyClass *  myClass,
+                         bool const  isInternal)
+{
+    std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
+            objList = myClass->getEObjectPtr();
+    if (isInternal) {
+        for (auto &  it: *objList) {
+            EObject *  ptr = it.second.get();
+            if (Function *  fnPtr = dynamic_cast<Function *>(ptr)) {
+                fnPtr->setInternal(true);
+            } else if (Functions *  ptrFns = dynamic_cast<Functions *>(ptr)) {
+                std::vector<std::shared_ptr<Function>> &
+                        fns = ptrFns->getFunctionRef();
+                for (auto &  thisFn: fns) {
+                    thisFn->setInternal(true);
+                }
+            } else if (MyClass *  clsPtr = dynamic_cast<MyClass *>(ptr)) {
+                classToInternal(clsPtr, true);
+            }
+        }
+    } else {
+        for (auto &  it: *objList) {
+            EObject *  ptr = it.second.get();
+            if (Function *  fnPtr = dynamic_cast<Function *>(ptr)) {
+                fnPtr->setInternal(false);
+            } else if (Functions *  ptrFns = dynamic_cast<Functions *>(ptr)) {
+                std::vector<std::shared_ptr<Function>> &
+                        fns = ptrFns->getFunctionRef();
+                for (auto &  thisFn: fns) {
+                    thisFn->setInternal(false);
+                }
+            } else if (MyClass *  clsPtr = dynamic_cast<MyClass *>(ptr)) {
+                classToInternal(clsPtr, false);
+            }
+        }
+    }
+}
+
 std::vector<size_t>
 MyClass::getStringErr() const
 {
@@ -3283,37 +3333,19 @@ void
 MyClass::setInternal(const bool  value)
 {
     m_internal = value;
-    if (m_internal) {
-        for (auto &  it: m_eobjList) {
-            EObject *  ptr = it.second.get();
-            if (Function *  fnPtr = dynamic_cast<Function *>(ptr)) {
-                fnPtr->setInternal(true);
-            } else {
-                if (Functions *  ptrFns = dynamic_cast<Functions *>(ptr)) {
-                    std::vector<std::shared_ptr<Function>> &
-                            fns = ptrFns->getFunctionRef();
-                    for (auto &  thisFn: fns) {
-                        thisFn->setInternal(true);
-                    }
-                }
-            }
-        }
-    } else {
-        for (auto &  it: m_eobjList) {
-            EObject *  ptr = it.second.get();
-            if (Function *  fnPtr = dynamic_cast<Function *>(ptr)) {
-                fnPtr->setInternal(false);
-            } else {
-                if (Functions *  ptrFns = dynamic_cast<Functions *>(ptr)) {
-                    std::vector<std::shared_ptr<Function>> &
-                            fns = ptrFns->getFunctionRef();
-                    for (auto &  thisFn: fns) {
-                        thisFn->setInternal(false);
-                    }
-                }
-            }
-        }
-    }
+    classToInternal(this, m_internal);
+}
+
+bool
+MyClass::isIndPublicLabel() const
+{
+    return m_indPublicLabel;
+}
+
+void
+MyClass::setIndPublicLabel(const bool  value)
+{
+    m_indPublicLabel = value;
 }
 
 bool
@@ -3411,6 +3443,7 @@ MyClass::serialize() const
         if (m_swapFunction)      boolBit[1] |= 0b00'000'010;
         if (m_toStringFunction)  boolBit[1] |= 0b00'000'100;
         if (m_internal)          boolBit[1] |= 0b00'001'000;
+        if (m_indPublicLabel)    boolBit[1] |= 0b00'010'000;
 
         xu::append(res, xu::toString(boolBit));
     }
@@ -3475,6 +3508,7 @@ MyClass::deserialize(const char *  data,
             me.m_swapFunction =     boolBit[1] & 0b00'000'010;
             me.m_toStringFunction = boolBit[1] & 0b00'000'100;
             me.m_internal =         boolBit[1] & 0b00'001'000;
+            me.m_indPublicLabel =   boolBit[1] & 0b00'010'000;
         } else {
             err.push_back({25});
         }
@@ -3534,6 +3568,7 @@ MyClass::exchange(EObject &  value) noexcept
         swap(m_swapFunction, rhs.m_swapFunction);
         swap(m_toStringFunction, rhs.m_toStringFunction);
         swap(m_internal, rhs.m_internal);
+        swap(m_indPublicLabel, rhs.m_indPublicLabel);
 
         result = true;
     }

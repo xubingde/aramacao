@@ -1082,6 +1082,29 @@ MainWindow::menuConnect()
         m_fnMenu->addAction(actMoveOutsideClass);
         m_fnMenu->addSeparator();
         m_fnMenu->addAction(actDeleteFn);
+
+        connect(actAddNewFn, &QAction::triggered,
+                this, &MainWindow::addNewFunctionTail_triggered);
+        connect(actInsertNewFn, &QAction::triggered,
+                this, &MainWindow::addNewFunctionInsert_triggered);
+        connect(actFollowNewFn, &QAction::triggered,
+                this, &MainWindow::addNewFunctionFollow_triggered);
+        connect(actCopyFnInsertToNew, &QAction::triggered,
+                this, &MainWindow::addCopyFunctionInsert_triggered);
+        connect(actCopyFnToNew, &QAction::triggered,
+                this, &MainWindow::addCopyFunctionFollow_triggered);
+        connect(actCopyFnToNewEnd, &QAction::triggered,
+                this, &MainWindow::addCopyFunctionTail_triggered);
+
+        connect(actDeleteFn, &QAction::triggered,
+                this, &MainWindow::deleteRowFunction_triggered);
+        connect(actUp, &QAction::triggered,
+                this, &MainWindow::upRowFunction_triggered);
+        connect(actDown, &QAction::triggered,
+                this, &MainWindow::downRowFunction_triggered);
+        connect(actMoveToRow, &QAction::triggered,
+                this, &MainWindow::moveToRowFunction_triggered);
+
     }
     {
         QAction *  actCopyInsertToNew = new QAction(tr("Copy Insert"));
@@ -3373,39 +3396,9 @@ MainWindow::fnsAddNewFn_triggered()
     if (index.isValid()) {
         void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
         Etype const  etp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
+        std::shared_ptr<Function>  newMePtr = addNewFunction(ptr, etp);
+        if (!newMePtr)  return;
 
-        Function  fn;
-        fn.setFunctionName("new__fn");
-        std::shared_ptr<Function>  newMePtr;
-
-        switch (etp) {
-        case Etype::eFunctions :
-            newMePtr = static_cast<Functions *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eStaticFunctions :
-            newMePtr = static_cast<StaticFunctions *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eConstexprFunctions :
-            newMePtr = static_cast<ConstexprFunctions *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eTplFunctions :
-            newMePtr = static_cast<TplFunctions *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eTplStaticFunctions :
-            newMePtr = static_cast<TplStaticFunctions *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eTplConstexprFunctions :
-            newMePtr = static_cast<TplConstexprFunctions *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eConstructors :
-            newMePtr = static_cast<Constructors *>(ptr)->appendFunction(fn);
-            break;
-        case Etype::eTplConstructors :
-            newMePtr = static_cast<TplConstructors *>(ptr)->appendFunction(fn);
-            break;
-        default :
-            return;
-        }
         std::vector<ItemStack>  vecItemStack;
         getItemStack(vecItemStack, index);
 
@@ -3418,6 +3411,115 @@ MainWindow::fnsAddNewFn_triggered()
         if (!m_mainTreeView->isExpanded(index)) {
             m_mainTreeView->expand(index);
         }
+    }
+}
+
+void
+MainWindow::addNewFunctionTail_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        insertFunction(index, AddMethod::child, false);
+    }
+}
+
+void
+MainWindow::addNewFunctionInsert_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        insertFunction(index, AddMethod::insert, false);
+    }
+}
+
+void
+MainWindow::addNewFunctionFollow_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        insertFunction(index, AddMethod::follow, false);
+    }
+}
+
+void
+MainWindow::addCopyFunctionTail_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
+    void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
+
+    if (index.isValid()) {
+        insertFunction(index, AddMethod::child, true,
+                *static_cast<Function *>(ptr));
+    }
+}
+
+void
+MainWindow::addCopyFunctionInsert_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
+    void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
+
+    if (index.isValid()) {
+        insertFunction(index, AddMethod::insert, true,
+                *static_cast<Function *>(ptr));
+    }
+}
+
+void
+MainWindow::addCopyFunctionFollow_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
+    void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
+
+    if (index.isValid()) {
+        insertFunction(index, AddMethod::follow, true,
+                *static_cast<Function *>(ptr));
+    }
+}
+
+void
+MainWindow::deleteRowFunction_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        deleteRowValueFunction(index);
+    }
+}
+
+void
+MainWindow::upRowFunction_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        upRowValueFunction(index);
+    }
+}
+
+void
+MainWindow::downRowFunction_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        downRowValueFunction(index);
+    }
+}
+
+void
+MainWindow::moveToRowFunction_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        moveToRowValueFunction(index);
     }
 }
 
@@ -3729,6 +3831,9 @@ MainWindow::insertProject(QModelIndex const &  index,
             QString::fromStdString(newProjPtr->getTreeLabel()));
     setItemProperty(item, Etype::eProject, newProjPtr);
     rootItem->appendRow(item);
+    if (isFromMould) {
+        fillProject(*newProjPtr, item);
+    }
 
     QModelIndex const  idx = index.sibling(static_cast<int>(size) - 1, 0);
     m_mainTreeView->setCurrentIndex(idx);
@@ -3767,6 +3872,9 @@ MainWindow::insertModule(QModelIndex const &  index,
                     QString::fromStdString(newModulePtr->getTreeLabel()));
             setItemProperty(item, Etype::eModule, newModulePtr);
             parentItem->insertRow(row, item);
+            if (isFromMould) {
+                fillModule(*newModulePtr, item);
+            }
         }
         break;
     case AddMethod::follow :
@@ -3780,6 +3888,9 @@ MainWindow::insertModule(QModelIndex const &  index,
                     QString::fromStdString(newModulePtr->getTreeLabel()));
             setItemProperty(item, Etype::eModule, newModulePtr);
             parentItem->insertRow(row + 1, item);
+            if (isFromMould) {
+                fillModule(*newModulePtr, item);
+            }
         }
         break;
     case AddMethod::child :
@@ -3793,6 +3904,9 @@ MainWindow::insertModule(QModelIndex const &  index,
                     QString::fromStdString(newModulePtr->getTreeLabel()));
             setItemProperty(item, Etype::eModule, newModulePtr);
             selfItem->appendRow(item);
+            if (isFromMould) {
+                fillModule(*newModulePtr, item);
+            }
 
             if (!m_mainTreeView->isExpanded(index)) {
                 m_mainTreeView->expand(index);
@@ -3883,6 +3997,154 @@ MainWindow::insertFunction(QModelIndex const &  index,
                            bool const  isFromMould,
                            Function const &  mouldVal /* = Function() */)
 {
+    if (!index.isValid())  return;
+    std::vector<ItemStack>  vecItemStack;
+    getItemStack(vecItemStack, index);
+
+    std::shared_ptr<Function>  newMePtr;
+    if (isFromMould) {
+        newMePtr = std::make_shared<Function>(mouldVal);
+    } else {
+        Function  fn;
+        fn.setFunctionName("new__fn");
+        newMePtr = std::make_shared<Function>(fn);
+    }
+
+    switch (addmethod) {
+    case AddMethod::insert :
+        {
+            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+                    Qt::UserRole + 1).toInt());
+            void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+            insertMouldValFunction(parentPtr, parentEtp, *newMePtr, index.row());
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newMePtr->getTreeLabel()));
+            setItemProperty(item, Etype::eFunction, newMePtr, parentEtp);
+            parentItem->insertRow(index.row(), item);
+        }
+        break;
+    case AddMethod::follow :
+        {
+            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+                    Qt::UserRole + 1).toInt());
+            void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+            insertMouldValFunction(parentPtr, parentEtp, *newMePtr, index.row() + 1);
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newMePtr->getTreeLabel()));
+            setItemProperty(item, Etype::eFunction, newMePtr, parentEtp);
+            parentItem->insertRow(index.row() + 1, item);
+        }
+        break;
+    case AddMethod::child :
+        {
+            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+                    Qt::UserRole + 1).toInt());
+            void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+            addMouldValFunction(parentPtr, parentEtp, *newMePtr);
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newMePtr->getTreeLabel()));
+            setItemProperty(item, Etype::eFunction, newMePtr, parentEtp);
+            parentItem->appendRow(item);
+
+            if (!m_mainTreeView->isExpanded(index)) {
+                m_mainTreeView->expand(index);
+            }
+        }
+        break;
+    }
+}
+
+std::shared_ptr<Function>
+MainWindow::addNewFunction(void *  fnsPtr,
+                           Etype const  etp)
+{
+    Function  fn;
+    fn.setFunctionName("new__fn");
+    return addMouldValFunction(fnsPtr, etp, fn);
+}
+
+std::shared_ptr<Function>
+MainWindow::addMouldValFunction(void *  fnsPtr,
+                                Etype const  etp,
+                                Function const &  mouldVal)
+{
+    std::shared_ptr<Function>  newMePtr;
+
+    switch (etp) {
+    case Etype::eFunctions :
+        newMePtr = static_cast<Functions *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eStaticFunctions :
+        newMePtr = static_cast<StaticFunctions *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eConstexprFunctions :
+        newMePtr = static_cast<ConstexprFunctions *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eTplFunctions :
+        newMePtr = static_cast<TplFunctions *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eTplStaticFunctions :
+        newMePtr = static_cast<TplStaticFunctions *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eTplConstexprFunctions :
+        newMePtr = static_cast<TplConstexprFunctions *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eConstructors :
+        newMePtr = static_cast<Constructors *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    case Etype::eTplConstructors :
+        newMePtr = static_cast<TplConstructors *>(fnsPtr)->appendFunction(mouldVal);
+        break;
+    default :
+        break;
+    }
+
+    return newMePtr;
+}
+
+void
+MainWindow::insertMouldValFunction(void *  fnsPtr,
+                                   Etype const  etp,
+                                   Function const &  mouldVal,
+                                   int  row)
+{
+    switch (etp) {
+    case Etype::eFunctions :
+        static_cast<Functions *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eStaticFunctions :
+        static_cast<StaticFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eConstexprFunctions :
+        static_cast<ConstexprFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eTplFunctions :
+        static_cast<TplFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eTplStaticFunctions :
+        static_cast<TplStaticFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eTplConstexprFunctions :
+        static_cast<TplConstexprFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eConstructors :
+        static_cast<Constructors *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    case Etype::eTplConstructors :
+        static_cast<TplConstructors *>(fnsPtr)->insertFunction(mouldVal, row);
+        break;
+    default :
+        break;
+    }
 }
 
 void

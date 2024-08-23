@@ -52,7 +52,7 @@ fromString(std::vector<std::shared_ptr<Module>> &  res,
 Project::Project():
         EObject(),
         m_eobjList(),
-        m_projectName(),
+        m_projectName("project1"),
         m_docment()
 {
     setTreeLabel("P   " + m_projectName);

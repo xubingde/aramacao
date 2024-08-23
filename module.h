@@ -21,7 +21,6 @@ public:
 
     enum class Extension {
         cpp,
-        hpp,
         c,
         cc
     };
