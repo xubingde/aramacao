@@ -50,6 +50,7 @@ public:
     bool  swapFunction(const size_t  indexLhs, const size_t  indexRhs);
     bool  moveFunction(size_t &  indexFrom, size_t &  indexTo);
     void  clearFunction();
+    virtual void  procFunction(Function &  fn);
 
     std::vector<std::shared_ptr<Function>>  getObjList() const;
     virtual void  setObjList(const std::vector<std::shared_ptr<Function>> &  value);
@@ -58,8 +59,6 @@ public:
     virtual void  setParentClassPtr(MyClass *  value);
 
 protected:
-
-    virtual void  procFunction(Function &  fn);
 
     virtual bool  equal(const EObject &  value) const override;
     virtual bool  less(const EObject &  value) const override;

@@ -14,7 +14,7 @@ main(int  argc,
 {
     QApplication app(argc, argv);
     app.setApplicationName("AraMacao");
-    app.setApplicationVersion("1.0.1");
+    app.setApplicationVersion("0.1.0");
 
     QFile  qss;
     xu::StyleType const  stype = xu::getGuiStyle();

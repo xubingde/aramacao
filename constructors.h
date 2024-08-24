@@ -28,9 +28,9 @@ public:
     Constructors &  operator=(const Constructors &  other);
     Constructors &  operator=(Constructors &&  other) noexcept;
 
-protected:
-
     virtual void  procFunction(Function &  fn) override;
+
+protected:
 
     virtual bool  equal(const EObject &  value) const override;
     virtual bool  less(const EObject &  value) const override;

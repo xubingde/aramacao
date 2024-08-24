@@ -1,5 +1,6 @@
 #include <iostream>
 #include <typeinfo>
+#include <cstring>
 #include <memory>
 #include <QInputDialog>
 #include <QVBoxLayout>
@@ -77,6 +78,7 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_functionsMenu(nullptr),
         m_fnMenu(nullptr),
         m_otherMenu(nullptr),
+        m_defaultMenu(nullptr),
         m_spaceWindow(nullptr),
         m_wtBasicBlock(nullptr),
         m_wtLabel(nullptr),
@@ -126,44 +128,83 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
 {
     if (!index.isValid())  return;
 
-    QStandardItem *  item = m_mainTreeModel->itemFromIndex(index);
-    Etype const  etp = static_cast<Etype>(item->data(Qt::UserRole + 1).toInt());
-    void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
+    Etype const  selfEtp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
+    void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
+    Etype  parentEtp;
+    if (selfEtp == Etype::eFunction) {
+        QStandardItem *  parentItem = selfItem->parent();
+        parentEtp = static_cast<Etype>(parentItem->data(Qt::UserRole + 1).toInt());
+    }
 
-    switch (etp) {
+    switch (selfEtp) {
     case Etype::eBasicBlock :
-        m_wtBasicBlock->setObjPtr(static_cast<BasicBlock *>(ptr));
-        m_spvMain->replaceWidget(1, m_wtBasicBlock);
+        m_wtBasicBlock->setObjPtr(static_cast<BasicBlock *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtBasicBlock) {
+            m_spvMain->replaceWidget(1, m_wtBasicBlock);
+        }
         break;
     case Etype::eLabel :
-        m_wtLabel->setObjPtr(static_cast<Label *>(ptr));
-        m_wtLabel->setItemPtr(item);
-        m_spvMain->replaceWidget(1, m_wtLabel);
+        m_wtLabel->setObjPtr(static_cast<Label *>(selfPtr));
+        m_wtLabel->setItemPtr(selfItem);
+        if (m_spvMain->widget(1) != m_wtLabel) {
+            m_spvMain->replaceWidget(1, m_wtLabel);
+        }
         break;
     case Etype::ePublicLabel :
-        m_wtPublicLabel->setObjPtr(static_cast<PublicLabel *>(ptr));
-        m_spvMain->replaceWidget(1, m_wtPublicLabel);
+        m_wtPublicLabel->setObjPtr(static_cast<PublicLabel *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtPublicLabel) {
+            m_spvMain->replaceWidget(1, m_wtPublicLabel);
+        }
         break;
     case Etype::eProtectedLabel :
-        m_wtProtectedLabel->setObjPtr(static_cast<ProtectedLabel *>(ptr));
-        m_spvMain->replaceWidget(1, m_wtProtectedLabel);
+        m_wtProtectedLabel->setObjPtr(static_cast<ProtectedLabel *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtProtectedLabel) {
+            m_spvMain->replaceWidget(1, m_wtProtectedLabel);
+        }
         break;
     case Etype::ePrivateLabel :
-        m_wtPrivateLabel->setObjPtr(static_cast<PrivateLabel *>(ptr));
-        m_spvMain->replaceWidget(1, m_wtPrivateLabel);
+        m_wtPrivateLabel->setObjPtr(static_cast<PrivateLabel *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtPrivateLabel) {
+            m_spvMain->replaceWidget(1, m_wtPrivateLabel);
+        }
         break;
     case Etype::eEnum :
-        m_wtMyEnum->setObjPtr(static_cast<MyEnum *>(ptr));
-        m_wtMyEnum->setItemPtr(item);
-        m_spvMain->replaceWidget(1, m_wtMyEnum);
+        m_wtMyEnum->setObjPtr(static_cast<MyEnum *>(selfPtr));
+        m_wtMyEnum->setItemPtr(selfItem);
+        if (m_spvMain->widget(1) != m_wtMyEnum) {
+            m_spvMain->replaceWidget(1, m_wtMyEnum);
+        }
         break;
     case Etype::eProject :
-        m_wtProject->setObjPtr(static_cast<Project *>(ptr));
-        m_wtProject->setItemPtr(item);
-        m_spvMain->replaceWidget(1, m_wtProject);
+        m_wtProject->setObjPtr(static_cast<Project *>(selfPtr));
+        m_wtProject->setItemPtr(selfItem);
+        if (m_spvMain->widget(1) != m_wtProject) {
+            m_spvMain->replaceWidget(1, m_wtProject);
+        }
+        break;
+    case Etype::eFunction :
+        switch (parentEtp) {
+        case Etype::eFunctions :
+        case Etype::eStaticFunctions :
+        case Etype::eConstexprFunctions :
+            break;
+        case Etype::eTplFunctions :
+        case Etype::eTplStaticFunctions :
+        case Etype::eTplConstexprFunctions :
+            break;
+        case Etype::eConstructors :
+            break;
+        case Etype::eTplConstructors :
+            break;
+        default :
+            break;
+        }
         break;
     default :
-        m_spvMain->replaceWidget(1, m_spaceWindow);
+        if (m_spvMain->widget(1) != m_spaceWindow) {
+            m_spvMain->replaceWidget(1, m_spaceWindow);
+        }
         break;
     }
     m_spvMain->setStretchFactor(0, 30);
@@ -223,6 +264,7 @@ MainWindow::mainTreeView_customCxtMenu(QPoint const &  pos)
             m_otherMenu->exec(m_mainTreeView->mapToGlobal(pos));
             break;
         default :
+            m_defaultMenu->exec(m_mainTreeView->mapToGlobal(pos));
             break;
         }
     } else {
@@ -1262,6 +1304,262 @@ MainWindow::menuConnect()
                 this, &MainWindow::copyToNewValue_triggered);
         connect(actDelete, &QAction::triggered,
                 this, &MainWindow::deleteRowValue_triggered);
+        connect(actUp, &QAction::triggered,
+                this, &MainWindow::upRowValue_triggered);
+        connect(actDown, &QAction::triggered,
+                this, &MainWindow::downRowValue_triggered);
+        connect(actMoveToRow, &QAction::triggered,
+                this, &MainWindow::moveToRowValue_triggered);
+
+        connect(actInsBasicBlock, &QAction::triggered,
+                this, &MainWindow::addNewBasicBlockInsert_triggered);
+        connect(actFlwBasicBlock, &QAction::triggered,
+                this, &MainWindow::addNewBasicBlockFollow_triggered);
+        connect(actInsLabel, &QAction::triggered,
+                this, &MainWindow::addNewLabelInsert_triggered);
+        connect(actFlwLabel, &QAction::triggered,
+                this, &MainWindow::addNewLabelFollow_triggered);
+        connect(actInsPubLabel, &QAction::triggered,
+                this, &MainWindow::addNewPublicLabelInsert_triggered);
+        connect(actFlwPubLabel, &QAction::triggered,
+                this, &MainWindow::addNewPublicLabelFollow_triggered);
+        connect(actInsProtLabel, &QAction::triggered,
+                this, &MainWindow::addNewProtectedLabelInsert_triggered);
+        connect(actFlwProtLabel, &QAction::triggered,
+                this, &MainWindow::addNewProtectedLabelFollow_triggered);
+        connect(actInsPrvLabel, &QAction::triggered,
+                this, &MainWindow::addNewPrivateLabelInsert_triggered);
+        connect(actFlwPrvLabel, &QAction::triggered,
+                this, &MainWindow::addNewPrivateLabelFollow_triggered);
+
+        connect(actInsCtors, &QAction::triggered,
+                this, &MainWindow::addNewCtorsInsert_triggered);
+        connect(actFlwCtors, &QAction::triggered,
+                this, &MainWindow::addNewCtorsFollow_triggered);
+        connect(actInsTplCtors, &QAction::triggered,
+                this, &MainWindow::addNewTplCtorsInsert_triggered);
+        connect(actFlwTplCtors, &QAction::triggered,
+                this, &MainWindow::addNewTplCtorsFollow_triggered);
+        connect(actInsDefCtor, &QAction::triggered,
+                this, &MainWindow::addNewDefCtorFnInsert_triggered);
+        connect(actFlwDefCtor, &QAction::triggered,
+                this, &MainWindow::addNewDefCtorFnFollow_triggered);
+        connect(actInsCopyCtor, &QAction::triggered,
+                this, &MainWindow::addNewCopyCtorFnInsert_triggered);
+        connect(actFlwCopyCtor, &QAction::triggered,
+                this, &MainWindow::addNewCopyCtorFnFollow_triggered);
+        connect(actInsMoveCtor, &QAction::triggered,
+                this, &MainWindow::addNewMoveCtorFnInsert_triggered);
+        connect(actFlwMoveCtor, &QAction::triggered,
+                this, &MainWindow::addNewMoveCtorFnFollow_triggered);
+        connect(actInsDtor, &QAction::triggered,
+                this, &MainWindow::addNewDtorFnInsert_triggered);
+        connect(actFlwDtor, &QAction::triggered,
+                this, &MainWindow::addNewDtorFnFollow_triggered);
+        connect(actInsCopyEq, &QAction::triggered,
+                this, &MainWindow::addNewCopyOpEqFnInsert_triggered);
+        connect(actFlwCopyEq, &QAction::triggered,
+                this, &MainWindow::addNewCopyOpEqFnFollow_triggered);
+        connect(actInsMoveEq, &QAction::triggered,
+                this, &MainWindow::addNewMoveOpEqFnInsert_triggered);
+        connect(actFlwMoveEq, &QAction::triggered,
+                this, &MainWindow::addNewMoveOpEqFnFollow_triggered);
+
+        connect(actInsClassDec, &QAction::triggered,
+                this, &MainWindow::addNewClassDecInsert_triggered);
+        connect(actInsClass, &QAction::triggered,
+                this, &MainWindow::addNewClassInsert_triggered);
+        connect(actInsStructDec, &QAction::triggered,
+                this, &MainWindow::addNewStructDecInsert_triggered);
+        connect(actInsStruct, &QAction::triggered,
+                this, &MainWindow::addNewStructInsert_triggered);
+        connect(actInsEnum, &QAction::triggered,
+                this, &MainWindow::addNewEnumInsert_triggered);
+        connect(actInsTypedef, &QAction::triggered,
+                this, &MainWindow::addNewTypedefInsert_triggered);
+
+        connect(actFlwClassDec, &QAction::triggered,
+                this, &MainWindow::addNewClassDecFollow_triggered);
+        connect(actFlwClass, &QAction::triggered,
+                this, &MainWindow::addNewClassFollow_triggered);
+        connect(actFlwStructDec, &QAction::triggered,
+                this, &MainWindow::addNewStructDecFollow_triggered);
+        connect(actFlwStruct, &QAction::triggered,
+                this, &MainWindow::addNewStructFollow_triggered);
+        connect(actFlwEnum, &QAction::triggered,
+                this, &MainWindow::addNewEnumFollow_triggered);
+        connect(actFlwTypedef, &QAction::triggered,
+                this, &MainWindow::addNewTypedefFollow_triggered);
+
+        connect(actInsFns, &QAction::triggered,
+                this, &MainWindow::addNewFnsInsert_triggered);
+        connect(actInsFnsStatic, &QAction::triggered,
+                this, &MainWindow::addNewStaticFnsInsert_triggered);
+        connect(actInsFnsCnex, &QAction::triggered,
+                this, &MainWindow::addNewCoexFnsInsert_triggered);
+        connect(actInsTplFns, &QAction::triggered,
+                this, &MainWindow::addNewTplFnsInsert_triggered);
+        connect(actInsTplFnsStatic, &QAction::triggered,
+                this, &MainWindow::addNewTplStaticFnsInsert_triggered);
+        connect(actInsTplFnsCnex, &QAction::triggered,
+                this, &MainWindow::addNewTplCoexFnsInsert_triggered);
+
+        connect(actFlwFns, &QAction::triggered,
+                this, &MainWindow::addNewFnsFollow_triggered);
+        connect(actFlwFnsStatic, &QAction::triggered,
+                this, &MainWindow::addNewStaticFnsFollow_triggered);
+        connect(actFlwFnsCnex, &QAction::triggered,
+                this, &MainWindow::addNewCoexFnsFollow_triggered);
+        connect(actFlwTplFns, &QAction::triggered,
+                this, &MainWindow::addNewTplFnsFollow_triggered);
+        connect(actFlwTplFnsStatic, &QAction::triggered,
+                this, &MainWindow::addNewTplStaticFnsFollow_triggered);
+        connect(actFlwTplFnsCnex, &QAction::triggered,
+                this, &MainWindow::addNewTplCoexFnsFollow_triggered);
+
+    }
+    {
+        QAction *  actUp = new QAction(tr("Up"));
+        QAction *  actDown = new QAction(tr("Down"));
+        QAction *  actMoveToRow = new QAction(tr("Move To Row"));
+
+        QAction *  actInsClassDec = new QAction(tr("New Class Declaration"));
+        QAction *  actInsClass = new QAction(tr("New Class"));
+        QAction *  actInsStructDec = new QAction(tr("New Struct Declaration"));
+        QAction *  actInsStruct = new QAction(tr("New Struct"));
+        QAction *  actInsEnum = new QAction(tr("New Enum"));
+        QAction *  actInsTypedef = new QAction(tr("New Typedef"));
+
+        QAction *  actInsPubLabel = new QAction(tr("New Public Label"));
+        QAction *  actInsProtLabel = new QAction(tr("New Protected Label"));
+        QAction *  actInsPrvLabel = new QAction(tr("New Private Label"));
+        QAction *  actInsLabel = new QAction(tr("New Label"));
+
+        QAction *  actInsDefCtor = new QAction(tr("New Default Constructor"));
+        QAction *  actInsCopyCtor = new QAction(tr("New Copy Constructor"));
+        QAction *  actInsMoveCtor = new QAction(tr("New Move Constructor"));
+        QAction *  actInsDtor = new QAction(tr("New ~Destructor"));
+        QAction *  actInsCopyEq = new QAction(tr("New Copy Operator="));
+        QAction *  actInsMoveEq = new QAction(tr("New Move Operator="));
+
+        QAction *  actInsCtors = new QAction(tr("New Constructors"));
+        QAction *  actInsTplCtors = new QAction(tr("New Template Constructors"));
+
+        QAction *  actInsFns = new QAction(tr("New Functions"));
+        QAction *  actInsFnsStatic = new QAction(tr("New Functions Static"));
+        QAction *  actInsFnsCnex = new QAction(tr("New Functions Constexpr"));
+        QAction *  actInsTplFns = new QAction(tr("New Template Functions"));
+        QAction *  actInsTplFnsStatic = new QAction(tr("New Template Functions Static"));
+        QAction *  actInsTplFnsCnex = new QAction(tr("New Template Functions Constexpr"));
+
+        QAction *  actInsBasicBlock = new QAction(tr("New BasicBlock"));
+
+        QAction *  actFlwClassDec = new QAction(tr("New Class Declaration"));
+        QAction *  actFlwClass = new QAction(tr("New Class"));
+        QAction *  actFlwStructDec = new QAction(tr("New Struct Declaration"));
+        QAction *  actFlwStruct = new QAction(tr("New Struct"));
+        QAction *  actFlwEnum = new QAction(tr("New Enum"));
+        QAction *  actFlwTypedef = new QAction(tr("New Typedef"));
+
+        QAction *  actFlwPubLabel = new QAction(tr("New Public Label"));
+        QAction *  actFlwProtLabel = new QAction(tr("New Protected Label"));
+        QAction *  actFlwPrvLabel = new QAction(tr("New Private Label"));
+        QAction *  actFlwLabel = new QAction(tr("New Label"));
+
+        QAction *  actFlwDefCtor = new QAction(tr("New Default Constructor"));
+        QAction *  actFlwCopyCtor = new QAction(tr("New Copy Constructor"));
+        QAction *  actFlwMoveCtor = new QAction(tr("New Move Constructor"));
+        QAction *  actFlwDtor = new QAction(tr("New ~Destructor"));
+        QAction *  actFlwCopyEq = new QAction(tr("New Copy Operator="));
+        QAction *  actFlwMoveEq = new QAction(tr("New Move Operator="));
+
+        QAction *  actFlwCtors = new QAction(tr("New Constructors"));
+        QAction *  actFlwTplCtors = new QAction(tr("New Template Constructors"));
+
+        QAction *  actFlwFns = new QAction(tr("New Functions"));
+        QAction *  actFlwFnsStatic = new QAction(tr("New Functions Static"));
+        QAction *  actFlwFnsCnex = new QAction(tr("New Functions Constexpr"));
+        QAction *  actFlwTplFns = new QAction(tr("New Template Functions"));
+        QAction *  actFlwTplFnsStatic = new QAction(tr("New Template Functions Static"));
+        QAction *  actFlwTplFnsCnex = new QAction(tr("New Template Functions Constexpr"));
+
+        QAction *  actFlwBasicBlock = new QAction(tr("New BasicBlock"));
+
+        QMenu *  menuInsert = new QMenu(m_defaultMenu);
+        QMenu *  menuFollow = new QMenu(m_defaultMenu);
+
+        QAction *  actParentInsert = m_defaultMenu->addAction(tr("Insert"));
+        QAction *  actParentFollow = m_defaultMenu->addAction(tr("Follow"));
+        actParentInsert->setMenu(menuInsert);
+        actParentFollow->setMenu(menuFollow);
+
+        m_defaultMenu->addSeparator();
+        m_defaultMenu->addAction(actUp);
+        m_defaultMenu->addAction(actDown);
+        m_defaultMenu->addAction(actMoveToRow);
+
+        menuInsert->addAction(actInsClassDec);
+        menuInsert->addAction(actInsClass);
+        menuInsert->addAction(actInsStructDec);
+        menuInsert->addAction(actInsStruct);
+        menuInsert->addAction(actInsEnum);
+        menuInsert->addAction(actInsTypedef);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsPubLabel);
+        menuInsert->addAction(actInsProtLabel);
+        menuInsert->addAction(actInsPrvLabel);
+        menuInsert->addAction(actInsLabel);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsDefCtor);
+        menuInsert->addAction(actInsCopyCtor);
+        menuInsert->addAction(actInsMoveCtor);
+        menuInsert->addAction(actInsDtor);
+        menuInsert->addAction(actInsCopyEq);
+        menuInsert->addAction(actInsMoveEq);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsCtors);
+        menuInsert->addAction(actInsTplCtors);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsFns);
+        menuInsert->addAction(actInsFnsStatic);
+        menuInsert->addAction(actInsFnsCnex);
+        menuInsert->addAction(actInsTplFns);
+        menuInsert->addAction(actInsTplFnsStatic);
+        menuInsert->addAction(actInsTplFnsCnex);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsBasicBlock);
+
+        menuFollow->addAction(actFlwClassDec);
+        menuFollow->addAction(actFlwClass);
+        menuFollow->addAction(actFlwStructDec);
+        menuFollow->addAction(actFlwStruct);
+        menuFollow->addAction(actFlwEnum);
+        menuFollow->addAction(actFlwTypedef);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwPubLabel);
+        menuFollow->addAction(actFlwProtLabel);
+        menuFollow->addAction(actFlwPrvLabel);
+        menuFollow->addAction(actFlwLabel);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwDefCtor);
+        menuFollow->addAction(actFlwCopyCtor);
+        menuFollow->addAction(actFlwMoveCtor);
+        menuFollow->addAction(actFlwDtor);
+        menuFollow->addAction(actFlwCopyEq);
+        menuFollow->addAction(actFlwMoveEq);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwCtors);
+        menuFollow->addAction(actFlwTplCtors);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwFns);
+        menuFollow->addAction(actFlwFnsStatic);
+        menuFollow->addAction(actFlwFnsCnex);
+        menuFollow->addAction(actFlwTplFns);
+        menuFollow->addAction(actFlwTplFnsStatic);
+        menuFollow->addAction(actFlwTplFnsCnex);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwBasicBlock);
+
         connect(actUp, &QAction::triggered,
                 this, &MainWindow::upRowValue_triggered);
         connect(actDown, &QAction::triggered,
@@ -3405,7 +3703,7 @@ MainWindow::fnsAddNewFn_triggered()
         QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
         QStandardItem *  item = new QStandardItem(
                 QString::fromStdString(newMePtr->getTreeLabel()));
-        setItemProperty(item, Etype::eFunction, newMePtr, etp);
+        setItemProperty(item, Etype::eFunction, newMePtr);
         selfItem->appendRow(item);
 
         if (!m_mainTreeView->isExpanded(index)) {
@@ -3417,10 +3715,13 @@ MainWindow::fnsAddNewFn_triggered()
 void
 MainWindow::addNewFunctionTail_triggered()
 {
-    QModelIndex const  index = m_mainTreeView->currentIndex();
+    QModelIndex const index = m_mainTreeView->currentIndex();
+    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
 
     if (index.isValid()) {
-        insertFunction(index, AddMethod::child, false);
+        QStandardItem *  parentItem = selfItem->parent();
+        QModelIndex const parentIndex = m_mainTreeModel->indexFromItem(parentItem);
+        insertFunction(parentIndex, AddMethod::child, false);
     }
 }
 
@@ -3452,7 +3753,9 @@ MainWindow::addCopyFunctionTail_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertFunction(index, AddMethod::child, true,
+        QStandardItem *  parentItem = selfItem->parent();
+        QModelIndex const parentIndex = m_mainTreeModel->indexFromItem(parentItem);
+        insertFunction(parentIndex, AddMethod::child, true,
                 *static_cast<Function *>(ptr));
     }
 }
@@ -3549,6 +3852,7 @@ MainWindow::init_obj()
     m_functionsMenu = new QMenu;
     m_fnMenu = new QMenu;
     m_otherMenu = new QMenu;
+    m_defaultMenu = new QMenu;
 
     m_spaceWindow = new QAbstractScrollArea;
     m_wtBasicBlock = new WtBasicBlock;
@@ -3656,7 +3960,7 @@ MainWindow::fillData()
 
 void
 MainWindow::fillProject(Project &  project,
-                        QStandardItem *  rootItem)
+                        QStandardItem *  projectItem)
 {
     std::vector<std::shared_ptr<Module>> &  moduleList = project.getModuleListRef();
     size_t const  moduleSize = moduleList.size();
@@ -3664,7 +3968,7 @@ MainWindow::fillProject(Project &  project,
         QStandardItem *  item = new QStandardItem(
                 QString::fromStdString(moduleList[i]->getTreeLabel()));
         setItemProperty(item, Etype::eModule, moduleList[i]);
-        rootItem->appendRow(item);
+        projectItem->appendRow(item);
 
         fillModule(*moduleList[i], item);
     }
@@ -3672,7 +3976,7 @@ MainWindow::fillProject(Project &  project,
 
 void
 MainWindow::fillModule(Module &  module,
-                       QStandardItem *  rootItem)
+                       QStandardItem *  moduleItem)
 {
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  eList =
             module.getEObjectListRef();
@@ -3681,7 +3985,7 @@ MainWindow::fillModule(Module &  module,
         QStandardItem *  item = new QStandardItem(
                 QString::fromStdString(eList[i].second->getTreeLabel()));
         setItemProperty(item, eList[i].first, eList[i].second);
-        rootItem->appendRow(item);
+        moduleItem->appendRow(item);
 
         if (eList[i].first == Etype::eClass) {
             std::shared_ptr<MyClass>  classPtr =
@@ -3697,14 +4001,14 @@ MainWindow::fillModule(Module &  module,
                    eList[i].first == Etype::eTplConstexprFunctions ) {
             std::shared_ptr<Functions>  fnsPtr =
                     std::dynamic_pointer_cast<Functions>(eList[i].second);
-            fillFunctions(*fnsPtr, item, eList[i].first);
+            fillFunctions(*fnsPtr, item);
         }
     }
 }
 
 void
 MainWindow::fillClass(MyClass &  myClass,
-                      QStandardItem *  rootItem)
+                      QStandardItem *  myClassItem)
 {
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  eList =
             myClass.getEObjectRef();
@@ -3713,7 +4017,7 @@ MainWindow::fillClass(MyClass &  myClass,
         QStandardItem *  item = new QStandardItem(
                 QString::fromStdString(eList[i].second->getTreeLabel()));
         setItemProperty(item, eList[i].first, eList[i].second);
-        rootItem->appendRow(item);
+        myClassItem->appendRow(item);
 
         if (eList[i].first == Etype::eClass) {
             std::shared_ptr<MyClass>  classPtr =
@@ -3729,40 +4033,35 @@ MainWindow::fillClass(MyClass &  myClass,
                    eList[i].first == Etype::eTplConstexprFunctions ) {
             std::shared_ptr<Functions>  fnsPtr =
                     std::dynamic_pointer_cast<Functions>(eList[i].second);
-            fillFunctions(*fnsPtr, item, eList[i].first);
+            fillFunctions(*fnsPtr, item);
         }
     }
 }
 
 void
 MainWindow::fillFunctions(Functions &  functions,
-                          QStandardItem *  rootItem,
-                          Etype const  etp)
+                          QStandardItem *  functionsItem)
 {
     std::vector<std::shared_ptr<Function>> &  fnList = functions.getFunctionRef();
     size_t const  fnSize = fnList.size();
     for (size_t  i = 0; i < fnSize; ++i) {
         QStandardItem *  item = new QStandardItem(
                 QString::fromStdString(fnList[i]->getTreeLabel()));
-        setItemProperty(item, Etype::eFunction, fnList[i], etp);
-        rootItem->appendRow(item);
+        setItemProperty(item, Etype::eFunction, fnList[i]);
+        functionsItem->appendRow(item);
     }
 }
 
 void
 MainWindow::setItemProperty(QStandardItem *  item,
                             Etype const  etp,
-                            std::shared_ptr<EObject>  objPtr,
-                            Etype const  secondEtp /* = Etype::eFunctions */)
+                            std::shared_ptr<EObject>  objPtr)
 {
     QVariant  valType = static_cast<int>(etp);
     item->setData(valType, Qt::UserRole + 1);
+
     QVariant  valPtr = QVariant::fromValue(static_cast<void *>(objPtr.get()));
     item->setData(valPtr, Qt::UserRole + 2);
-    if (etp == Etype::eFunction) {
-        QVariant  valEtp = static_cast<int>(secondEtp);
-        item->setData(valEtp, Qt::UserRole + 3);
-    }
 
     item->setFlags(Qt::NoItemFlags);
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
@@ -4014,45 +4313,56 @@ MainWindow::insertFunction(QModelIndex const &  index,
     case AddMethod::insert :
         {
             QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
-                    Qt::UserRole + 1).toInt());
-            void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+            Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
+                    Qt::UserRole + 2).value<void *>());
+            parentPtr->procFunction(*newMePtr);
 
-            insertMouldValFunction(parentPtr, parentEtp, *newMePtr, index.row());
+            void *  ptrTmp = vecItemStack[1].getVecPtr();
+            std::vector<std::shared_ptr<Function>> *  parentVec =
+                    static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
+            int const  selfRow = vecItemStack[0].getSelfRow();
+            parentVec->insert(parentVec->begin() + selfRow, newMePtr);
 
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eFunction, newMePtr, parentEtp);
-            parentItem->insertRow(index.row(), item);
+            setItemProperty(item, Etype::eFunction, newMePtr);
+            parentItem->insertRow(selfRow, item);
         }
         break;
     case AddMethod::follow :
         {
             QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
-                    Qt::UserRole + 1).toInt());
-            void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+            Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
+                    Qt::UserRole + 2).value<void *>());
+            parentPtr->procFunction(*newMePtr);
 
-            insertMouldValFunction(parentPtr, parentEtp, *newMePtr, index.row() + 1);
+            void *  ptrTmp = vecItemStack[1].getVecPtr();
+            std::vector<std::shared_ptr<Function>> *  parentVec =
+                    static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
+            int const  selfRow = vecItemStack[0].getSelfRow();
+            parentVec->insert(parentVec->begin() + selfRow + 1, newMePtr);
 
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eFunction, newMePtr, parentEtp);
-            parentItem->insertRow(index.row() + 1, item);
+            setItemProperty(item, Etype::eFunction, newMePtr);
+            parentItem->insertRow(selfRow + 1, item);
         }
         break;
     case AddMethod::child :
         {
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
-                    Qt::UserRole + 1).toInt());
-            void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+            QStandardItem *  parentItem = vecItemStack[0].getSelfItem();
+            Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
+                    Qt::UserRole + 2).value<void *>());
+            parentPtr->procFunction(*newMePtr);
 
-            addMouldValFunction(parentPtr, parentEtp, *newMePtr);
+            void *  ptrTmp = vecItemStack[0].getVecPtr();
+            std::vector<std::shared_ptr<Function>> *  parentVec =
+                    static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
+            parentVec->push_back(newMePtr);
 
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eFunction, newMePtr, parentEtp);
+            setItemProperty(item, Etype::eFunction, newMePtr);
             parentItem->appendRow(item);
 
             if (!m_mainTreeView->isExpanded(index)) {
@@ -4109,42 +4419,6 @@ MainWindow::addMouldValFunction(void *  fnsPtr,
     }
 
     return newMePtr;
-}
-
-void
-MainWindow::insertMouldValFunction(void *  fnsPtr,
-                                   Etype const  etp,
-                                   Function const &  mouldVal,
-                                   int  row)
-{
-    switch (etp) {
-    case Etype::eFunctions :
-        static_cast<Functions *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eStaticFunctions :
-        static_cast<StaticFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eConstexprFunctions :
-        static_cast<ConstexprFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eTplFunctions :
-        static_cast<TplFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eTplStaticFunctions :
-        static_cast<TplStaticFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eTplConstexprFunctions :
-        static_cast<TplConstexprFunctions *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eConstructors :
-        static_cast<Constructors *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    case Etype::eTplConstructors :
-        static_cast<TplConstructors *>(fnsPtr)->insertFunction(mouldVal, row);
-        break;
-    default :
-        break;
-    }
 }
 
 void

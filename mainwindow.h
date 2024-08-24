@@ -219,11 +219,11 @@ private:
     void  connect_obj();
     void  display_obj();
     void  fillData();
-    void  fillProject(Project &  project, QStandardItem *  rootItem);
-    void  fillModule(Module &  module, QStandardItem *  rootItem);
-    void  fillClass(MyClass &  myClass, QStandardItem *  rootItem);
-    void  fillFunctions(Functions &  functions, QStandardItem *  rootItem, Etype const  etp);
-    void  setItemProperty(QStandardItem *  item, Etype const  etp, std::shared_ptr<EObject>  objPtr, Etype const  secondEtp = Etype::eFunctions);
+    void  fillProject(Project &  project, QStandardItem *  projectItem);
+    void  fillModule(Module &  module, QStandardItem *  moduleItem);
+    void  fillClass(MyClass &  myClass, QStandardItem *  myClassItem);
+    void  fillFunctions(Functions &  functions, QStandardItem *  functionsItem);
+    void  setItemProperty(QStandardItem *  item, Etype const  etp, std::shared_ptr<EObject>  objPtr);
     void  getItemStack(std::vector<ItemStack> &  res, QModelIndex const &  index);
     void  insertProject(QModelIndex const &  index, bool const  isFromMould, Project const &  mouldVal = Project());
     void  insertModule(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, Module const &  mouldVal = Module());
@@ -231,7 +231,6 @@ private:
     void  insertFunction(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, Function const &  mouldVal = Function());
     std::shared_ptr<Function>  addNewFunction(void *  fnsPtr, Etype const  etp);
     std::shared_ptr<Function>  addMouldValFunction(void *  fnsPtr, Etype const  etp, Function const &  mouldVal);
-    void  insertMouldValFunction(void *  fnsPtr, Etype const  etp, Function const &  mouldVal, int  row);
     void  deleteRowValue(QModelIndex const &  index);
     void  deleteRowValueFunction(QModelIndex const &  index);
     void  upRowValue(QModelIndex const &  index);
@@ -261,6 +260,7 @@ private:
     QMenu *         m_functionsMenu;
     QMenu *         m_fnMenu;
     QMenu *         m_otherMenu;
+    QMenu *         m_defaultMenu;
     QAbstractScrollArea *   m_spaceWindow;
     WtBasicBlock *      m_wtBasicBlock;
     WtLabel *       m_wtLabel;

@@ -22,7 +22,8 @@ public:
     enum class Extension {
         cpp,
         c,
-        cc
+        cc,
+        cxx
     };
 
     Module();
