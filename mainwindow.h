@@ -23,6 +23,7 @@
 #include "eobject.h"
 #include "itemstack.h"
 #include "function.h"
+#include "wtfn.h"
 
 namespace xu {
 
@@ -269,6 +270,7 @@ private:
     WtPrivateLabel *    m_wtPrivateLabel;
     WtMyEnum *      m_wtMyEnum;
     WtProject *     m_wtProject;
+    WtFn *          m_wtFn;
 };
 
 template <typename T> inline

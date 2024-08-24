@@ -86,7 +86,8 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_wtProtectedLabel(nullptr),
         m_wtPrivateLabel(nullptr),
         m_wtMyEnum(nullptr),
-        m_wtProject(nullptr)
+        m_wtProject(nullptr),
+        m_wtFn(nullptr)
 {
     setWindowTitle("AraMacao");
     init_obj();
@@ -188,6 +189,11 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         case Etype::eFunctions :
         case Etype::eStaticFunctions :
         case Etype::eConstexprFunctions :
+            m_wtFn->setObjPtr(static_cast<Function *>(selfPtr));
+            m_wtFn->setItemPtr(selfItem);
+            if (m_spvMain->widget(1) != m_wtFn) {
+                m_spvMain->replaceWidget(1, m_wtFn);
+            }
             break;
         case Etype::eTplFunctions :
         case Etype::eTplStaticFunctions :
@@ -3862,6 +3868,7 @@ MainWindow::init_obj()
     m_wtPrivateLabel = new WtPrivateLabel;
     m_wtMyEnum = new WtMyEnum;
     m_wtProject = new WtProject;
+    m_wtFn = new WtFn;
 }
 
 void

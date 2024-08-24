@@ -154,6 +154,8 @@ set(PROJECT_SOURCES
         tplstaticfunctions.h
         twobeforebehind.cpp
         twobeforebehind.h
+        fourbeforebehind.cpp
+        fourbeforebehind.h
         virtualeqfn.cpp
         virtualeqfn.h
         virtualexchangefn.cpp
@@ -178,6 +180,8 @@ set(PROJECT_SOURCES
         wtprotectedlabel.h
         wtpubliclabel.cpp
         wtpubliclabel.h
+        wtfn.cpp
+        wtfn.h
         ${TS_FILES}
 )
 
