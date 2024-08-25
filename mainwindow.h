@@ -24,6 +24,7 @@
 #include "itemstack.h"
 #include "function.h"
 #include "wtfn.h"
+#include "wttplfn.h"
 
 namespace xu {
 
@@ -271,6 +272,7 @@ private:
     WtMyEnum *      m_wtMyEnum;
     WtProject *     m_wtProject;
     WtFn *          m_wtFn;
+    WtTplFn *       m_wtTplFn;
 };
 
 template <typename T> inline
@@ -298,6 +300,15 @@ MainWindow::insertValue(QModelIndex const &  index,
     switch (addmethod) {
     case AddMethod::insert :
         {
+            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+                    Qt::UserRole + 1).toInt());
+            if (parentEtp == Etype::eModule && etpValue == Etype::eClass) {
+                void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+                std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
+                        static_cast<Module *>(parentPtr));
+            }
+
             void *  ptrTmp = vecItemStack[1].getVecPtr();
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
                     parentVec = static_cast<std::vector<std::pair<Etype,
@@ -308,7 +319,6 @@ MainWindow::insertValue(QModelIndex const &  index,
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(newMePtr->getTreeLabel()));
             setItemProperty(item, etpValue, newMePtr);
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
             parentItem->insertRow(selfRow, item);
             if (isFromMould && etpValue == Etype::eClass) {
                 fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
@@ -317,6 +327,15 @@ MainWindow::insertValue(QModelIndex const &  index,
         break;
     case AddMethod::follow :
         {
+            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+                    Qt::UserRole + 1).toInt());
+            if (parentEtp == Etype::eModule && etpValue == Etype::eClass) {
+                void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+                std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
+                        static_cast<Module *>(parentPtr));
+            }
+
             void *  ptrTmp = vecItemStack[1].getVecPtr();
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
                     parentVec = static_cast<std::vector<std::pair<Etype,
@@ -327,7 +346,6 @@ MainWindow::insertValue(QModelIndex const &  index,
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(newMePtr->getTreeLabel()));
             setItemProperty(item, etpValue, newMePtr);
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
             parentItem->insertRow(selfRow + 1, item);
             if (isFromMould && etpValue == Etype::eClass) {
                 fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
@@ -336,13 +354,21 @@ MainWindow::insertValue(QModelIndex const &  index,
         break;
     case AddMethod::child :
         {
+            QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
+            Etype const  parentEtp = static_cast<Etype>(selfItem->data(
+                    Qt::UserRole + 1).toInt());
+            if (parentEtp == Etype::eModule && etpValue == Etype::eClass) {
+                void *  parentPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
+                std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
+                        static_cast<Module *>(parentPtr));
+            }
+
             void *  ptrTmp = vecItemStack[0].getVecPtr();
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
                     parentVec = static_cast<std::vector<std::pair<Etype,
                     std::shared_ptr<EObject>>> *>(ptrTmp);
             parentVec->push_back(selfData);
 
-            QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(newMePtr->getTreeLabel()));
             setItemProperty(item, etpValue, newMePtr);

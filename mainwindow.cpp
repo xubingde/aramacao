@@ -87,7 +87,8 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_wtPrivateLabel(nullptr),
         m_wtMyEnum(nullptr),
         m_wtProject(nullptr),
-        m_wtFn(nullptr)
+        m_wtFn(nullptr),
+        m_wtTplFn(nullptr)
 {
     setWindowTitle("AraMacao");
     init_obj();
@@ -198,12 +199,20 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         case Etype::eTplFunctions :
         case Etype::eTplStaticFunctions :
         case Etype::eTplConstexprFunctions :
+            m_wtTplFn->setObjPtr(static_cast<Function *>(selfPtr));
+            m_wtTplFn->setItemPtr(selfItem);
+            if (m_spvMain->widget(1) != m_wtTplFn) {
+                m_spvMain->replaceWidget(1, m_wtTplFn);
+            }
             break;
         case Etype::eConstructors :
             break;
         case Etype::eTplConstructors :
             break;
         default :
+            if (m_spvMain->widget(1) != m_spaceWindow) {
+                m_spvMain->replaceWidget(1, m_spaceWindow);
+            }
             break;
         }
         break;
@@ -3707,6 +3716,14 @@ MainWindow::fnsAddNewFn_triggered()
         getItemStack(vecItemStack, index);
 
         QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
+        QStandardItem *  rootItem = selfItem->parent();
+        Etype const  rootEtp = static_cast<Etype>(rootItem->data(
+                    Qt::UserRole + 1).toInt());
+        if (rootEtp == Etype::eClass) {
+            void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
+            newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
+        }
+
         QStandardItem *  item = new QStandardItem(
                 QString::fromStdString(newMePtr->getTreeLabel()));
         setItemProperty(item, Etype::eFunction, newMePtr);
@@ -3869,6 +3886,7 @@ MainWindow::init_obj()
     m_wtMyEnum = new WtMyEnum;
     m_wtProject = new WtProject;
     m_wtFn = new WtFn;
+    m_wtTplFn = new WtTplFn;
 }
 
 void
@@ -3993,10 +4011,12 @@ MainWindow::fillModule(Module &  module,
                 QString::fromStdString(eList[i].second->getTreeLabel()));
         setItemProperty(item, eList[i].first, eList[i].second);
         moduleItem->appendRow(item);
+        void *  modulePtr = moduleItem->data(Qt::UserRole + 2).value<void *>();
 
         if (eList[i].first == Etype::eClass) {
             std::shared_ptr<MyClass>  classPtr =
                     std::dynamic_pointer_cast<MyClass>(eList[i].second);
+            classPtr->setParentModulePtr(static_cast<Module *>(modulePtr));
             fillClass(*classPtr, item);
         } else if (eList[i].first == Etype::eConstructors ||
                    eList[i].first == Etype::eTplConstructors ||
@@ -4025,6 +4045,7 @@ MainWindow::fillClass(MyClass &  myClass,
                 QString::fromStdString(eList[i].second->getTreeLabel()));
         setItemProperty(item, eList[i].first, eList[i].second);
         myClassItem->appendRow(item);
+        void *  classPtr = myClassItem->data(Qt::UserRole + 2).value<void *>();
 
         if (eList[i].first == Etype::eClass) {
             std::shared_ptr<MyClass>  classPtr =
@@ -4040,6 +4061,7 @@ MainWindow::fillClass(MyClass &  myClass,
                    eList[i].first == Etype::eTplConstexprFunctions ) {
             std::shared_ptr<Functions>  fnsPtr =
                     std::dynamic_pointer_cast<Functions>(eList[i].second);
+            fnsPtr->setParentClassPtr(static_cast<MyClass *>(classPtr));
             fillFunctions(*fnsPtr, item);
         }
     }
@@ -4311,15 +4333,21 @@ MainWindow::insertFunction(QModelIndex const &  index,
     if (isFromMould) {
         newMePtr = std::make_shared<Function>(mouldVal);
     } else {
-        Function  fn;
-        fn.setFunctionName("new__fn");
-        newMePtr = std::make_shared<Function>(fn);
+        newMePtr = std::make_shared<Function>();
     }
 
     switch (addmethod) {
     case AddMethod::insert :
         {
             QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            QStandardItem *  rootItem = parentItem->parent();
+            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
+                    Qt::UserRole + 1).toInt());
+            if (rootEtp == Etype::eClass) {
+                void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
+                newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
+            }
+
             Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
                     Qt::UserRole + 2).value<void *>());
             parentPtr->procFunction(*newMePtr);
@@ -4339,6 +4367,14 @@ MainWindow::insertFunction(QModelIndex const &  index,
     case AddMethod::follow :
         {
             QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+            QStandardItem *  rootItem = parentItem->parent();
+            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
+                    Qt::UserRole + 1).toInt());
+            if (rootEtp == Etype::eClass) {
+                void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
+                newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
+            }
+
             Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
                     Qt::UserRole + 2).value<void *>());
             parentPtr->procFunction(*newMePtr);
@@ -4358,6 +4394,14 @@ MainWindow::insertFunction(QModelIndex const &  index,
     case AddMethod::child :
         {
             QStandardItem *  parentItem = vecItemStack[0].getSelfItem();
+            QStandardItem *  rootItem = parentItem->parent();
+            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
+                    Qt::UserRole + 1).toInt());
+            if (rootEtp == Etype::eClass) {
+                void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
+                newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
+            }
+
             Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
                     Qt::UserRole + 2).value<void *>());
             parentPtr->procFunction(*newMePtr);

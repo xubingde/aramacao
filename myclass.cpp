@@ -37,7 +37,7 @@ namespace xu {
 MyClass::MyClass():
         EObject(),
         m_stringErr(),
-        m_parentModulePtr(),
+        m_parentModulePtr(nullptr),
         m_eobjList(),
         m_field(),
         m_styleField(),
@@ -2303,6 +2303,8 @@ MyClass::getClassName() const
 void
 MyClass::setClassName(const std::string &  value)
 {
+    std::string const  oldName = m_className;
+
     m_className = xu::trim(value);
     if (!xu::checkReg(m_className)) {
         m_className = "MyClass1";
@@ -2313,6 +2315,25 @@ MyClass::setClassName(const std::string &  value)
 
     if (m_updateFilename && m_parentModulePtr) {
         m_parentModulePtr->setFilename(m_className);
+    }
+    if (m_parentModulePtr) {
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  fns =
+                m_parentModulePtr->getEObjectListRef();
+        for (auto &  it: fns) {
+            if (it.first == Etype::eFunctions ||
+                    it.first == Etype::eStaticFunctions) {
+                std::vector<std::shared_ptr<Function>> &  friends =
+                        std::dynamic_pointer_cast<Functions>(
+                        it.second)->getFunctionRef();
+                for (auto &  thisFn: friends) {
+                    std::vector<std::string>  frs = thisFn->getFriendClassName();
+                    for (auto &  fName:  frs) {
+                        if (fName == oldName)  fName = m_className;
+                    }
+                    thisFn->setFriendClassName(frs);
+                }
+            }
+        }
     }
 }
 

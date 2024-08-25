@@ -1465,6 +1465,9 @@ void
 Function::setFriendClassName(const std::vector<std::string> &  value)
 {
     m_friendClassName = value;
+    for (auto &  it: m_friendClassName) {
+        it = xu::trim(it);
+    }
 }
 
 bool

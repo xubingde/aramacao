@@ -13,7 +13,6 @@
 #include "fmt.h"
 #include "eobject.h"
 #include "parameter.h"
-#include "wtfn.h"
 #include "myclass.h"
 #include "module.h"
 #include "functions.h"
@@ -24,10 +23,11 @@
 #include "tplconstexprfunctions.h"
 #include "constructors.h"
 #include "tplconstructors.h"
+#include "wttplfn.h"
 
 namespace xu {
 
-WtFn::WtFn(QWidget *  parent /* = nullptr */):
+WtTplFn::WtTplFn(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
         m_itemPtr(nullptr),
@@ -36,19 +36,15 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
         m_attribute(nullptr),
         m_beforBehindPb(nullptr),
         m_codeEdit(nullptr),
+        m_paramTplView(nullptr),
+        m_paramTplModel(nullptr),
         m_parameterView(nullptr),
         m_parameterModel(nullptr),
         m_friendClassView(nullptr),
         m_friendClassModel(nullptr),
         m_friendLabel(nullptr),
         m_isEnabled(nullptr),
-        m_isInline(nullptr),
         m_isConst(nullptr),
-        m_isExplicit(nullptr),
-        m_isPureVirtual(nullptr),
-        m_isVirtual(nullptr),
-        m_isOverride(nullptr),
-        m_isFinal(nullptr),
         m_isNoexcept(nullptr)
 {
     m_functionName = new QLineEdit;
@@ -57,6 +53,26 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
     m_beforBehindPb = new QPushButton(tr(" Insert && Follow "));
     m_codeEdit = new CodeEditor;
     new Highlighter(m_codeEdit->document());
+
+    m_paramTplView = new QTableView;
+    m_paramTplModel = new QStandardItemModel;
+    m_paramTplModel->setHorizontalHeaderItem(0,
+            new QStandardItem(tr("typename / class")));
+    m_paramTplModel->setHorizontalHeaderItem(1,
+            new QStandardItem(tr("Type Name / T")));
+    m_paramTplModel->setHorizontalHeaderItem(2,
+            new QStandardItem(tr("Docment")));
+    m_paramTplModel->setHorizontalHeaderItem(3,
+            new QStandardItem(tr("Default Value")));
+    m_paramTplModel->setHorizontalHeaderItem(4,
+            new QStandardItem(tr("T / (isFriend)")));
+    m_paramTplView->setModel(m_paramTplModel);
+
+    m_paramTplView->setColumnWidth(0, 220);
+    m_paramTplView->setColumnWidth(1, 110);
+    m_paramTplView->setColumnWidth(2, 190);
+    m_paramTplView->setColumnWidth(3, 120);
+    m_paramTplView->setColumnWidth(4, 120);
 
     m_parameterView = new QTableView;
     m_parameterModel = new QStandardItemModel;
@@ -81,47 +97,30 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
     m_friendLabel = new QLabel(tr("Friend Class"));
 
     m_isEnabled = new QCheckBox(tr("Enabled"));
-    m_isInline = new QCheckBox(tr("inline"));
     m_isConst = new QCheckBox(tr("const"));
-    m_isExplicit = new QCheckBox(tr("explicit"));
-    m_isPureVirtual = new QCheckBox(tr(" = 0"));
-    m_isVirtual = new QCheckBox(tr("virtual"));
-    m_isOverride = new QCheckBox(tr("override"));
-    m_isFinal = new QCheckBox(tr("final"));
     m_isNoexcept = new QCheckBox(tr("noexcept"));
 
     connect(m_functionName, &QLineEdit::editingFinished,
-            this, &WtFn::functionName_editingFinished);
+            this, &WtTplFn::functionName_editingFinished);
     connect(m_returnType, &QLineEdit::editingFinished,
-            this, &WtFn::returnType_editingFinished);
+            this, &WtTplFn::returnType_editingFinished);
     connect(m_attribute, &QLineEdit::editingFinished,
-            this, &WtFn::attribute_editingFinished);
+            this, &WtTplFn::attribute_editingFinished);
     connect(m_beforBehindPb, &QPushButton::clicked,
-            this, &WtFn::beforBehindPb_clicked);
+            this, &WtTplFn::beforBehindPb_clicked);
     connect(m_codeEdit, &CodeEditor::textChanged,
-            this, &WtFn::codeEdit_textChanged);
+            this, &WtTplFn::codeEdit_textChanged);
 
+    paramTplItemConnect();
     parameterItemConnect();
     friendClassConnect();
 
     connect(m_isEnabled, &QCheckBox::stateChanged,
-            this, &WtFn::isEnabled_stateChanged);
-    connect(m_isInline, &QCheckBox::stateChanged,
-            this, &WtFn::isInline_stateChanged);
+            this, &WtTplFn::isEnabled_stateChanged);
     connect(m_isConst, &QCheckBox::stateChanged,
-            this, &WtFn::isConst_stateChanged);
-    connect(m_isExplicit, &QCheckBox::stateChanged,
-            this, &WtFn::isExplicit_stateChanged);
-    connect(m_isPureVirtual, &QCheckBox::stateChanged,
-            this, &WtFn::isPureVirtual_stateChanged);
-    connect(m_isVirtual, &QCheckBox::stateChanged,
-            this, &WtFn::isVirtual_stateChanged);
-    connect(m_isOverride, &QCheckBox::stateChanged,
-            this, &WtFn::isOverride_stateChanged);
-    connect(m_isFinal, &QCheckBox::stateChanged,
-            this, &WtFn::isFinal_stateChanged);
+            this, &WtTplFn::isConst_stateChanged);
     connect(m_isNoexcept, &QCheckBox::stateChanged,
-            this, &WtFn::isNoexcept_stateChanged);
+            this, &WtTplFn::isNoexcept_stateChanged);
 
     QVBoxLayout *  vbox = new QVBoxLayout;
     vbox->setContentsMargins(0, 0, 0, 0);
@@ -157,10 +156,12 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
     QSplitter *  splitter = new QSplitter;
     splitter->setHandleWidth(1);
 
+    vH->addWidget(m_paramTplView);
     vH->addWidget(m_parameterView);
     vH->addWidget(splitter);
     vH->setStretchFactor(0, 15);
-    vH->setStretchFactor(1, 85);
+    vH->setStretchFactor(1, 15);
+    vH->setStretchFactor(2, 70);
 
     QAbstractScrollArea *  fr = new QAbstractScrollArea;
     splitter->addWidget(m_codeEdit);
@@ -174,13 +175,7 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
     fr->setLayout(rightVbox);
     rightVbox->addWidget(m_isEnabled);
     rightVbox->addWidget(m_isConst);
-    rightVbox->addWidget(m_isExplicit);
-    rightVbox->addWidget(m_isPureVirtual);
-    rightVbox->addWidget(m_isVirtual);
-    rightVbox->addWidget(m_isOverride);
-    rightVbox->addWidget(m_isFinal);
     rightVbox->addWidget(m_isNoexcept);
-    rightVbox->addWidget(m_isInline);
 
     QLabel *  attr = new QLabel(tr("Attribute"));
     rightVbox->addSpacing(5);
@@ -191,12 +186,12 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
     rightVbox->addWidget(m_friendClassView);
 }
 
-WtFn::~WtFn() noexcept
+WtTplFn::~WtTplFn() noexcept
 {
 }
 
 void
-WtFn::functionName_editingFinished()
+WtTplFn::functionName_editingFinished()
 {
     if (!m_objPtr)  return;
 
@@ -213,7 +208,7 @@ WtFn::functionName_editingFinished()
 }
 
 void
-WtFn::returnType_editingFinished()
+WtTplFn::returnType_editingFinished()
 {
     if (!m_objPtr)  return;
 
@@ -221,7 +216,7 @@ WtFn::returnType_editingFinished()
 }
 
 void
-WtFn::attribute_editingFinished()
+WtTplFn::attribute_editingFinished()
 {
     if (!m_objPtr)  return;
 
@@ -229,7 +224,7 @@ WtFn::attribute_editingFinished()
 }
 
 void
-WtFn::beforBehindPb_clicked()
+WtTplFn::beforBehindPb_clicked()
 {
     if (!m_objPtr)  return;
 
@@ -255,7 +250,7 @@ WtFn::beforBehindPb_clicked()
 }
 
 void
-WtFn::codeEdit_textChanged()
+WtTplFn::codeEdit_textChanged()
 {
     if (!m_objPtr)  return;
 
@@ -263,7 +258,7 @@ WtFn::codeEdit_textChanged()
 }
 
 void
-WtFn::parameterItemConnect()
+WtTplFn::parameterItemConnect()
 {
     QAction *  actAddNew = new QAction(tr("Add New"));
     QAction *  actInsertNew = new QAction(tr("Insert New"));
@@ -299,30 +294,30 @@ WtFn::parameterItemConnect()
     m_parameterView->addAction(actBeforBehind);
 
     connect(actAddNew, &QAction::triggered,
-            this, &WtFn::param_AddNew_triggered);
+            this, &WtTplFn::param_AddNew_triggered);
     connect(actInsertNew, &QAction::triggered,
-            this, &WtFn::param_InsertNew_triggered);
+            this, &WtTplFn::param_InsertNew_triggered);
     connect(actDelete, &QAction::triggered,
-            this, &WtFn::param_Delete_triggered);
+            this, &WtTplFn::param_Delete_triggered);
     connect(actCopyToNew, &QAction::triggered,
-            this, &WtFn::param_CopyToNew_triggered);
+            this, &WtTplFn::param_CopyToNew_triggered);
     connect(actUp, &QAction::triggered,
-            this, &WtFn::param_Up_triggered);
+            this, &WtTplFn::param_Up_triggered);
     connect(actDown, &QAction::triggered,
-            this, &WtFn::param_Down_triggered);
+            this, &WtTplFn::param_Down_triggered);
     connect(actMoveToRow, &QAction::triggered,
-            this, &WtFn::param_MoveToRow_triggered);
+            this, &WtTplFn::param_MoveToRow_triggered);
 
     connect(actBeforBehind, &QAction::triggered,
-            this, &WtFn::param_BeforBehind_triggered);
+            this, &WtTplFn::param_BeforBehind_triggered);
 
     connect(m_parameterView->itemDelegate(),
             &QAbstractItemDelegate::closeEditor,
-            this, &WtFn::param_itemDelegate_closeEditor);
+            this, &WtTplFn::param_itemDelegate_closeEditor);
 }
 
 void
-WtFn::param_AddNew_triggered()
+WtTplFn::param_AddNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -346,7 +341,7 @@ WtFn::param_AddNew_triggered()
 }
 
 void
-WtFn::param_InsertNew_triggered()
+WtTplFn::param_InsertNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -376,7 +371,7 @@ WtFn::param_InsertNew_triggered()
 }
 
 void
-WtFn::param_Delete_triggered()
+WtTplFn::param_Delete_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -401,7 +396,7 @@ WtFn::param_Delete_triggered()
 }
 
 void
-WtFn::param_CopyToNew_triggered()
+WtTplFn::param_CopyToNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -440,7 +435,7 @@ WtFn::param_CopyToNew_triggered()
 }
 
 void
-WtFn::param_Up_triggered()
+WtTplFn::param_Up_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -459,7 +454,7 @@ WtFn::param_Up_triggered()
 }
 
 void
-WtFn::param_Down_triggered()
+WtTplFn::param_Down_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -479,7 +474,7 @@ WtFn::param_Down_triggered()
 }
 
 void
-WtFn::param_MoveToRow_triggered()
+WtTplFn::param_MoveToRow_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -506,7 +501,7 @@ WtFn::param_MoveToRow_triggered()
 }
 
 void
-WtFn::param_BeforBehind_triggered()
+WtTplFn::param_BeforBehind_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -523,7 +518,7 @@ WtFn::param_BeforBehind_triggered()
 }
 
 void
-WtFn::param_itemDelegate_closeEditor()
+WtTplFn::param_itemDelegate_closeEditor()
 {
     if (!m_objPtr)  return;
 
@@ -579,7 +574,7 @@ WtFn::param_itemDelegate_closeEditor()
 }
 
 void
-WtFn::isEnabled_stateChanged(int  status)
+WtTplFn::isEnabled_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -591,19 +586,7 @@ WtFn::isEnabled_stateChanged(int  status)
 }
 
 void
-WtFn::isInline_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setInline(true);
-    } else {
-        m_objPtr->setInline(false);
-    }
-}
-
-void
-WtFn::isConst_stateChanged(int  status)
+WtTplFn::isConst_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -615,71 +598,7 @@ WtFn::isConst_stateChanged(int  status)
 }
 
 void
-WtFn::isExplicit_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setExplicit(true);
-        bool const  newVal = m_objPtr->isExplicit();
-        if (!newVal) {
-            m_isExplicit->setChecked(false);
-        }
-    } else {
-        m_objPtr->setExplicit(false);
-    }
-}
-
-void
-WtFn::isPureVirtual_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setPureVirtual(true);
-    } else {
-        m_objPtr->setPureVirtual(false);
-    }
-}
-
-void
-WtFn::isVirtual_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setVirtual(true);
-    } else {
-        m_objPtr->setVirtual(false);
-    }
-}
-
-void
-WtFn::isOverride_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setOverride(true);
-    } else {
-        m_objPtr->setOverride(false);
-    }
-}
-
-void
-WtFn::isFinal_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setFinal(true);
-    } else {
-        m_objPtr->setFinal(false);
-    }
-}
-
-void
-WtFn::isNoexcept_stateChanged(int  status)
+WtTplFn::isNoexcept_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -691,7 +610,7 @@ WtFn::isNoexcept_stateChanged(int  status)
 }
 
 void
-WtFn::friendClassConnect()
+WtTplFn::friendClassConnect()
 {
     QAction *  actAdd = new QAction(tr("Add New"));
     QAction *  actInsertNew = new QAction(tr("Insert New"));
@@ -718,25 +637,25 @@ WtFn::friendClassConnect()
     m_friendClassView->addAction(actMoveTo);
 
     connect(actAdd, &QAction::triggered,
-            this, &WtFn::friendClass_Add_triggered);
+            this, &WtTplFn::friendClass_Add_triggered);
     connect(actInsertNew, &QAction::triggered,
-            this, &WtFn::friendClass_InsertNew_triggered);
+            this, &WtTplFn::friendClass_InsertNew_triggered);
     connect(actDelete, &QAction::triggered,
-            this, &WtFn::friendClass_Delete_triggered);
+            this, &WtTplFn::friendClass_Delete_triggered);
     connect(actUp, &QAction::triggered,
-            this, &WtFn::friendClass_Up_triggered);
+            this, &WtTplFn::friendClass_Up_triggered);
     connect(actDown, &QAction::triggered,
-            this, &WtFn::friendClass_Down_triggered);
+            this, &WtTplFn::friendClass_Down_triggered);
     connect(actMoveTo, &QAction::triggered,
-            this, &WtFn::friendClass_MoveToRow_triggered);
+            this, &WtTplFn::friendClass_MoveToRow_triggered);
 
     connect(m_friendClassView->itemDelegate(),
             &QAbstractItemDelegate::closeEditor,
-            this, &WtFn::friendClass_itemDelegate_closeEditor);
+            this, &WtTplFn::friendClass_itemDelegate_closeEditor);
 }
 
 void
-WtFn::friendClass_Add_triggered()
+WtTplFn::friendClass_Add_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -748,7 +667,7 @@ WtFn::friendClass_Add_triggered()
 }
 
 void
-WtFn::friendClass_InsertNew_triggered()
+WtTplFn::friendClass_InsertNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -765,7 +684,7 @@ WtFn::friendClass_InsertNew_triggered()
 }
 
 void
-WtFn::friendClass_Delete_triggered()
+WtTplFn::friendClass_Delete_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -780,7 +699,7 @@ WtFn::friendClass_Delete_triggered()
 }
 
 void
-WtFn::friendClass_Up_triggered()
+WtTplFn::friendClass_Up_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -799,7 +718,7 @@ WtFn::friendClass_Up_triggered()
 }
 
 void
-WtFn::friendClass_Down_triggered()
+WtTplFn::friendClass_Down_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -819,7 +738,7 @@ WtFn::friendClass_Down_triggered()
 }
 
 void
-WtFn::friendClass_MoveToRow_triggered()
+WtTplFn::friendClass_MoveToRow_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -854,7 +773,7 @@ WtFn::friendClass_MoveToRow_triggered()
 }
 
 void
-WtFn::friendClass_itemDelegate_closeEditor()
+WtTplFn::friendClass_itemDelegate_closeEditor()
 {
     if (!m_objPtr)  return;
 
@@ -871,7 +790,333 @@ WtFn::friendClass_itemDelegate_closeEditor()
 }
 
 void
-WtFn::repParameterItem()
+WtTplFn::paramTplItemConnect()
+{
+    QAction *  actAddNew = new QAction(tr("Add New"));
+    QAction *  actInsertNew = new QAction(tr("Insert New"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    QAction *  actCopyToNew = new QAction(tr("Copy To New"));
+    actAddNew->setParent(this);
+    actInsertNew->setParent(this);
+    actDelete->setParent(this);
+    actCopyToNew->setParent(this);
+    QAction *  actSpt = new QAction;
+    actSpt->setSeparator(true);
+    actSpt->setParent(this);
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveToRow = new QAction(tr("Move To Row"));
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveToRow->setParent(this);
+    QAction *  actSpt2 = new QAction;
+    actSpt2->setSeparator(true);
+    actSpt2->setParent(this);
+    QAction *  actBeforBehind = new QAction(tr("ReturnType Insert && Follow"));
+    m_paramTplView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_paramTplView->addAction(actAddNew);
+    m_paramTplView->addAction(actInsertNew);
+    m_paramTplView->addAction(actDelete);
+    m_paramTplView->addAction(actCopyToNew);
+    m_paramTplView->addAction(actSpt);
+    m_paramTplView->addAction(actUp);
+    m_paramTplView->addAction(actDown);
+    m_paramTplView->addAction(actMoveToRow);
+    m_paramTplView->addAction(actSpt2);
+    m_paramTplView->addAction(actBeforBehind);
+
+    connect(actAddNew, &QAction::triggered,
+            this, &WtTplFn::paramTpl_AddNew_triggered);
+    connect(actInsertNew, &QAction::triggered,
+            this, &WtTplFn::paramTpl_InsertNew_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtTplFn::paramTpl_Delete_triggered);
+    connect(actCopyToNew, &QAction::triggered,
+            this, &WtTplFn::paramTpl_CopyToNew_triggered);
+    connect(actUp, &QAction::triggered,
+            this, &WtTplFn::paramTpl_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtTplFn::paramTpl_Down_triggered);
+    connect(actMoveToRow, &QAction::triggered,
+            this, &WtTplFn::paramTpl_MoveToRow_triggered);
+
+    connect(actBeforBehind, &QAction::triggered,
+            this, &WtTplFn::param_BeforBehind_triggered);
+
+    connect(m_paramTplView->itemDelegate(),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtTplFn::paramTpl_itemDelegate_closeEditor);
+}
+
+void
+WtTplFn::paramTpl_AddNew_triggered()
+{
+    if (!m_objPtr)  return;
+
+    std::vector<Tpl>  rawDataVec = m_objPtr->getTparam();
+    Tpl  newData;
+    QList<QStandardItem *>  items;
+    QStandardItem *  item0 = new QStandardItem(
+            QString::fromStdString(newData.getTypename()));
+    QStandardItem *  item1 = new QStandardItem(
+            QString::fromStdString(newData.getTName()));
+    QStandardItem *  item2 = new QStandardItem(
+            QString::fromStdString(newData.getDocment()));
+    QStandardItem *  item3 = new QStandardItem(
+            QString::fromStdString(newData.getDefalutValue()));
+    QStandardItem *  item4 = new QStandardItem(
+            QString::fromStdString(newData.getFriendTypeName()));
+    items << item0 << item1 << item2 << item3 << item4;
+
+    rawDataVec.push_back(std::move(newData));
+    m_objPtr->setTparam(std::move(rawDataVec));
+
+    m_paramTplModel->appendRow(items);
+}
+
+void
+WtTplFn::paramTpl_InsertNew_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  rawDataVec = m_objPtr->getTparam();
+        Tpl  newData;
+        QList<QStandardItem *>  items;
+        QStandardItem *  item0 = new QStandardItem(
+                QString::fromStdString(newData.getTypename()));
+        QStandardItem *  item1 = new QStandardItem(
+                QString::fromStdString(newData.getTName()));
+        QStandardItem *  item2 = new QStandardItem(
+                QString::fromStdString(newData.getDocment()));
+        QStandardItem *  item3 = new QStandardItem(
+                QString::fromStdString(newData.getDefalutValue()));
+        QStandardItem *  item4 = new QStandardItem(
+                QString::fromStdString(newData.getFriendTypeName()));
+        items << item0 << item1 << item2 << item3 << item4;
+
+        rawDataVec.insert(rawDataVec.begin() + row, std::move(newData));
+        m_objPtr->setTparam(std::move(rawDataVec));
+
+        m_paramTplModel->insertRow(row, items);
+    } else {
+        paramTpl_AddNew_triggered();
+    }
+}
+
+void
+WtTplFn::paramTpl_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  rawDataVec = m_objPtr->getTparam();
+        rawDataVec.erase(rawDataVec.begin() + row);
+        m_objPtr->setTparam(std::move(rawDataVec));
+
+        m_paramTplModel->removeRows(row, 1);
+
+        int const  count = m_paramTplModel->rowCount();
+        if (count > 0 && row < count) {
+            m_paramTplView->setCurrentIndex(m_paramTplModel->index(row, index.column()));
+        } else if (count > 0 && row != 0) {
+            m_paramTplView->setCurrentIndex(m_paramTplModel->index(row - 1, index.column()));
+        } else if (count == 1) {
+            m_paramTplView->setCurrentIndex(m_paramTplModel->index(0, index.column()));
+        }
+    }
+}
+
+void
+WtTplFn::paramTpl_CopyToNew_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  rawDataVec = m_objPtr->getTparam();
+        Tpl  newData = rawDataVec[row];
+        rawDataVec.insert(rawDataVec.begin() + row + 1, newData);
+        m_objPtr->setTparam(std::move(rawDataVec));
+
+        QList<QStandardItem *>  itemNew;
+        QStandardItem *  item0 = new QStandardItem(
+                QString::fromStdString(newData.getTypename()));
+        QStandardItem *  item1 = new QStandardItem(
+                QString::fromStdString(newData.getTName()));
+        QStandardItem *  item2 = new QStandardItem(
+                QString::fromStdString(newData.getDocment()));
+        QStandardItem *  item3 = new QStandardItem(
+                QString::fromStdString(newData.getDefalutValue()));
+        QStandardItem *  item4 = new QStandardItem(
+                QString::fromStdString(newData.getFriendTypeName()));
+        itemNew << item0 << item1 << item2 << item3 << item4;
+        m_paramTplModel->insertRow(row + 1, itemNew);
+    }
+}
+
+void
+WtTplFn::paramTpl_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && row != 0) {
+        auto  rawDataVec = m_objPtr->getTparam();
+        std::swap(rawDataVec[row], rawDataVec[row - 1]);
+        m_objPtr->setTparam(std::move(rawDataVec));
+
+        auto const  item = m_paramTplModel->takeRow(row);
+        m_paramTplModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_paramTplView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtTplFn::paramTpl_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  row = index.row();
+    int const  count = m_paramTplModel->rowCount();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        auto  rawDataVec = m_objPtr->getTparam();
+        std::swap(rawDataVec[row], rawDataVec[row + 1]);
+        m_objPtr->setTparam(std::move(rawDataVec));
+
+        auto const  item = m_paramTplModel->takeRow(row + 1);
+        m_paramTplModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_paramTplView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtTplFn::paramTpl_MoveToRow_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  count = m_paramTplModel->rowCount();
+    size_t  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        size_t  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (!ok)  return;
+
+        auto  rawDataVec = m_objPtr->getTparam();
+        if (!xu::moveVec_0(rawDataVec, currRow, movetoRow)) {
+            return;
+        }
+        m_objPtr->setTparam(std::move(rawDataVec));
+
+        auto const  item = m_paramTplModel->takeRow(static_cast<int>(currRow));
+        m_paramTplModel->insertRow(static_cast<int>(movetoRow), item);
+        QModelIndex  idx = index.sibling(static_cast<int>(movetoRow), index.column());
+        m_paramTplView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtTplFn::paramTpl_itemDelegate_closeEditor()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_paramTplView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  rawDataVec = m_objPtr->getTparam();
+        std::string const  currVal = m_paramTplModel->data(index).
+                toString().toUtf8().toStdString();
+
+        switch (index.column()) {
+        case 0 :
+            {
+                rawDataVec[row].setTypename(currVal);
+                std::string const  newVal = rawDataVec[row].getTypename();
+                if (currVal != newVal) {
+                    m_paramTplModel->setData(index, QVariant(
+                            QString::fromStdString(newVal)));
+                }
+                m_objPtr->setTparam(std::move(rawDataVec));
+            }
+            break;
+        case 1 :
+            {
+                std::string const  oldVal = rawDataVec[row].getTName();
+                if (oldVal == currVal)  return;
+                rawDataVec[row].setTName(currVal);
+                std::string const  newVal = rawDataVec[row].getTName();
+                if (currVal != newVal) {
+                    m_paramTplModel->setData(index, QVariant(
+                            QString::fromStdString(newVal)));
+                }
+                m_objPtr->setTparam(std::move(rawDataVec));
+            }
+            break;
+        case 2 :
+            rawDataVec[row].setDocment(currVal);
+            m_objPtr->setTparam(std::move(rawDataVec));
+            break;
+        case 3 :
+            {
+                rawDataVec[row].setDefalutValue(currVal);
+                std::string const  newVal = rawDataVec[row].getDefalutValue();
+                if (currVal != newVal) {
+                    m_paramTplModel->setData(index, QVariant(
+                            QString::fromStdString(newVal)));
+                }
+                m_objPtr->setTparam(std::move(rawDataVec));
+            }
+            break;
+        case 4 :
+            {
+                rawDataVec[row].setFriendTypeName(currVal);
+                std::string const  newVal = rawDataVec[row].getFriendTypeName();
+                if (currVal != newVal) {
+                    m_paramTplModel->setData(index, QVariant(
+                            QString::fromStdString(newVal)));
+                }
+                m_objPtr->setTparam(std::move(rawDataVec));
+            }
+            break;
+        }
+    }
+}
+
+void
+WtTplFn::repParamTplItem()
+{
+    m_paramTplModel->removeRows(0, m_paramTplModel->rowCount());
+    std::vector<Tpl> const  item = m_objPtr->getTparam();
+    for (auto const &  it: item) {
+        QList<QStandardItem *>  items;
+        QStandardItem *  item0 = new QStandardItem(
+                QString::fromStdString(it.getTypename()));
+        QStandardItem *  item1 = new QStandardItem(
+                QString::fromStdString(it.getTName()));
+        QStandardItem *  item2 = new QStandardItem(
+                QString::fromStdString(it.getDocment()));
+        QStandardItem *  item3 = new QStandardItem(
+                QString::fromStdString(it.getDefalutValue()));
+        QStandardItem *  item4 = new QStandardItem(
+                QString::fromStdString(it.getFriendTypeName()));
+        items << item0 << item1 << item2 << item3 << item4;
+        m_paramTplModel->appendRow(items);
+    }
+}
+
+void
+WtTplFn::repParameterItem()
 {
     m_parameterModel->removeRows(0, m_parameterModel->rowCount());
     std::vector<Parameter> const  item = m_objPtr->getParam();
@@ -891,7 +1136,7 @@ WtFn::repParameterItem()
 }
 
 void
-WtFn::repFriendItem()
+WtTplFn::repFriendItem()
 {
     m_friendClassModel->removeRows(0, m_friendClassModel->rowCount());
     const auto  nps = m_objPtr->getFriendClassName();
@@ -902,7 +1147,7 @@ WtFn::repFriendItem()
 }
 
 bool
-WtFn::nameCheckDuplication(std::string const &  fnName)
+WtTplFn::nameCheckDuplication(std::string const &  fnName)
 {
     bool  res = false;
 
@@ -916,7 +1161,7 @@ WtFn::nameCheckDuplication(std::string const &  fnName)
 }
 
 void
-WtFn::setVisible()
+WtTplFn::setVisible()
 {
     if (!m_objPtr || !m_itemPtr)  return;
 
@@ -929,53 +1174,35 @@ WtFn::setVisible()
 
     if (rootEtp == Etype::eModule) {
         m_isConst->hide();
-        m_isExplicit->hide();
-        m_isPureVirtual->hide();
-        m_isVirtual->hide();
-        m_isOverride->hide();
-        m_isFinal->hide();
 
-        if (parentEtp == Etype::eConstexprFunctions) {
-            m_isInline->hide();
+        if (parentEtp == Etype::eTplConstexprFunctions) {
             m_friendLabel->hide();
             m_friendClassView->hide();
         } else {
-            m_isInline->show();
             m_friendLabel->show();
             m_friendClassView->show();
         }
     } else {
         m_isConst->show();
-        m_isExplicit->show();
-        m_isPureVirtual->show();
-        m_isVirtual->show();
-        m_isOverride->show();
-        m_isFinal->show();
 
         m_friendLabel->hide();
         m_friendClassView->hide();
 
-        if (parentEtp == Etype::eStaticFunctions ||
-                parentEtp == Etype::eConstexprFunctions) {
+        if (parentEtp == Etype::eTplStaticFunctions ||
+                parentEtp == Etype::eTplConstexprFunctions) {
             m_isConst->hide();
-        }
-
-        if (parentEtp == Etype::eConstexprFunctions) {
-            m_isInline->hide();
-        } else {
-            m_isInline->show();
         }
     }
 }
 
 Function *
-WtFn::getObjPtr() const
+WtTplFn::getObjPtr() const
 {
     return m_objPtr;
 }
 
 void
-WtFn::setObjPtr(Function *  value)
+WtTplFn::setObjPtr(Function *  value)
 {
     m_objPtr = value;
     if (m_objPtr) {
@@ -985,15 +1212,10 @@ WtFn::setObjPtr(Function *  value)
         m_codeEdit->setPlainText(QString::fromStdString(m_objPtr->getMCode()));
 
         m_isEnabled->setChecked(m_objPtr->isEnabled());
-        m_isInline->setChecked(m_objPtr->isInline());
         m_isConst->setChecked(m_objPtr->isConst());
-        m_isExplicit->setChecked(m_objPtr->isExplicit());
-        m_isPureVirtual->setChecked(m_objPtr->isPureVirtual());
-        m_isVirtual->setChecked(m_objPtr->isVirtual());
-        m_isOverride->setChecked(m_objPtr->isOverride());
-        m_isFinal->setChecked(m_objPtr->isFinal());
         m_isNoexcept->setChecked(m_objPtr->isNoexcept());
 
+        repParamTplItem();
         repParameterItem();
         repFriendItem();
 
@@ -1002,13 +1224,13 @@ WtFn::setObjPtr(Function *  value)
 }
 
 QStandardItem *
-WtFn::getItemPtr() const
+WtTplFn::getItemPtr() const
 {
     return m_itemPtr;
 }
 
 void
-WtFn::setItemPtr(QStandardItem *  value)
+WtTplFn::setItemPtr(QStandardItem *  value)
 {
     m_itemPtr = value;
     setVisible();

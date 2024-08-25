@@ -7,7 +7,7 @@ namespace xu {
 
 Tpl::Tpl():
         m_typename("typename"),
-        m_TName(),
+        m_TName("T"),
         m_docment(),
         m_defalutValue(),
         m_friendTypeName()

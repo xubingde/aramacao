@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef XU_WTFN_H_
-#define XU_WTFN_H_
+#ifndef XU_WTTPLFN_H_
+#define XU_WTTPLFN_H_
 
 #include <QLineEdit>
 #include <QTextEdit>
@@ -17,17 +17,17 @@
 
 namespace xu {
 
-class WtFn;
+class WtTplFn;
 
-class WtFn : public WtBase
+class WtTplFn : public WtBase
 {
 
     Q_OBJECT
 
 public:
 
-    WtFn(QWidget *  parent = nullptr);
-    virtual ~WtFn() noexcept;
+    WtTplFn(QWidget *  parent = nullptr);
+    virtual ~WtTplFn() noexcept;
 
     void  functionName_editingFinished();
     void  returnType_editingFinished();
@@ -45,13 +45,7 @@ public:
     void  param_BeforBehind_triggered();
     void  param_itemDelegate_closeEditor();
     void  isEnabled_stateChanged(int  status);
-    void  isInline_stateChanged(int  status);
     void  isConst_stateChanged(int  status);
-    void  isExplicit_stateChanged(int  status);
-    void  isPureVirtual_stateChanged(int  status);
-    void  isVirtual_stateChanged(int  status);
-    void  isOverride_stateChanged(int  status);
-    void  isFinal_stateChanged(int  status);
     void  isNoexcept_stateChanged(int  status);
     void  friendClassConnect();
     void  friendClass_Add_triggered();
@@ -61,6 +55,15 @@ public:
     void  friendClass_Down_triggered();
     void  friendClass_MoveToRow_triggered();
     void  friendClass_itemDelegate_closeEditor();
+    void  paramTplItemConnect();
+    void  paramTpl_AddNew_triggered();
+    void  paramTpl_InsertNew_triggered();
+    void  paramTpl_Delete_triggered();
+    void  paramTpl_CopyToNew_triggered();
+    void  paramTpl_Up_triggered();
+    void  paramTpl_Down_triggered();
+    void  paramTpl_MoveToRow_triggered();
+    void  paramTpl_itemDelegate_closeEditor();
 
     Function *  getObjPtr() const;
     void  setObjPtr(Function *  value);
@@ -72,6 +75,7 @@ protected:
 
 private:
 
+    void  repParamTplItem();
     void  repParameterItem();
     void  repFriendItem();
     bool  nameCheckDuplication(std::string const &  fnName);
@@ -84,19 +88,15 @@ private:
     QLineEdit *     m_attribute;
     QPushButton *   m_beforBehindPb;
     CodeEditor *    m_codeEdit;
+    QTableView *    m_paramTplView;
+    QStandardItemModel *    m_paramTplModel;
     QTableView *    m_parameterView;
     QStandardItemModel *    m_parameterModel;
     QListView *     m_friendClassView;
     QStandardItemModel *    m_friendClassModel;
     QLabel *        m_friendLabel;
     QCheckBox *     m_isEnabled;
-    QCheckBox *     m_isInline;
     QCheckBox *     m_isConst;
-    QCheckBox *     m_isExplicit;
-    QCheckBox *     m_isPureVirtual;
-    QCheckBox *     m_isVirtual;
-    QCheckBox *     m_isOverride;
-    QCheckBox *     m_isFinal;
     QCheckBox *     m_isNoexcept;
 };
 

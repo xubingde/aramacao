@@ -182,6 +182,8 @@ set(PROJECT_SOURCES
         wtpubliclabel.h
         wtfn.cpp
         wtfn.h
+        wttplfn.cpp
+        wttplfn.h
         ${TS_FILES}
 )
 
