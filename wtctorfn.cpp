@@ -3,6 +3,7 @@
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <QSplitter>
 #include <QAbstractScrollArea>
 #include <QAction>
@@ -13,7 +14,6 @@
 #include "fmt.h"
 #include "eobject.h"
 #include "parameter.h"
-#include "wtfn.h"
 #include "myclass.h"
 #include "module.h"
 #include "functions.h"
@@ -24,36 +24,29 @@
 #include "tplconstexprfunctions.h"
 #include "constructors.h"
 #include "tplconstructors.h"
+#include "wtctorfn.h"
 
 namespace xu {
 
-WtFn::WtFn(QWidget *  parent /* = nullptr */):
+WtCtorFn::WtCtorFn(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
-        m_functionName(nullptr),
-        m_returnType(nullptr),
+        m_baseClassDefVal(nullptr),
         m_attribute(nullptr),
         m_beforBehindPb(nullptr),
         m_codeEdit(nullptr),
         m_parameterView(nullptr),
         m_parameterModel(nullptr),
-        m_friendClassView(nullptr),
-        m_friendClassModel(nullptr),
-        m_friendLabel(nullptr),
-        m_hideWindow(nullptr),
+        m_fieldValView(nullptr),
+        m_fieldValModel(nullptr),
+        m_baseClassValView(nullptr),
+        m_baseClassValModel(nullptr),
         m_isEnabled(nullptr),
         m_isInline(nullptr),
-        m_isConst(nullptr),
         m_isExplicit(nullptr),
-        m_isPureVirtual(nullptr),
-        m_isVirtual(nullptr),
-        m_isOverride(nullptr),
-        m_isFinal(nullptr),
         m_isNoexcept(nullptr)
 {
-    m_functionName = new QLineEdit;
-    m_returnType = new QLineEdit;
+    m_baseClassDefVal = new QLineEdit;
     m_attribute = new QLineEdit;
     m_beforBehindPb = new QPushButton(tr(" Insert && Follow "));
     m_codeEdit = new CodeEditor;
@@ -76,153 +69,139 @@ WtFn::WtFn(QWidget *  parent /* = nullptr */):
     m_parameterView->setColumnWidth(2, 220);
     m_parameterView->setColumnWidth(3, 140);
 
-    m_friendClassView = new QListView;
-    m_friendClassModel = new QStandardItemModel;
-    m_friendClassView->setModel(m_friendClassModel);
-    m_friendLabel = new QLabel(tr("Friend Class"));
+    m_fieldValView = new QTableView;
+    m_fieldValModel = new QStandardItemModel;
+    m_fieldValModel->setHorizontalHeaderItem(0,
+            new QStandardItem(tr("Field Name")));
+    m_fieldValModel->setHorizontalHeaderItem(1,
+            new QStandardItem(tr("Default Value")));
+    m_fieldValView->setModel(m_fieldValModel);
 
-    m_hideWindow = new QFrame;
-    m_hideWindow->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_fieldValView->setColumnWidth(0, 100);
+    m_fieldValView->setColumnWidth(1, 100);
+
+    m_baseClassValView = new QTableView;
+    m_baseClassValModel = new QStandardItemModel;
+    m_baseClassValModel->setHorizontalHeaderItem(0,
+            new QStandardItem(tr("Base Class")));
+    m_baseClassValModel->setHorizontalHeaderItem(1,
+            new QStandardItem(tr("Default Value")));
+    m_baseClassValView->setModel(m_baseClassValModel);
+
+    m_baseClassValView->setColumnWidth(0, 100);
+    m_baseClassValView->setColumnWidth(1, 100);
 
     m_isEnabled = new QCheckBox(tr("Enabled"));
     m_isInline = new QCheckBox(tr("inline"));
-    m_isConst = new QCheckBox(tr("const"));
     m_isExplicit = new QCheckBox(tr("explicit"));
-    m_isPureVirtual = new QCheckBox(tr(" = 0"));
-    m_isVirtual = new QCheckBox(tr("virtual"));
-    m_isOverride = new QCheckBox(tr("override"));
-    m_isFinal = new QCheckBox(tr("final"));
     m_isNoexcept = new QCheckBox(tr("noexcept"));
 
-    connect(m_functionName, &QLineEdit::editingFinished,
-            this, &WtFn::functionName_editingFinished);
-    connect(m_returnType, &QLineEdit::editingFinished,
-            this, &WtFn::returnType_editingFinished);
+    connect(m_baseClassDefVal, &QLineEdit::editingFinished,
+            this, &WtCtorFn::baseClassDefVal_editingFinished);
     connect(m_attribute, &QLineEdit::editingFinished,
-            this, &WtFn::attribute_editingFinished);
+            this, &WtCtorFn::attribute_editingFinished);
     connect(m_beforBehindPb, &QPushButton::clicked,
-            this, &WtFn::beforBehindPb_clicked);
+            this, &WtCtorFn::beforBehindPb_clicked);
     connect(m_codeEdit, &CodeEditor::textChanged,
-            this, &WtFn::codeEdit_textChanged);
+            this, &WtCtorFn::codeEdit_textChanged);
 
     parameterItemConnect();
-    friendClassConnect();
+
+    connect(m_fieldValView->itemDelegate(),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtCtorFn::fieldVal_itemDelegate_closeEditor);
+    connect(m_baseClassValView->itemDelegate(),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtCtorFn::baseClassVal_itemDelegate_closeEditor);
 
     connect(m_isEnabled, &QCheckBox::stateChanged,
-            this, &WtFn::isEnabled_stateChanged);
+            this, &WtCtorFn::isEnabled_stateChanged);
     connect(m_isInline, &QCheckBox::stateChanged,
-            this, &WtFn::isInline_stateChanged);
-    connect(m_isConst, &QCheckBox::stateChanged,
-            this, &WtFn::isConst_stateChanged);
+            this, &WtCtorFn::isInline_stateChanged);
     connect(m_isExplicit, &QCheckBox::stateChanged,
-            this, &WtFn::isExplicit_stateChanged);
-    connect(m_isPureVirtual, &QCheckBox::stateChanged,
-            this, &WtFn::isPureVirtual_stateChanged);
-    connect(m_isVirtual, &QCheckBox::stateChanged,
-            this, &WtFn::isVirtual_stateChanged);
-    connect(m_isOverride, &QCheckBox::stateChanged,
-            this, &WtFn::isOverride_stateChanged);
-    connect(m_isFinal, &QCheckBox::stateChanged,
-            this, &WtFn::isFinal_stateChanged);
+            this, &WtCtorFn::isExplicit_stateChanged);
     connect(m_isNoexcept, &QCheckBox::stateChanged,
-            this, &WtFn::isNoexcept_stateChanged);
+            this, &WtCtorFn::isNoexcept_stateChanged);
 
     QVBoxLayout *  vbox = new QVBoxLayout(this);
     vbox->setContentsMargins(0, 0, 0, 0);
+    {
+        QHBoxLayout *  hbox1 = new QHBoxLayout;
+        hbox1->setContentsMargins(0, 0, 0, 0);
+        vbox->addLayout(hbox1);
+        QSplitter *  vH = new QSplitter(Qt::Vertical);
+        vH->setHandleWidth(1);
+        hbox1->addWidget(vH);
+        vH->addWidget(m_parameterView);
+        QSplitter *  splitter = new QSplitter;
+        splitter->setHandleWidth(1);
+        vH->addWidget(splitter);
+        vH->setStretchFactor(0, 15);
+        vH->setStretchFactor(1, 85);
 
-    QHBoxLayout *  hbox1 = new QHBoxLayout;
-    QVBoxLayout *  vbox2 = new QVBoxLayout;
-    hbox1->setContentsMargins(0, 0, 0, 0);
-    vbox2->setContentsMargins(0, 0, 0, 0);
-    vbox->addLayout(hbox1);
-    vbox->addLayout(vbox2);
+        splitter->addWidget(m_codeEdit);
+        QAbstractScrollArea *  fr = new QAbstractScrollArea;
+        splitter->addWidget(fr);
+        splitter->setStretchFactor(0, 70);
+        splitter->setStretchFactor(1, 30);
 
-    QFormLayout *  fm0 = new QFormLayout;
-    QFormLayout *  fm1 = new QFormLayout;
-    fm0->setContentsMargins(0, 0, 0, 0);
-    fm1->setContentsMargins(0, 0, 0, 0);
-    hbox1->addLayout(fm0);
-    hbox1->addLayout(fm1);
+        QVBoxLayout *  vboxFr = new QVBoxLayout(fr);
+        vboxFr->setContentsMargins(0, 0, 0, 0);
 
-    QLabel *  label0 = new QLabel(tr("Function Name"));
-    QLabel *  label1 = new QLabel(tr(" Return Type"));
-    fm0->addRow(label0, m_functionName);
-    fm1->addRow(label1, m_returnType);
+        QGridLayout *  box4g = new QGridLayout;
+        QVBoxLayout *  vboxVal = new QVBoxLayout;
+        box4g->setContentsMargins(0, 0, 0, 0);
+        vboxVal->setContentsMargins(0, 0, 0, 0);
+        vboxFr->addLayout(box4g);
+        vboxFr->addLayout(vboxVal);
 
-    QSplitter *  vH = new QSplitter(Qt::Vertical);
-    vH->setHandleWidth(1);
-    vbox2->addWidget(vH);
+        box4g->addWidget(m_isEnabled, 0, 0);
+        box4g->addWidget(m_isExplicit, 0, 1);
+        box4g->addWidget(m_isNoexcept, 1, 0);
+        box4g->addWidget(m_isInline, 1, 1);
 
-    QSplitter *  splitter = new QSplitter;
-    splitter->setHandleWidth(1);
-
-    vH->addWidget(m_parameterView);
-    vH->addWidget(splitter);
-    vH->setStretchFactor(0, 15);
-    vH->setStretchFactor(1, 85);
-
-    QAbstractScrollArea *  fr = new QAbstractScrollArea;
-    splitter->addWidget(m_codeEdit);
-    splitter->addWidget(fr);
-    splitter->setStretchFactor(0, 80);
-    splitter->setStretchFactor(1, 20);
-
-    QVBoxLayout *  rightVbox = new QVBoxLayout;
-    rightVbox->setContentsMargins(5, 5, 5, 5);
-    rightVbox->setAlignment(Qt::AlignTop);
-    fr->setLayout(rightVbox);
-    rightVbox->addWidget(m_isEnabled);
-    rightVbox->addWidget(m_isConst);
-    rightVbox->addWidget(m_isExplicit);
-    rightVbox->addWidget(m_isPureVirtual);
-    rightVbox->addWidget(m_isVirtual);
-    rightVbox->addWidget(m_isOverride);
-    rightVbox->addWidget(m_isFinal);
-    rightVbox->addWidget(m_isNoexcept);
-    rightVbox->addWidget(m_isInline);
-
-    QLabel *  attr = new QLabel(tr("Attribute"));
-    rightVbox->addSpacing(5);
-    rightVbox->addWidget(attr);
-    rightVbox->addWidget(m_attribute);
-    rightVbox->addSpacing(5);
-    rightVbox->addWidget(m_friendLabel);
-    rightVbox->addWidget(m_friendClassView);
-    rightVbox->addWidget(m_hideWindow);
-    rightVbox->addWidget(m_beforBehindPb);
-}
-
-WtFn::~WtFn() noexcept
-{
-}
-
-void
-WtFn::functionName_editingFinished()
-{
-    if (!m_objPtr)  return;
-
-    std::string const  oldVal = m_objPtr->getFunctionName();
-    std::string const  currVal = m_functionName->text().toUtf8().toStdString();
-    if (oldVal == currVal)  return;
-    m_objPtr->setFunctionName(currVal);
-    std::string const  newVal = m_objPtr->getFunctionName();
-    if (currVal != newVal) {
-        m_functionName->setText(QString::fromStdString(newVal));
+        vboxVal->addWidget(m_fieldValView);
+        vboxVal->addWidget(m_baseClassValView);
+        vboxVal->setStretch(0, 80);
+        vboxVal->setStretch(1, 20);
     }
-    QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    {
+        QHBoxLayout *  hbox1 = new QHBoxLayout;
+        hbox1->setContentsMargins(0, 0, 0, 0);
+        vbox->addLayout(hbox1);
+
+        QFormLayout *  fm0 = new QFormLayout;
+        QFormLayout *  fm1 = new QFormLayout;
+        QHBoxLayout *  fm2 = new QHBoxLayout;
+        fm0->setContentsMargins(0, 0, 0, 0);
+        fm1->setContentsMargins(0, 0, 0, 0);
+        fm2->setContentsMargins(0, 0, 0, 0);
+        hbox1->addLayout(fm0);
+        hbox1->addLayout(fm1);
+        hbox1->addLayout(fm2);
+
+        QLabel *  label0 = new QLabel(tr("BaseClass DefValue"));
+        QLabel *  label1 = new QLabel(tr(" Attribute"));
+        fm0->addRow(label0, m_baseClassDefVal);
+        fm1->addRow(label1, m_attribute);
+        fm2->addWidget(m_beforBehindPb);
+    }
+}
+
+WtCtorFn::~WtCtorFn() noexcept
+{
 }
 
 void
-WtFn::returnType_editingFinished()
+WtCtorFn::baseClassDefVal_editingFinished()
 {
     if (!m_objPtr)  return;
 
-    m_objPtr->setReturnType(m_returnType->text().toUtf8().toStdString());
+    m_objPtr->setInhValueFirst(m_attribute->text().toUtf8().toStdString());
 }
 
 void
-WtFn::attribute_editingFinished()
+WtCtorFn::attribute_editingFinished()
 {
     if (!m_objPtr)  return;
 
@@ -230,7 +209,7 @@ WtFn::attribute_editingFinished()
 }
 
 void
-WtFn::beforBehindPb_clicked()
+WtCtorFn::beforBehindPb_clicked()
 {
     if (!m_objPtr)  return;
 
@@ -256,7 +235,7 @@ WtFn::beforBehindPb_clicked()
 }
 
 void
-WtFn::codeEdit_textChanged()
+WtCtorFn::codeEdit_textChanged()
 {
     if (!m_objPtr)  return;
 
@@ -264,7 +243,7 @@ WtFn::codeEdit_textChanged()
 }
 
 void
-WtFn::parameterItemConnect()
+WtCtorFn::parameterItemConnect()
 {
     QAction *  actAddNew = new QAction(tr("Add New"));
     QAction *  actInsertNew = new QAction(tr("Insert New"));
@@ -300,30 +279,30 @@ WtFn::parameterItemConnect()
     m_parameterView->addAction(actBeforBehind);
 
     connect(actAddNew, &QAction::triggered,
-            this, &WtFn::param_AddNew_triggered);
+            this, &WtCtorFn::param_AddNew_triggered);
     connect(actInsertNew, &QAction::triggered,
-            this, &WtFn::param_InsertNew_triggered);
+            this, &WtCtorFn::param_InsertNew_triggered);
     connect(actDelete, &QAction::triggered,
-            this, &WtFn::param_Delete_triggered);
+            this, &WtCtorFn::param_Delete_triggered);
     connect(actCopyToNew, &QAction::triggered,
-            this, &WtFn::param_CopyToNew_triggered);
+            this, &WtCtorFn::param_CopyToNew_triggered);
     connect(actUp, &QAction::triggered,
-            this, &WtFn::param_Up_triggered);
+            this, &WtCtorFn::param_Up_triggered);
     connect(actDown, &QAction::triggered,
-            this, &WtFn::param_Down_triggered);
+            this, &WtCtorFn::param_Down_triggered);
     connect(actMoveToRow, &QAction::triggered,
-            this, &WtFn::param_MoveToRow_triggered);
+            this, &WtCtorFn::param_MoveToRow_triggered);
 
     connect(actBeforBehind, &QAction::triggered,
-            this, &WtFn::param_BeforBehind_triggered);
+            this, &WtCtorFn::param_BeforBehind_triggered);
 
     connect(m_parameterView->itemDelegate(),
             &QAbstractItemDelegate::closeEditor,
-            this, &WtFn::param_itemDelegate_closeEditor);
+            this, &WtCtorFn::param_itemDelegate_closeEditor);
 }
 
 void
-WtFn::param_AddNew_triggered()
+WtCtorFn::param_AddNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -347,7 +326,7 @@ WtFn::param_AddNew_triggered()
 }
 
 void
-WtFn::param_InsertNew_triggered()
+WtCtorFn::param_InsertNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -377,7 +356,7 @@ WtFn::param_InsertNew_triggered()
 }
 
 void
-WtFn::param_Delete_triggered()
+WtCtorFn::param_Delete_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -402,7 +381,7 @@ WtFn::param_Delete_triggered()
 }
 
 void
-WtFn::param_CopyToNew_triggered()
+WtCtorFn::param_CopyToNew_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -441,7 +420,7 @@ WtFn::param_CopyToNew_triggered()
 }
 
 void
-WtFn::param_Up_triggered()
+WtCtorFn::param_Up_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -460,7 +439,7 @@ WtFn::param_Up_triggered()
 }
 
 void
-WtFn::param_Down_triggered()
+WtCtorFn::param_Down_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -480,7 +459,7 @@ WtFn::param_Down_triggered()
 }
 
 void
-WtFn::param_MoveToRow_triggered()
+WtCtorFn::param_MoveToRow_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -507,7 +486,7 @@ WtFn::param_MoveToRow_triggered()
 }
 
 void
-WtFn::param_BeforBehind_triggered()
+WtCtorFn::param_BeforBehind_triggered()
 {
     if (!m_objPtr)  return;
 
@@ -524,7 +503,7 @@ WtFn::param_BeforBehind_triggered()
 }
 
 void
-WtFn::param_itemDelegate_closeEditor()
+WtCtorFn::param_itemDelegate_closeEditor()
 {
     if (!m_objPtr)  return;
 
@@ -580,7 +559,7 @@ WtFn::param_itemDelegate_closeEditor()
 }
 
 void
-WtFn::isEnabled_stateChanged(int  status)
+WtCtorFn::isEnabled_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -592,7 +571,7 @@ WtFn::isEnabled_stateChanged(int  status)
 }
 
 void
-WtFn::isInline_stateChanged(int  status)
+WtCtorFn::isInline_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -604,19 +583,7 @@ WtFn::isInline_stateChanged(int  status)
 }
 
 void
-WtFn::isConst_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setConst(true);
-    } else {
-        m_objPtr->setConst(false);
-    }
-}
-
-void
-WtFn::isExplicit_stateChanged(int  status)
+WtCtorFn::isExplicit_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -632,55 +599,7 @@ WtFn::isExplicit_stateChanged(int  status)
 }
 
 void
-WtFn::isPureVirtual_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setPureVirtual(true);
-    } else {
-        m_objPtr->setPureVirtual(false);
-    }
-}
-
-void
-WtFn::isVirtual_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setVirtual(true);
-    } else {
-        m_objPtr->setVirtual(false);
-    }
-}
-
-void
-WtFn::isOverride_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setOverride(true);
-    } else {
-        m_objPtr->setOverride(false);
-    }
-}
-
-void
-WtFn::isFinal_stateChanged(int  status)
-{
-    if (!m_objPtr)  return;
-
-    if (status == Qt::Checked) {
-        m_objPtr->setFinal(true);
-    } else {
-        m_objPtr->setFinal(false);
-    }
-}
-
-void
-WtFn::isNoexcept_stateChanged(int  status)
+WtCtorFn::isNoexcept_stateChanged(int  status)
 {
     if (!m_objPtr)  return;
 
@@ -692,187 +611,47 @@ WtFn::isNoexcept_stateChanged(int  status)
 }
 
 void
-WtFn::friendClassConnect()
+WtCtorFn::fieldVal_itemDelegate_closeEditor()
 {
-    QAction *  actAdd = new QAction(tr("Add New"));
-    QAction *  actInsertNew = new QAction(tr("Insert New"));
-    QAction *  actDelete = new QAction(tr("Delete"));
-    actAdd->setParent(this);
-    actInsertNew->setParent(this);
-    actDelete->setParent(this);
-    QAction *  actSpt = new QAction;
-    actSpt->setSeparator(true);
-    actSpt->setParent(this);
-    QAction *  actUp = new QAction(tr("Up"));
-    QAction *  actDown = new QAction(tr("Down"));
-    QAction *  actMoveTo = new QAction(tr("Move To Row"));
-    actUp->setParent(this);
-    actDown->setParent(this);
-    actMoveTo->setParent(this);
-    m_friendClassView->setContextMenuPolicy(Qt::ActionsContextMenu);
-    m_friendClassView->addAction(actAdd);
-    m_friendClassView->addAction(actInsertNew);
-    m_friendClassView->addAction(actDelete);
-    m_friendClassView->addAction(actSpt);
-    m_friendClassView->addAction(actUp);
-    m_friendClassView->addAction(actDown);
-    m_friendClassView->addAction(actMoveTo);
+    QModelIndex const  index = m_fieldValView->currentIndex();
+    int const  row = index.row();
 
-    connect(actAdd, &QAction::triggered,
-            this, &WtFn::friendClass_Add_triggered);
-    connect(actInsertNew, &QAction::triggered,
-            this, &WtFn::friendClass_InsertNew_triggered);
-    connect(actDelete, &QAction::triggered,
-            this, &WtFn::friendClass_Delete_triggered);
-    connect(actUp, &QAction::triggered,
-            this, &WtFn::friendClass_Up_triggered);
-    connect(actDown, &QAction::triggered,
-            this, &WtFn::friendClass_Down_triggered);
-    connect(actMoveTo, &QAction::triggered,
-            this, &WtFn::friendClass_MoveToRow_triggered);
-
-    connect(m_friendClassView->itemDelegate(),
-            &QAbstractItemDelegate::closeEditor,
-            this, &WtFn::friendClass_itemDelegate_closeEditor);
-}
-
-void
-WtFn::friendClass_Add_triggered()
-{
-    if (!m_objPtr)  return;
-
-    auto  frs = m_objPtr->getFriendClassName();
-    frs.push_back("MyClass1");
-    m_objPtr->setFriendClassName(frs);
-
-    repFriendItem();
-}
-
-void
-WtFn::friendClass_InsertNew_triggered()
-{
-    if (!m_objPtr)  return;
-
-    const QModelIndex  index = m_friendClassView->currentIndex();
     if (index.isValid()) {
-        auto  frs = m_objPtr->getFriendClassName();
-        frs.insert(frs.begin() + index.row(), "MyClass1");
-        m_objPtr->setFriendClassName(frs);
+        auto  rawDataVec = m_objPtr->getDefValueCtor();
+        std::string const  currVal = m_fieldValModel->data(index).
+                toString().toUtf8().toStdString();
 
-        repFriendItem();
-    } else {
-        friendClass_Add_triggered();
-    }
-}
-
-void
-WtFn::friendClass_Delete_triggered()
-{
-    if (!m_objPtr)  return;
-
-    const QModelIndex  index = m_friendClassView->currentIndex();
-    if (index.isValid()) {
-        auto  frs = m_objPtr->getFriendClassName();
-        frs.erase(frs.begin() + index.row());
-        m_objPtr->setFriendClassName(frs);
-
-        repFriendItem();
-    }
-}
-
-void
-WtFn::friendClass_Up_triggered()
-{
-    if (!m_objPtr)  return;
-
-    const QModelIndex  index = m_friendClassView->currentIndex();
-    const int  row = index.row();
-    if (index.isValid() && row != 0) {
-        auto  frs = m_objPtr->getFriendClassName();
-        std::swap(frs[row], frs[row - 1]);
-        m_objPtr->setFriendClassName(frs);
-
-        const auto  item = m_friendClassModel->takeRow(row);
-        m_friendClassModel->insertRow(row - 1, item);
-        const QModelIndex  idx = index.sibling(row - 1, index.column());
-        m_friendClassView->setCurrentIndex(idx);
-    }
-}
-
-void
-WtFn::friendClass_Down_triggered()
-{
-    if (!m_objPtr)  return;
-
-    const QModelIndex  index = m_friendClassView->currentIndex();
-    const int  row = index.row();
-    const int  count = m_friendClassModel->rowCount();
-    if (index.isValid() && count > 1 && row != count - 1) {
-        auto  frs = m_objPtr->getFriendClassName();
-        std::swap(frs[row], frs[row + 1]);
-        m_objPtr->setFriendClassName(frs);
-
-        const auto  item = m_friendClassModel->takeRow(row + 1);
-        m_friendClassModel->insertRow(row, item);
-        const QModelIndex  idx = index.sibling(row + 1, index.column());
-        m_friendClassView->setCurrentIndex(idx);
-    }
-}
-
-void
-WtFn::friendClass_MoveToRow_triggered()
-{
-    if (!m_objPtr)  return;
-
-    const QModelIndex  index = m_friendClassView->currentIndex();
-    const int  count = m_friendClassModel->rowCount();
-    int  currRow = index.row();
-    if (index.isValid() && count > 1) {
-        bool  ok = false;
-        int  movetoRow = QInputDialog::getInt(this, "Move To Row",
-                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
-        if (ok) {
-            if (movetoRow > count)  movetoRow = count;
-            if (movetoRow == 0)  movetoRow = 1;
-            ++currRow;
-            if (currRow == movetoRow)  return;
-            movetoRow--;  currRow--;
-
-            auto  frs = m_objPtr->getFriendClassName();
-            auto  dval = frs[currRow];
-            frs.erase(frs.begin() + currRow);
-            frs.insert(frs.begin() + movetoRow, std::move(dval));
-            m_objPtr->setFriendClassName(frs);
-
-            const auto  item = m_friendClassModel->takeRow(currRow);
-            QModelIndex  idx;
-            m_friendClassModel->insertRow(movetoRow, item);
-            idx = index.sibling(movetoRow, index.column());
-
-            m_friendClassView->setCurrentIndex(idx);
+        switch (index.column()) {
+        case 1 :
+            rawDataVec[row] = currVal;
+            m_objPtr->setDefValueCtor(rawDataVec);
+            break;
         }
     }
 }
 
 void
-WtFn::friendClass_itemDelegate_closeEditor()
+WtCtorFn::baseClassVal_itemDelegate_closeEditor()
 {
-    if (!m_objPtr)  return;
+    QModelIndex const  index = m_baseClassValView->currentIndex();
+    int const  row = index.row();
 
-    const QModelIndex  index = m_friendClassView->currentIndex();
     if (index.isValid()) {
-        const std::string  newVal = m_friendClassModel->itemFromIndex(index)
-                                    ->text().toUtf8().toStdString();
-        auto  frs = m_objPtr->getFriendClassName();
-        frs[index.row()] = newVal;
-        m_objPtr->setFriendClassName(frs);
+        auto  rawDataVec = m_objPtr->getInhValueBaseClass();
+        std::string const  currVal = m_baseClassValModel->data(index).
+                toString().toUtf8().toStdString();
 
-        repFriendItem();
+        switch (index.column()) {
+        case 1 :
+            rawDataVec[row] = currVal;
+            m_objPtr->setInhValueBaseClass(rawDataVec);
+            break;
+        }
     }
 }
 
 void
-WtFn::repParameterItem()
+WtCtorFn::repParameterItem()
 {
     m_parameterModel->removeRows(0, m_parameterModel->rowCount());
     std::vector<Parameter> const  item = m_objPtr->getParam();
@@ -892,18 +671,59 @@ WtFn::repParameterItem()
 }
 
 void
-WtFn::repFriendItem()
+WtCtorFn::repFieldValItem()
 {
-    m_friendClassModel->removeRows(0, m_friendClassModel->rowCount());
-    const auto  nps = m_objPtr->getFriendClassName();
-    for (const auto &  it: nps) {
-        m_friendClassModel->appendRow(new QStandardItem(
-                QString::fromStdString(it)));
+    m_fieldValModel->removeRows(0, m_fieldValModel->rowCount());
+
+    std::vector<Field> &  fieldRef = m_objPtr->getParentClassPtr()->getFieldRef();
+    std::vector<std::string>  fieldVal = m_objPtr->getDefValueCtor();
+    int const  width0 = m_fieldValView->columnWidth(0);
+    int const  width1 = m_fieldValView->columnWidth(1);
+    int const  defSize = static_cast<int>(fieldVal.size());
+    for (int i = 0; i < defSize; ++i) {
+        QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
+                fieldRef[i].getPrivateName()));
+        item0->setFlags(Qt::NoItemFlags);
+        item0->setFlags(Qt::ItemIsSelectable |
+                Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(fieldVal[i]));
+        QList<QStandardItem *>  items;
+        items << item0 << item1;
+        m_fieldValModel->appendRow(items);
     }
+    m_fieldValView->setColumnWidth(0, width0);
+    m_fieldValView->setColumnWidth(1, width1);
+}
+
+void
+WtCtorFn::repBaseClassValItem()
+{
+    m_baseClassValModel->removeRows(0, m_baseClassValModel->rowCount());
+
+    std::vector<std::tuple<std::string, Purview, bool>>  mulInhClass =
+            m_objPtr->getParentClassPtr()->getMulInhClass();
+    std::vector<std::string>  inhBaseClassVal = m_objPtr->getInhValueBaseClass();
+    int const  width0 = m_baseClassValView->columnWidth(0);
+    int const  width1 = m_baseClassValView->columnWidth(1);
+    int const  inhSize = static_cast<int>(inhBaseClassVal.size());
+    for (int i = 0; i < inhSize; ++i) {
+        QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
+                std::get<0>(mulInhClass[i])));
+        item0->setFlags(Qt::NoItemFlags);
+        item0->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable
+                            | Qt::ItemIsEnabled);
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
+                inhBaseClassVal[i]));
+        QList<QStandardItem *>  items;
+        items << item0 << item1;
+        m_baseClassValModel->appendRow(items);
+    }
+    m_baseClassValView->setColumnWidth(0, width0);
+    m_baseClassValView->setColumnWidth(1, width1);
 }
 
 bool
-WtFn::nameCheckDuplication(std::string const &  fnName)
+WtCtorFn::nameCheckDuplication(std::string const &  fnName)
 {
     bool  res = false;
 
@@ -916,106 +736,31 @@ WtFn::nameCheckDuplication(std::string const &  fnName)
     return res;
 }
 
-void
-WtFn::setVisible()
-{
-    if (!m_objPtr || !m_itemPtr)  return;
-
-    QStandardItem *  parentItem = m_itemPtr->parent();
-    QStandardItem *  rootItem = parentItem->parent();
-    Etype const  parentEtp = static_cast<Etype>(parentItem->data(
-            Qt::UserRole + 1).toInt());
-    Etype const  rootEtp = static_cast<Etype>(rootItem->data(
-            Qt::UserRole + 1).toInt());
-
-    if (rootEtp == Etype::eModule) {
-        m_isConst->hide();
-        m_isExplicit->hide();
-        m_isPureVirtual->hide();
-        m_isVirtual->hide();
-        m_isOverride->hide();
-        m_isFinal->hide();
-
-        if (parentEtp == Etype::eConstexprFunctions) {
-            m_isInline->hide();
-            m_friendLabel->hide();
-            m_friendClassView->hide();
-            m_hideWindow->show();
-        } else {
-            m_isInline->show();
-            m_friendLabel->show();
-            m_friendClassView->show();
-            m_hideWindow->hide();
-        }
-    } else {
-        m_isConst->show();
-        m_isExplicit->show();
-        m_isPureVirtual->show();
-        m_isVirtual->show();
-        m_isOverride->show();
-        m_isFinal->show();
-
-        m_friendLabel->hide();
-        m_friendClassView->hide();
-        m_hideWindow->show();
-
-        if (parentEtp == Etype::eStaticFunctions ||
-                parentEtp == Etype::eConstexprFunctions) {
-            m_isConst->hide();
-        }
-
-        if (parentEtp == Etype::eConstexprFunctions) {
-            m_isInline->hide();
-        } else {
-            m_isInline->show();
-        }
-    }
-}
-
 Function *
-WtFn::getObjPtr() const
+WtCtorFn::getObjPtr() const
 {
     return m_objPtr;
 }
 
 void
-WtFn::setObjPtr(Function *  value)
+WtCtorFn::setObjPtr(Function *  value)
 {
     m_objPtr = value;
     if (m_objPtr) {
-        m_functionName->setText(QString::fromStdString(m_objPtr->getFunctionName()));
-        m_returnType->setText(QString::fromStdString(m_objPtr->getReturnType()));
+        m_baseClassDefVal->setText(QString::fromStdString(
+                m_objPtr->getInhValueFirst()));
         m_attribute->setText(QString::fromStdString(m_objPtr->getAttribute()));
         m_codeEdit->setPlainText(QString::fromStdString(m_objPtr->getMCode()));
 
         m_isEnabled->setChecked(m_objPtr->isEnabled());
         m_isInline->setChecked(m_objPtr->isInline());
-        m_isConst->setChecked(m_objPtr->isConst());
         m_isExplicit->setChecked(m_objPtr->isExplicit());
-        m_isPureVirtual->setChecked(m_objPtr->isPureVirtual());
-        m_isVirtual->setChecked(m_objPtr->isVirtual());
-        m_isOverride->setChecked(m_objPtr->isOverride());
-        m_isFinal->setChecked(m_objPtr->isFinal());
         m_isNoexcept->setChecked(m_objPtr->isNoexcept());
 
         repParameterItem();
-        repFriendItem();
-
-        setVisible();
+        repFieldValItem();
+        repBaseClassValItem();
     }
-}
-
-QStandardItem *
-WtFn::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtFn::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
-    setVisible();
 }
 
 }

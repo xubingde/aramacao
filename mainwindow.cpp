@@ -88,7 +88,9 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_wtMyEnum(nullptr),
         m_wtProject(nullptr),
         m_wtFn(nullptr),
-        m_wtTplFn(nullptr)
+        m_wtTplFn(nullptr),
+        m_wtCtorFn(nullptr),
+        m_wtTplCtorFn(nullptr)
 {
     setWindowTitle("AraMacao");
     init_obj();
@@ -206,8 +208,16 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
             }
             break;
         case Etype::eConstructors :
+            m_wtCtorFn->setObjPtr(static_cast<Function *>(selfPtr));
+            if (m_spvMain->widget(1) != m_wtCtorFn) {
+                m_spvMain->replaceWidget(1, m_wtCtorFn);
+            }
             break;
         case Etype::eTplConstructors :
+            m_wtTplCtorFn->setObjPtr(static_cast<Function *>(selfPtr));
+            if (m_spvMain->widget(1) != m_wtTplCtorFn) {
+                m_spvMain->replaceWidget(1, m_wtTplCtorFn);
+            }
             break;
         default :
             if (m_spvMain->widget(1) != m_spaceWindow) {
@@ -3887,6 +3897,8 @@ MainWindow::init_obj()
     m_wtProject = new WtProject;
     m_wtFn = new WtFn;
     m_wtTplFn = new WtTplFn;
+    m_wtCtorFn = new WtCtorFn;
+    m_wtTplCtorFn = new WtTplCtorFn;
 }
 
 void

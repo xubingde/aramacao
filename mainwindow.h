@@ -25,6 +25,8 @@
 #include "function.h"
 #include "wtfn.h"
 #include "wttplfn.h"
+#include "wtctorfn.h"
+#include "wttplctorfn.h"
 
 namespace xu {
 
@@ -273,6 +275,8 @@ private:
     WtProject *     m_wtProject;
     WtFn *          m_wtFn;
     WtTplFn *       m_wtTplFn;
+    WtCtorFn *      m_wtCtorFn;
+    WtTplCtorFn *   m_wtTplCtorFn;
 };
 
 template <typename T> inline

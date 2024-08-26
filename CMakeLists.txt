@@ -184,6 +184,10 @@ set(PROJECT_SOURCES
         wtfn.h
         wttplfn.cpp
         wttplfn.h
+        wtctorfn.cpp
+        wtctorfn.h
+        wttplctorfn.cpp
+        wttplctorfn.h
         ${TS_FILES}
 )
 
