@@ -30,11 +30,11 @@ public:
 
     virtual std::string  toHBlock(std::string const &  tabStr = std::string()) const override;
 
-    std::string  getStructName() const;
-    virtual void  setStructName(const std::string &  value);
-
     MyStruct *  getParentStructPtr() const;
     virtual void  setParentStructPtr(MyStruct *  value);
+
+    std::string  getStructName() const;
+    virtual void  setStructName(const std::string &  value);
 
 protected:
 
@@ -46,8 +46,8 @@ protected:
 
 private:
 
-    std::string     m_structName;
     MyStruct *      m_parentStructPtr;
+    std::string     m_structName;
 };
 
 }

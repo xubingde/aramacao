@@ -127,7 +127,7 @@ void
 CopyOperatorEqFn::setFunctionName(std::string const &  value)
 {
     Function::setFunctionName(value);
-    setTreeLabel("    Copy Operator=");
+    setTreeLabel("A   Copy Operator=");
 }
 
 void

@@ -10,8 +10,8 @@ namespace xu {
 
 MyStructDec::MyStructDec():
         EObject(),
-        m_structName("Struct1"),
-        m_parentStructPtr(nullptr)
+        m_parentStructPtr(nullptr),
+        m_structName("Struct1")
 {
     setTreeLabel("SD  " + m_structName);
     setBaseType(Etype::eStructDeclaration);
@@ -19,15 +19,15 @@ MyStructDec::MyStructDec():
 
 MyStructDec::MyStructDec(const MyStructDec &  other):
         EObject(other),
-        m_structName(other.m_structName),
-        m_parentStructPtr(other.m_parentStructPtr)
+        m_parentStructPtr(other.m_parentStructPtr),
+        m_structName(other.m_structName)
 {
 }
 
 MyStructDec::MyStructDec(MyStructDec &&  other) noexcept:
         EObject(std::move(other)),
-        m_structName(std::move(other.m_structName)),
-        m_parentStructPtr(std::move(other.m_parentStructPtr))
+        m_parentStructPtr(std::move(other.m_parentStructPtr)),
+        m_structName(std::move(other.m_structName))
 {
     other.m_parentStructPtr = nullptr;
 }
@@ -43,8 +43,8 @@ MyStructDec::operator=(const MyStructDec &  other)
 
     this->EObject::operator=(other);
 
-    m_structName = other.m_structName;
     m_parentStructPtr = other.m_parentStructPtr;
+    m_structName = other.m_structName;
 
     return *this;
 }
@@ -56,8 +56,8 @@ MyStructDec::operator=(MyStructDec &&  other) noexcept
 
     this->EObject::operator=(std::move(other));
 
-    m_structName = std::move(other.m_structName);
     m_parentStructPtr = std::move(other.m_parentStructPtr);
+    m_structName = std::move(other.m_structName);
 
     other.m_parentStructPtr = nullptr;
 
@@ -84,24 +84,6 @@ MyStructDec::toHBlock(std::string const &  tabStr /* = std::string() */) const
     return res;
 }
 
-std::string
-MyStructDec::getStructName() const
-{
-    return m_structName;
-}
-
-void
-MyStructDec::setStructName(const std::string &  value)
-{
-    m_structName = xu::trim(value);
-    if (!xu::checkReg(m_structName)) {
-        m_structName = "Struct1";
-    }
-    m_structName[0] = xu::toupperS(m_structName[0]);
-
-    setTreeLabel("SD  " + m_structName);
-}
-
 MyStruct *
 MyStructDec::getParentStructPtr() const
 {
@@ -116,6 +98,23 @@ MyStructDec::setParentStructPtr(MyStruct *  value)
         m_structName = m_parentStructPtr->getName();
         setTreeLabel("SD  " + m_structName);
     }
+}
+
+std::string
+MyStructDec::getStructName() const
+{
+    return m_structName;
+}
+
+void
+MyStructDec::setStructName(const std::string &  value)
+{
+    m_structName = xu::trim(value);
+    if (!xu::checkReg(m_structName)) {
+        m_structName = "Struct1";
+    }
+    m_structName[0] = xu::toupperS(m_structName[0]);
+    setTreeLabel("SD  " + m_structName);
 }
 
 bool
@@ -185,8 +184,8 @@ MyStructDec::deserialize(const char *  data,
     if (err.size() == 0) {
         *this = std::move(me);
         result = true;
+        m_parentStructPtr = nullptr;
     }
-    m_parentStructPtr = nullptr;
 
     return result;
 }
@@ -200,8 +199,8 @@ MyStructDec::exchange(EObject &  value) noexcept
         this->EObject::exchange(rhs);
 
         using std::swap;
-        swap(m_structName, rhs.m_structName);
         swap(m_parentStructPtr, rhs.m_parentStructPtr);
+        swap(m_structName, rhs.m_structName);
 
         result = true;
     }

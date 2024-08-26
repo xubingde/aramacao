@@ -84,7 +84,7 @@ void
 CopyConstructorFn::setFunctionName(std::string const &  value)
 {
     Function::setFunctionName(value);
-    setTreeLabel("    Copy Constructor");
+    setTreeLabel("A   Copy Constructor");
 }
 
 void
@@ -112,7 +112,7 @@ void
 CopyConstructorFn::setParentClassPtr(MyClass *  value)
 {
     Function::setParentClassPtr(value);
-    setTreeLabel("    Copy Constructor");
+    setTreeLabel("A   Copy Constructor");
     updateDefualtValue();
 }
 
@@ -140,7 +140,7 @@ CopyConstructorFn::updateDefualtValue()
 void
 CopyConstructorFn::init()
 {
-    setTreeLabel("    Copy Constructor");
+    setTreeLabel("A   Copy Constructor");
     setBaseType(Etype::eCopyConstructorFn);
 
     setClassFunction(true);

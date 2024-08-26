@@ -2310,7 +2310,6 @@ MyClass::setClassName(const std::string &  value)
         m_className = "MyClass1";
     }
     m_className[0] = xu::toupperS(m_className[0]);
-
     setTreeLabel("C   " + m_className);
 
     if (m_updateFilename && m_parentModulePtr) {

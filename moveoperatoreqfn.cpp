@@ -122,7 +122,7 @@ void
 MoveOperatorEqFn::setFunctionName(std::string const &  value)
 {
     Function::setFunctionName(value);
-    setTreeLabel("    Move Operator=");
+    setTreeLabel("A   Move Operator=");
 }
 
 void

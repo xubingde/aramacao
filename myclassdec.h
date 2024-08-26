@@ -30,11 +30,11 @@ public:
 
     virtual std::string  toHBlock(std::string const &  tabStr = std::string()) const override;
 
-    std::string  getClassName() const;
-    virtual void  setClassName(const std::string &  value);
-
     MyClass *  getParentClassPtr() const;
-    virtual void  setParentClassPtr(MyClass *  value);
+    void  setParentClassPtr(MyClass *  value);
+
+    std::string  getClassName() const;
+    void  setClassName(const std::string &  value);
 
 protected:
 
@@ -46,8 +46,8 @@ protected:
 
 private:
 
-    std::string     m_className;
     MyClass *       m_parentClassPtr;
+    std::string     m_className;
 };
 
 }

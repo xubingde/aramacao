@@ -6,13 +6,14 @@
 #include "myclassdec.h"
 #include "tpl.h"
 #include "myclass.h"
+#include "module.h"
 
 namespace xu {
 
 MyClassDec::MyClassDec():
         EObject(),
-        m_className("MyClass1"),
-        m_parentClassPtr(nullptr)
+        m_parentClassPtr(nullptr),
+        m_className("MyClass1")
 {
     setTreeLabel("CD  " + m_className);
     setBaseType(Etype::eClassDeclaration);
@@ -20,15 +21,15 @@ MyClassDec::MyClassDec():
 
 MyClassDec::MyClassDec(const MyClassDec &  other):
         EObject(other),
-        m_className(other.m_className),
-        m_parentClassPtr(other.m_parentClassPtr)
+        m_parentClassPtr(other.m_parentClassPtr),
+        m_className(other.m_className)
 {
 }
 
 MyClassDec::MyClassDec(MyClassDec &&  other) noexcept:
         EObject(std::move(other)),
-        m_className(std::move(other.m_className)),
-        m_parentClassPtr(std::move(other.m_parentClassPtr))
+        m_parentClassPtr(std::move(other.m_parentClassPtr)),
+        m_className(std::move(other.m_className))
 {
     other.m_parentClassPtr = nullptr;
 }
@@ -44,8 +45,8 @@ MyClassDec::operator=(const MyClassDec &  other)
 
     this->EObject::operator=(other);
 
-    m_className = other.m_className;
     m_parentClassPtr = other.m_parentClassPtr;
+    m_className = other.m_className;
 
     return *this;
 }
@@ -57,8 +58,8 @@ MyClassDec::operator=(MyClassDec &&  other) noexcept
 
     this->EObject::operator=(std::move(other));
 
-    m_className = std::move(other.m_className);
     m_parentClassPtr = std::move(other.m_parentClassPtr);
+    m_className = std::move(other.m_className);
 
     other.m_parentClassPtr = nullptr;
 
@@ -102,24 +103,6 @@ MyClassDec::toHBlock(std::string const &  tabStr /* = std::string() */) const
     return res;
 }
 
-std::string
-MyClassDec::getClassName() const
-{
-    return m_className;
-}
-
-void
-MyClassDec::setClassName(const std::string &  value)
-{
-    m_className = xu::trim(value);
-    if (!xu::checkReg(m_className)) {
-        m_className = "MyClass";
-    }
-    m_className[0] = xu::toupperS(m_className[0]);
-
-    setTreeLabel("CD  " + m_className);
-}
-
 MyClass *
 MyClassDec::getParentClassPtr() const
 {
@@ -134,6 +117,23 @@ MyClassDec::setParentClassPtr(MyClass *  value)
         m_className = m_parentClassPtr->getClassName();
         setTreeLabel("CD  " + m_className);
     }
+}
+
+std::string
+MyClassDec::getClassName() const
+{
+    return m_className;
+}
+
+void
+MyClassDec::setClassName(const std::string &  value)
+{
+    m_className = xu::trim(value);
+    if (!xu::checkReg(m_className)) {
+        m_className = "MyClass1";
+    }
+    m_className[0] = xu::toupperS(m_className[0]);
+    setTreeLabel("CD  " + m_className);
 }
 
 bool
@@ -203,8 +203,8 @@ MyClassDec::deserialize(const char *  data,
     if (err.size() == 0) {
         *this = std::move(me);
         result = true;
+        m_parentClassPtr = nullptr;
     }
-    m_parentClassPtr = nullptr;
 
     return result;
 }
@@ -218,8 +218,8 @@ MyClassDec::exchange(EObject &  value) noexcept
         this->EObject::exchange(rhs);
 
         using std::swap;
-        swap(m_className, rhs.m_className);
         swap(m_parentClassPtr, rhs.m_parentClassPtr);
+        swap(m_className, rhs.m_className);
 
         result = true;
     }

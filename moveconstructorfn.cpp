@@ -79,7 +79,7 @@ void
 MoveConstructorFn::setFunctionName(std::string const &  value)
 {
     Function::setFunctionName(value);
-    setTreeLabel("    Move Constructor");
+    setTreeLabel("A   Move Constructor");
 }
 
 void
@@ -107,7 +107,7 @@ void
 MoveConstructorFn::setParentClassPtr(MyClass *  value)
 {
     Function::setParentClassPtr(value);
-    setTreeLabel("    Move Constructor");
+    setTreeLabel("A   Move Constructor");
     updateDefualtValue();
 }
 
@@ -135,7 +135,7 @@ MoveConstructorFn::updateDefualtValue()
 void
 MoveConstructorFn::init()
 {
-    setTreeLabel("    Move Constructor");
+    setTreeLabel("A   Move Constructor");
     setBaseType(Etype::eMoveConstructorFn);
 
     setClassFunction(true);

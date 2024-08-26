@@ -83,14 +83,14 @@ void
 DefaultConstructorFn::setFunctionName(std::string const &  value)
 {
     Function::setFunctionName(value);
-    setTreeLabel("    Default Constructor");
+    setTreeLabel("A   Default Constructor");
 }
 
 void
 DefaultConstructorFn::setParentClassPtr(MyClass *  value)
 {
     Function::setParentClassPtr(value);
-    setTreeLabel("    Default Constructor");
+    setTreeLabel("A   Default Constructor");
     updateDefualtValue();
 }
 
@@ -118,7 +118,7 @@ DefaultConstructorFn::updateDefualtValue()
 void
 DefaultConstructorFn::init()
 {
-    setTreeLabel("    Default Constructor");
+    setTreeLabel("A   Default Constructor");
     setBaseType(Etype::eDefaultConstructorFn);
 
     setClassFunction(true);

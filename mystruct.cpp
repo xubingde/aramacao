@@ -133,7 +133,6 @@ MyStruct::setName(const std::string &  value)
         m_name = "Struct1";
     }
     m_name[0] = xu::toupperS(m_name[0]);
-
     setTreeLabel("S   " + m_name);
 }
 

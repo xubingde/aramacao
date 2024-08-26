@@ -17,7 +17,7 @@ main(int  argc,
     app.setApplicationVersion("0.1.0");
 
     QFile  qss;
-    xu::StyleType const  stype = xu::getGuiStyle();
+    xu::StyleType  stype = xu::getGuiStyle();
     if (stype == xu::StyleType::dark) {
         qss.setFileName(":qdarkstyle/dark/darkstyle.qss");
     } else {

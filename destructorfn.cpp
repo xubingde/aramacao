@@ -85,14 +85,14 @@ DestructorFn::setFunctionName(std::string const &)
     }
 
     Function::setFunctionName(fnName);
-    setTreeLabel("    ~Destructor");
+    setTreeLabel("A   ~Destructor");
 }
 
 void
 DestructorFn::setParentClassPtr(MyClass *  value)
 {
     Function::setParentClassPtr(value);
-    setTreeLabel("    ~Destructor");
+    setTreeLabel("A   ~Destructor");
     updateDefualtValue();
 
 }
@@ -116,7 +116,7 @@ DestructorFn::updateDefualtValue()
 void
 DestructorFn::init()
 {
-    setTreeLabel("    ~Destructor");
+    setTreeLabel("A   ~Destructor");
     setBaseType(Etype::eDestructorFn);
 
     setClassFunction(true);
