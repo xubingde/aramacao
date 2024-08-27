@@ -20,9 +20,9 @@ namespace xu {
 
 Field::Field():
         m_stringErr(),
-        m_fieldName(),
+        m_fieldName("new__state"),
         m_docment(),
-        m_typeName(),
+        m_typeName("std::string"),
         m_defValue(),
         m_array(),
         m_attribute(),

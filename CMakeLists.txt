@@ -188,6 +188,12 @@ set(PROJECT_SOURCES
         wtctorfn.h
         wttplctorfn.cpp
         wttplctorfn.h
+        wtmyclassdec.cpp
+        wtmyclassdec.h
+        wtmystructdec.cpp
+        wtmystructdec.h
+        wtmystruct.cpp
+        wtmystruct.h
         ${TS_FILES}
 )
 

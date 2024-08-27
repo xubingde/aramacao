@@ -90,7 +90,10 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_wtFn(nullptr),
         m_wtTplFn(nullptr),
         m_wtCtorFn(nullptr),
-        m_wtTplCtorFn(nullptr)
+        m_wtTplCtorFn(nullptr),
+        m_wtMyClassDec(nullptr),
+        m_wtMyStructDec(nullptr),
+        m_wtMyStruct(nullptr)
 {
     setWindowTitle("AraMacao");
     init_obj();
@@ -148,9 +151,30 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
             m_spvMain->replaceWidget(1, m_wtBasicBlock);
         }
         break;
+    case Etype::eClassDeclaration :
+        m_wtMyClassDec->setItemPtr(selfItem);
+        m_wtMyClassDec->setObjPtr(static_cast<MyClassDec *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtMyClassDec) {
+            m_spvMain->replaceWidget(1, m_wtMyClassDec);
+        }
+        break;
+    case Etype::eStructDeclaration :
+        m_wtMyStructDec->setItemPtr(selfItem);
+        m_wtMyStructDec->setObjPtr(static_cast<MyStructDec *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtMyStructDec) {
+            m_spvMain->replaceWidget(1, m_wtMyStructDec);
+        }
+        break;
+    case Etype::eStruct :
+        m_wtMyStruct->setItemPtr(selfItem);
+        m_wtMyStruct->setObjPtr(static_cast<MyStruct *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtMyStruct) {
+            m_spvMain->replaceWidget(1, m_wtMyStruct);
+        }
+        break;
     case Etype::eLabel :
-        m_wtLabel->setObjPtr(static_cast<Label *>(selfPtr));
         m_wtLabel->setItemPtr(selfItem);
+        m_wtLabel->setObjPtr(static_cast<Label *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtLabel) {
             m_spvMain->replaceWidget(1, m_wtLabel);
         }
@@ -174,15 +198,15 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         }
         break;
     case Etype::eEnum :
-        m_wtMyEnum->setObjPtr(static_cast<MyEnum *>(selfPtr));
         m_wtMyEnum->setItemPtr(selfItem);
+        m_wtMyEnum->setObjPtr(static_cast<MyEnum *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtMyEnum) {
             m_spvMain->replaceWidget(1, m_wtMyEnum);
         }
         break;
     case Etype::eProject :
-        m_wtProject->setObjPtr(static_cast<Project *>(selfPtr));
         m_wtProject->setItemPtr(selfItem);
+        m_wtProject->setObjPtr(static_cast<Project *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtProject) {
             m_spvMain->replaceWidget(1, m_wtProject);
         }
@@ -192,8 +216,8 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         case Etype::eFunctions :
         case Etype::eStaticFunctions :
         case Etype::eConstexprFunctions :
-            m_wtFn->setObjPtr(static_cast<Function *>(selfPtr));
             m_wtFn->setItemPtr(selfItem);
+            m_wtFn->setObjPtr(static_cast<Function *>(selfPtr));
             if (m_spvMain->widget(1) != m_wtFn) {
                 m_spvMain->replaceWidget(1, m_wtFn);
             }
@@ -201,8 +225,8 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         case Etype::eTplFunctions :
         case Etype::eTplStaticFunctions :
         case Etype::eTplConstexprFunctions :
-            m_wtTplFn->setObjPtr(static_cast<Function *>(selfPtr));
             m_wtTplFn->setItemPtr(selfItem);
+            m_wtTplFn->setObjPtr(static_cast<Function *>(selfPtr));
             if (m_spvMain->widget(1) != m_wtTplFn) {
                 m_spvMain->replaceWidget(1, m_wtTplFn);
             }
@@ -372,7 +396,8 @@ MainWindow::menuConnect()
         m_moduleMenu->addAction(actAddStructDec);
         m_moduleMenu->addAction(actAddStruct);
         m_moduleMenu->addAction(actAddEnum);
-        m_moduleMenu->addAction(actAddTypedef);
+        m_moduleMenu->addSeparator();
+        m_moduleMenu->addAction(actAddBasicBlock);
         m_moduleMenu->addSeparator();
         m_moduleMenu->addAction(actAddFns);
         m_moduleMenu->addAction(actAddFnsStatic);
@@ -380,8 +405,6 @@ MainWindow::menuConnect()
         m_moduleMenu->addAction(actAddTplFns);
         m_moduleMenu->addAction(actAddTplFnsStatic);
         m_moduleMenu->addAction(actAddTplFnsCnex);
-        m_moduleMenu->addSeparator();
-        m_moduleMenu->addAction(actAddBasicBlock);
         m_moduleMenu->addSeparator();
         m_moduleMenu->addAction(actUp);
         m_moduleMenu->addAction(actDown);
@@ -566,7 +589,8 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsStructDec);
         menuInsert->addAction(actInsStruct);
         menuInsert->addAction(actInsEnum);
-        menuInsert->addAction(actInsTypedef);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsBasicBlock);
         menuInsert->addSeparator();
         menuInsert->addAction(actInsPubLabel);
         menuInsert->addAction(actInsProtLabel);
@@ -589,15 +613,14 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsTplFns);
         menuInsert->addAction(actInsTplFnsStatic);
         menuInsert->addAction(actInsTplFnsCnex);
-        menuInsert->addSeparator();
-        menuInsert->addAction(actInsBasicBlock);
 
         menuFollow->addAction(actFlwClassDec);
         menuFollow->addAction(actFlwInClass);
         menuFollow->addAction(actFlwStructDec);
         menuFollow->addAction(actFlwStruct);
         menuFollow->addAction(actFlwEnum);
-        menuFollow->addAction(actFlwTypedef);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwBasicBlock);
         menuFollow->addSeparator();
         menuFollow->addAction(actFlwPubLabel);
         menuFollow->addAction(actFlwProtLabel);
@@ -620,15 +643,14 @@ MainWindow::menuConnect()
         menuFollow->addAction(actFlwTplFns);
         menuFollow->addAction(actFlwTplFnsStatic);
         menuFollow->addAction(actFlwTplFnsCnex);
-        menuFollow->addSeparator();
-        menuFollow->addAction(actFlwBasicBlock);
 
         menuAdd->addAction(actAddClassDec);
         menuAdd->addAction(actAddInClass);
         menuAdd->addAction(actAddStructDec);
         menuAdd->addAction(actAddStruct);
         menuAdd->addAction(actAddEnum);
-        menuAdd->addAction(actAddTypedef);
+        menuAdd->addSeparator();
+        menuAdd->addAction(actAddBasicBlock);
         menuAdd->addSeparator();
         menuAdd->addAction(actAddPubLabel);
         menuAdd->addAction(actAddProtLabel);
@@ -651,8 +673,6 @@ MainWindow::menuConnect()
         menuAdd->addAction(actAddTplFns);
         menuAdd->addAction(actAddTplFnsStatic);
         menuAdd->addAction(actAddTplFnsCnex);
-        menuAdd->addSeparator();
-        menuAdd->addAction(actAddBasicBlock);
 
         connect(actInsertNewClass, &QAction::triggered,
                 this, &MainWindow::addNewClassInsert_triggered);
@@ -920,7 +940,8 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsStructDec);
         menuInsert->addAction(actInsStruct);
         menuInsert->addAction(actInsEnum);
-        menuInsert->addAction(actInsTypedef);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsBasicBlock);
         menuInsert->addSeparator();
         menuInsert->addAction(actInsPubLabel);
         menuInsert->addAction(actInsProtLabel);
@@ -943,15 +964,14 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsTplFns);
         menuInsert->addAction(actInsTplFnsStatic);
         menuInsert->addAction(actInsTplFnsCnex);
-        menuInsert->addSeparator();
-        menuInsert->addAction(actInsBasicBlock);
 
         menuFollow->addAction(actFlwClassDec);
         menuFollow->addAction(actFlwClass);
         menuFollow->addAction(actFlwStructDec);
         menuFollow->addAction(actFlwStruct);
         menuFollow->addAction(actFlwEnum);
-        menuFollow->addAction(actFlwTypedef);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwBasicBlock);
         menuFollow->addSeparator();
         menuFollow->addAction(actFlwPubLabel);
         menuFollow->addAction(actFlwProtLabel);
@@ -974,8 +994,6 @@ MainWindow::menuConnect()
         menuFollow->addAction(actFlwTplFns);
         menuFollow->addAction(actFlwTplFnsStatic);
         menuFollow->addAction(actFlwTplFnsCnex);
-        menuFollow->addSeparator();
-        menuFollow->addAction(actFlwBasicBlock);
 
         connect(actAddFn, &QAction::triggered,
                 this, &MainWindow::fnsAddNewFn_triggered);
@@ -1266,7 +1284,8 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsStructDec);
         menuInsert->addAction(actInsStruct);
         menuInsert->addAction(actInsEnum);
-        menuInsert->addAction(actInsTypedef);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsBasicBlock);
         menuInsert->addSeparator();
         menuInsert->addAction(actInsPubLabel);
         menuInsert->addAction(actInsProtLabel);
@@ -1289,15 +1308,14 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsTplFns);
         menuInsert->addAction(actInsTplFnsStatic);
         menuInsert->addAction(actInsTplFnsCnex);
-        menuInsert->addSeparator();
-        menuInsert->addAction(actInsBasicBlock);
 
         menuFollow->addAction(actFlwClassDec);
         menuFollow->addAction(actFlwClass);
         menuFollow->addAction(actFlwStructDec);
         menuFollow->addAction(actFlwStruct);
         menuFollow->addAction(actFlwEnum);
-        menuFollow->addAction(actFlwTypedef);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwBasicBlock);
         menuFollow->addSeparator();
         menuFollow->addAction(actFlwPubLabel);
         menuFollow->addAction(actFlwProtLabel);
@@ -1320,8 +1338,6 @@ MainWindow::menuConnect()
         menuFollow->addAction(actFlwTplFns);
         menuFollow->addAction(actFlwTplFnsStatic);
         menuFollow->addAction(actFlwTplFnsCnex);
-        menuFollow->addSeparator();
-        menuFollow->addAction(actFlwBasicBlock);
 
         connect(actCopyInsertToNew, &QAction::triggered,
                 this, &MainWindow::copyInsertToNewValue_triggered);
@@ -1528,7 +1544,8 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsStructDec);
         menuInsert->addAction(actInsStruct);
         menuInsert->addAction(actInsEnum);
-        menuInsert->addAction(actInsTypedef);
+        menuInsert->addSeparator();
+        menuInsert->addAction(actInsBasicBlock);
         menuInsert->addSeparator();
         menuInsert->addAction(actInsPubLabel);
         menuInsert->addAction(actInsProtLabel);
@@ -1551,15 +1568,14 @@ MainWindow::menuConnect()
         menuInsert->addAction(actInsTplFns);
         menuInsert->addAction(actInsTplFnsStatic);
         menuInsert->addAction(actInsTplFnsCnex);
-        menuInsert->addSeparator();
-        menuInsert->addAction(actInsBasicBlock);
 
         menuFollow->addAction(actFlwClassDec);
         menuFollow->addAction(actFlwClass);
         menuFollow->addAction(actFlwStructDec);
         menuFollow->addAction(actFlwStruct);
         menuFollow->addAction(actFlwEnum);
-        menuFollow->addAction(actFlwTypedef);
+        menuFollow->addSeparator();
+        menuFollow->addAction(actFlwBasicBlock);
         menuFollow->addSeparator();
         menuFollow->addAction(actFlwPubLabel);
         menuFollow->addAction(actFlwProtLabel);
@@ -1582,8 +1598,6 @@ MainWindow::menuConnect()
         menuFollow->addAction(actFlwTplFns);
         menuFollow->addAction(actFlwTplFnsStatic);
         menuFollow->addAction(actFlwTplFnsCnex);
-        menuFollow->addSeparator();
-        menuFollow->addAction(actFlwBasicBlock);
 
         connect(actUp, &QAction::triggered,
                 this, &MainWindow::upRowValue_triggered);
@@ -3899,6 +3913,9 @@ MainWindow::init_obj()
     m_wtTplFn = new WtTplFn;
     m_wtCtorFn = new WtCtorFn;
     m_wtTplCtorFn = new WtTplCtorFn;
+    m_wtMyClassDec = new WtMyClassDec;
+    m_wtMyStructDec = new WtMyStructDec;
+    m_wtMyStruct = new WtMyStruct;
 }
 
 void

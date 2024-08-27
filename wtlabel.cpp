@@ -79,7 +79,7 @@ WtLabel::behindCode_textChanged()
 void
 WtLabel::labelValueEdit_editingFinished()
 {
-    if (!m_objPtr)  return;
+    if (!m_objPtr || !m_itemPtr)  return;
 
     m_objPtr->setLabelValue(m_labelValueEdit->text().toUtf8().toStdString());
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));

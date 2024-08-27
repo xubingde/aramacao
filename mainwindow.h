@@ -27,6 +27,9 @@
 #include "wttplfn.h"
 #include "wtctorfn.h"
 #include "wttplctorfn.h"
+#include "wtmyclassdec.h"
+#include "wtmystructdec.h"
+#include "wtmystruct.h"
 
 namespace xu {
 
@@ -277,6 +280,9 @@ private:
     WtTplFn *       m_wtTplFn;
     WtCtorFn *      m_wtCtorFn;
     WtTplCtorFn *   m_wtTplCtorFn;
+    WtMyClassDec *      m_wtMyClassDec;
+    WtMyStructDec *     m_wtMyStructDec;
+    WtMyStruct *    m_wtMyStruct;
 };
 
 template <typename T> inline
