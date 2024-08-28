@@ -2319,21 +2319,70 @@ void
 MainWindow::deleteRowValue_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
-    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
-    void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        Etype const  etp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
-        if (etp == Etype::eFunctions || etp == Etype::eStaticFunctions ||
-                etp == Etype::eConstexprFunctions || etp == Etype::eTplFunctions ||
-                etp == Etype::eTplStaticFunctions || etp == Etype::eTplConstexprFunctions ||
-                etp == Etype::eConstructors || etp == Etype::eTplConstructors ) {
-            if (static_cast<Functions *>(ptr)->getFunctionRef().size() > 0) {
-                return;
-            }
-        }
+        QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
+        Etype const  selfEtp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
+        void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
-        deleteRowValue(index);
+        QStandardItem *  parentItem = selfItem->parent();
+        void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+        switch (selfEtp) {
+        case Etype::eFunctions :
+        case Etype::eStaticFunctions :
+        case Etype::eConstexprFunctions :
+        case Etype::eTplFunctions :
+        case Etype::eTplStaticFunctions :
+        case Etype::eTplConstexprFunctions :
+        case Etype::eConstructors :
+        case Etype::eTplConstructors :
+            if (static_cast<Functions *>(selfPtr)->getFunctionRef().size() == 0) {
+                deleteRowValue(index);
+            }
+            break;
+        case Etype::eClass :
+            {
+                int const  count = parentItem->rowCount();
+                for (int  i = 0; i < count; ++i) {
+                    QStandardItem *  item = parentItem->child(i);
+                    Etype const  etp = static_cast<Etype>(item->data(
+                            Qt::UserRole + 1).toInt());
+                    if (etp == Etype::eClassDeclaration) {
+                        MyClassDec *  ptr = static_cast<MyClassDec *>(item->data(
+                                Qt::UserRole + 2).value<void *>());
+                        std::string const  cName = ptr->getClassName();
+                        if (static_cast<MyClass *>(parentPtr)->getClassName() == cName) {
+                            ptr->setParentClassPtr(nullptr);
+                        }
+                    }
+                }
+                deleteRowValue(index);
+            }
+            break;
+        case Etype::eStruct :
+            {
+                int const  count = parentItem->rowCount();
+                for (int  i = 0; i < count; ++i) {
+                    QStandardItem *  item = parentItem->child(i);
+                    Etype const  etp = static_cast<Etype>(item->data(
+                            Qt::UserRole + 1).toInt());
+                    if (etp == Etype::eStructDeclaration) {
+                        MyStructDec *  ptr = static_cast<MyStructDec *>(item->data(
+                                Qt::UserRole + 2).value<void *>());
+                        std::string const  cName = ptr->getStructName();
+                        if (static_cast<MyStruct *>(parentPtr)->getName() == cName) {
+                            ptr->setParentStructPtr(nullptr);
+                        }
+                    }
+                }
+                deleteRowValue(index);
+            }
+            break;
+        default :
+            deleteRowValue(index);
+            break;
+        }
     }
 }
 

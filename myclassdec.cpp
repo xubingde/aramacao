@@ -113,10 +113,6 @@ void
 MyClassDec::setParentClassPtr(MyClass *  value)
 {
     m_parentClassPtr = value;
-    if (m_parentClassPtr) {
-        m_className = m_parentClassPtr->getClassName();
-        setTreeLabel("CD  " + m_className);
-    }
 }
 
 std::string

@@ -16,15 +16,16 @@ WtMyStructDec::WtMyStructDec(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
         m_itemPtr(nullptr),
-        m_myStructPtr(nullptr),
         m_beforeCode(nullptr),
         m_behindCode(nullptr),
         m_structNameEdit(nullptr)
 {
     m_beforeCode = new CodeEditor;
     new Highlighter(m_beforeCode->document());
+    m_beforeCode->setReadOnly(true);
     m_behindCode = new CodeEditor;
     new Highlighter(m_behindCode->document());
+    m_behindCode->setReadOnly(true);
     m_structNameEdit = new QLineEdit;
 
     connect(m_beforeCode, &CodeEditor::textChanged,
@@ -64,17 +65,33 @@ WtMyStructDec::~WtMyStructDec() noexcept
 void
 WtMyStructDec::beforeCode_textChanged()
 {
-    if (!m_objPtr || !m_itemPtr || !m_myStructPtr)  return;
+    if (!m_objPtr || !m_itemPtr)  return;
 
-    m_myStructPtr->setBeforeDcl(m_beforeCode->toPlainText().toUtf8().toStdString());
+    updatePtr();
+    std::string  before = m_beforeCode->toPlainText().toUtf8().toStdString();
+    MyStruct *  cPtr = m_objPtr->getParentStructPtr();
+    if (cPtr) {
+        cPtr->setBeforeDcl(std::move(before));
+    } else {
+        if (before.size() != 0)  m_beforeCode->clear();
+        m_beforeCode->setReadOnly(true);
+    }
 }
 
 void
 WtMyStructDec::behindCode_textChanged()
 {
-    if (!m_objPtr || !m_itemPtr || !m_myStructPtr)  return;
+    if (!m_objPtr || !m_itemPtr)  return;
 
-    m_myStructPtr->setBehindDcl(m_behindCode->toPlainText().toUtf8().toStdString());
+    updatePtr();
+    std::string  behind = m_behindCode->toPlainText().toUtf8().toStdString();
+    MyStruct *  cPtr = m_objPtr->getParentStructPtr();
+    if (cPtr) {
+        cPtr->setBehindDcl(std::move(behind));
+    } else {
+        if (behind.size() != 0)  m_behindCode->clear();
+        m_behindCode->setReadOnly(true);
+    }
 }
 
 void
@@ -86,25 +103,49 @@ WtMyStructDec::structNameEdit_editingFinished()
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
     m_itemPtr->setData(treeLabel, Qt::EditRole);
 
+    updatePtr();
+    std::string const  uiBefore = m_beforeCode->toPlainText().toUtf8().toStdString();
+    std::string const  uiBehind = m_behindCode->toPlainText().toUtf8().toStdString();
+    MyStruct *  cPtr = m_objPtr->getParentStructPtr();
+    if (cPtr) {
+        std::string const  dataBefore = cPtr->getBeforeDcl();
+        std::string const  dataBehind = cPtr->getBehindDcl();
+        m_beforeCode->setReadOnly(false);
+        m_behindCode->setReadOnly(false);
+        if (uiBefore != dataBefore) {
+            m_beforeCode->setPlainText(QString::fromStdString(dataBefore));
+        }
+        if (uiBehind != dataBehind) {
+            m_behindCode->setPlainText(QString::fromStdString(dataBehind));
+        }
+    } else {
+        if (uiBefore.size() != 0)  m_beforeCode->clear();
+        if (uiBehind.size() != 0)  m_behindCode->clear();
+        m_beforeCode->setReadOnly(true);
+        m_behindCode->setReadOnly(true);
+    }
+}
+
+void
+WtMyStructDec::updatePtr()
+{
+    if (!m_objPtr || !m_itemPtr)  return;
+
     QStandardItem *  parentItem = m_itemPtr->parent();
     int const  count = parentItem->rowCount();
     for (int  i = 0; i < count; ++i) {
         QStandardItem *  item = parentItem->child(i);
         Etype const  etp = static_cast<Etype>(item->data(
                 Qt::UserRole + 1).toInt());
-        if (etp == Etype::eClass) {
+        if (etp == Etype::eStruct) {
             MyStruct *  ptr = static_cast<MyStruct *>(item->data(
                     Qt::UserRole + 2).value<void *>());
             std::string const  cName = ptr->getName();
             if (m_objPtr->getStructName() == cName) {
-                m_myStructPtr = ptr;
-                m_beforeCode->setPlainText(QString::fromStdString(
-                        ptr->getBeforeDcl()));
-                m_behindCode->setPlainText(QString::fromStdString(
-                        ptr->getBehindDcl()));
+                m_objPtr->setParentStructPtr(ptr);
                 break;
             } else {
-                m_myStructPtr = nullptr;
+                m_objPtr->setParentStructPtr(nullptr);
             }
         }
     }
@@ -125,27 +166,28 @@ WtMyStructDec::setObjPtr(MyStructDec *  value)
                 m_objPtr->getStructName()));
         if (!m_itemPtr)  return;
 
-        QStandardItem *  parentItem = m_itemPtr->parent();
-        int const  count = parentItem->rowCount();
-        for (int  i = 0; i < count; ++i) {
-            QStandardItem *  item = parentItem->child(i);
-            Etype const  etp = static_cast<Etype>(item->data(
-                    Qt::UserRole + 1).toInt());
-            if (etp == Etype::eStruct) {
-                MyStruct *  ptr = static_cast<MyStruct *>(item->data(
-                        Qt::UserRole + 2).value<void *>());
-                std::string const  cName = ptr->getName();
-                if (m_objPtr->getStructName() == cName) {
-                    m_myStructPtr = ptr;
-                    m_beforeCode->setPlainText(QString::fromStdString(
-                            ptr->getBeforeDcl()));
-                    m_behindCode->setPlainText(QString::fromStdString(
-                            ptr->getBehindDcl()));
-                    break;
-                } else {
-                    m_myStructPtr = nullptr;
-                }
+        updatePtr();
+        std::string const  uiBefore = m_beforeCode->toPlainText().
+                toUtf8().toStdString();
+        std::string const  uiBehind = m_behindCode->toPlainText().
+                toUtf8().toStdString();
+        MyStruct *  cPtr = m_objPtr->getParentStructPtr();
+        if (cPtr) {
+            std::string const  dataBefore = cPtr->getBeforeDcl();
+            std::string const  dataBehind = cPtr->getBehindDcl();
+            m_beforeCode->setReadOnly(false);
+            m_behindCode->setReadOnly(false);
+            if (uiBefore != dataBefore) {
+                m_beforeCode->setPlainText(QString::fromStdString(dataBefore));
             }
+            if (uiBehind != dataBehind) {
+                m_behindCode->setPlainText(QString::fromStdString(dataBehind));
+            }
+        } else {
+            if (uiBefore.size() != 0)  m_beforeCode->clear();
+            if (uiBehind.size() != 0)  m_behindCode->clear();
+            m_beforeCode->setReadOnly(true);
+            m_behindCode->setReadOnly(true);
         }
     }
 }

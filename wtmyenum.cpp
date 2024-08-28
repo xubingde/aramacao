@@ -152,7 +152,7 @@ WtMyEnum::docmentEdit_textChanged()
 void
 WtMyEnum::enumItemConnect()
 {
-    QAction *  actAddItem = new QAction(tr("Add Enum Item"));
+    QAction *  actAddItem = new QAction(tr("Add New Enum Item"));
     QAction *  actInsertNew = new QAction(tr("Insert New Enum Item"));
     QAction *  actDelete = new QAction(tr("Delete"));
     QAction *  actCopyToNew = new QAction(tr("Copy To New"));

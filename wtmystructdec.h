@@ -39,9 +39,10 @@ protected:
 
 private:
 
+    void  updatePtr();
+
     MyStructDec *   m_objPtr;
     QStandardItem *     m_itemPtr;
-    MyStruct *      m_myStructPtr;
     CodeEditor *    m_beforeCode;
     CodeEditor *    m_behindCode;
     QLineEdit *     m_structNameEdit;

@@ -94,10 +94,6 @@ void
 MyStructDec::setParentStructPtr(MyStruct *  value)
 {
     m_parentStructPtr = value;
-    if (m_parentStructPtr) {
-        m_structName = m_parentStructPtr->getName();
-        setTreeLabel("SD  " + m_structName);
-    }
 }
 
 std::string

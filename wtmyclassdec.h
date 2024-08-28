@@ -39,9 +39,10 @@ protected:
 
 private:
 
+    void  updatePtr();
+
     MyClassDec *    m_objPtr;
     QStandardItem *     m_itemPtr;
-    MyClass *       m_myClassPtr;
     CodeEditor *    m_beforeCode;
     CodeEditor *    m_behindCode;
     QLineEdit *     m_classNameEdit;

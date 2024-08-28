@@ -11,6 +11,7 @@
 #include "twobeforebehind.h"
 #include "fmt.h"
 #include "wtmystruct.h"
+#include "mystructdec.h"
 
 namespace xu {
 
@@ -99,10 +100,10 @@ WtMyStruct::WtMyStruct(QWidget *  parent /* = nullptr */):
     fm1->addRow(label1, m_attribute);
     fm2->addRow(label2, m_alignas);
     fm3->addWidget(m_beforBehindPb);
-    hbox1->setStretch(0, 30);
+    hbox1->setStretch(0, 40);
     hbox1->setStretch(1, 30);
     hbox1->setStretch(2, 15);
-    hbox1->setStretch(3, 25);
+    hbox1->setStretch(3, 15);
 
     QSplitter *  vH = new QSplitter(Qt::Vertical);
     vH->setHandleWidth(1);
@@ -133,6 +134,24 @@ WtMyStruct::structName_editingFinished()
     }
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
     m_itemPtr->setData(treeLabel, Qt::EditRole);
+
+    QStandardItem *  parentItem = m_itemPtr->parent();
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+        QStandardItem *  item = parentItem->child(i);
+        Etype const  etp = static_cast<Etype>(item->data(
+                Qt::UserRole + 1).toInt());
+        if (etp == Etype::eStructDeclaration) {
+            MyStructDec *  ptr = static_cast<MyStructDec *>(item->data(
+                    Qt::UserRole + 2).value<void *>());
+            std::string const  cName = ptr->getStructName();
+            if (newVal == cName) {
+                ptr->setParentStructPtr(m_objPtr);
+            } else {
+                ptr->setParentStructPtr(nullptr);
+            }
+        }
+    }
 }
 
 void
@@ -192,7 +211,7 @@ WtMyStruct::docmentEdit_textChanged()
 void
 WtMyStruct::structItemConnect()
 {
-    QAction *  actAddItem = new QAction(tr("Add Struct Item"));
+    QAction *  actAddItem = new QAction(tr("Add New Struct Item"));
     QAction *  actInsertNew = new QAction(tr("Insert New Struct Item"));
     QAction *  actDelete = new QAction(tr("Delete"));
     QAction *  actCopyToNew = new QAction(tr("Copy To New"));
@@ -253,11 +272,7 @@ WtMyStruct::structItem_AddItem_triggered()
 {
     if (!m_objPtr)  return;
 
-    std::vector<Field>  rawDataVec = m_objPtr->getField();
     Field  newData;
-    rawDataVec.push_back(std::move(newData));
-    m_objPtr->setField(std::move(rawDataVec));
-
     QList<QStandardItem *>  items;
     QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
             newData.getFieldName()));
@@ -272,6 +287,11 @@ WtMyStruct::structItem_AddItem_triggered()
     QStandardItem *  item5 = new QStandardItem(QString::fromStdString(
             newData.getAttribute()));
     items << item0 << item1 << item2 << item3 << item4 << item5;
+
+    std::vector<Field>  rawDataVec = m_objPtr->getField();
+    rawDataVec.push_back(std::move(newData));
+    m_objPtr->setField(std::move(rawDataVec));
+
     m_structItemModel->appendRow(items);
 }
 
@@ -283,7 +303,6 @@ WtMyStruct::structItem_InsertNew_triggered()
     QModelIndex const  index = m_structItemView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        auto  rawDataVec = m_objPtr->getField();
         Field  newData;
         QList<QStandardItem *>  items;
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
@@ -300,8 +319,10 @@ WtMyStruct::structItem_InsertNew_triggered()
                 newData.getAttribute()));
         items << item0 << item1 << item2 << item3 << item4 << item5;
 
+        auto  rawDataVec = m_objPtr->getField();
         rawDataVec.insert(rawDataVec.begin() + row, std::move(newData));
         m_objPtr->setField(std::move(rawDataVec));
+
         m_structItemModel->insertRow(row, items);
     } else {
         structItem_AddItem_triggered();

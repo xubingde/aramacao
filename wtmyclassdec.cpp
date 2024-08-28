@@ -16,15 +16,16 @@ WtMyClassDec::WtMyClassDec(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
         m_itemPtr(nullptr),
-        m_myClassPtr(nullptr),
         m_beforeCode(nullptr),
         m_behindCode(nullptr),
         m_classNameEdit(nullptr)
 {
     m_beforeCode = new CodeEditor;
     new Highlighter(m_beforeCode->document());
+    m_beforeCode->setReadOnly(true);
     m_behindCode = new CodeEditor;
     new Highlighter(m_behindCode->document());
+    m_behindCode->setReadOnly(true);
     m_classNameEdit = new QLineEdit;
 
     connect(m_beforeCode, &CodeEditor::textChanged,
@@ -64,17 +65,33 @@ WtMyClassDec::~WtMyClassDec() noexcept
 void
 WtMyClassDec::beforeCode_textChanged()
 {
-    if (!m_objPtr || !m_itemPtr || !m_myClassPtr)  return;
+    if (!m_objPtr || !m_itemPtr)  return;
 
-    m_myClassPtr->setBeforeDcl(m_beforeCode->toPlainText().toUtf8().toStdString());
+    updatePtr();
+    std::string  before = m_beforeCode->toPlainText().toUtf8().toStdString();
+    MyClass *  cPtr = m_objPtr->getParentClassPtr();
+    if (cPtr) {
+        cPtr->setBeforeDcl(std::move(before));
+    } else {
+        if (before.size() != 0)  m_beforeCode->clear();
+        m_beforeCode->setReadOnly(true);
+    }
 }
 
 void
 WtMyClassDec::behindCode_textChanged()
 {
-    if (!m_objPtr || !m_itemPtr || !m_myClassPtr)  return;
+    if (!m_objPtr || !m_itemPtr)  return;
 
-    m_myClassPtr->setBehindDcl(m_behindCode->toPlainText().toUtf8().toStdString());
+    updatePtr();
+    std::string  behind = m_behindCode->toPlainText().toUtf8().toStdString();
+    MyClass *  cPtr = m_objPtr->getParentClassPtr();
+    if (cPtr) {
+        cPtr->setBehindDcl(std::move(behind));
+    } else {
+        if (behind.size() != 0)  m_behindCode->clear();
+        m_behindCode->setReadOnly(true);
+    }
 }
 
 void
@@ -85,6 +102,34 @@ WtMyClassDec::classNameEdit_editingFinished()
     m_objPtr->setClassName(m_classNameEdit->text().toUtf8().toStdString());
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
     m_itemPtr->setData(treeLabel, Qt::EditRole);
+
+    updatePtr();
+    std::string const  uiBefore = m_beforeCode->toPlainText().toUtf8().toStdString();
+    std::string const  uiBehind = m_behindCode->toPlainText().toUtf8().toStdString();
+    MyClass *  cPtr = m_objPtr->getParentClassPtr();
+    if (cPtr) {
+        std::string const  dataBefore = cPtr->getBeforeDcl();
+        std::string const  dataBehind = cPtr->getBehindDcl();
+        m_beforeCode->setReadOnly(false);
+        m_behindCode->setReadOnly(false);
+        if (uiBefore != dataBefore) {
+            m_beforeCode->setPlainText(QString::fromStdString(dataBefore));
+        }
+        if (uiBehind != dataBehind) {
+            m_behindCode->setPlainText(QString::fromStdString(dataBehind));
+        }
+    } else {
+        if (uiBefore.size() != 0)  m_beforeCode->clear();
+        if (uiBehind.size() != 0)  m_behindCode->clear();
+        m_beforeCode->setReadOnly(true);
+        m_behindCode->setReadOnly(true);
+    }
+}
+
+void
+WtMyClassDec::updatePtr()
+{
+    if (!m_objPtr || !m_itemPtr)  return;
 
     QStandardItem *  parentItem = m_itemPtr->parent();
     int const  count = parentItem->rowCount();
@@ -97,14 +142,10 @@ WtMyClassDec::classNameEdit_editingFinished()
                     Qt::UserRole + 2).value<void *>());
             std::string const  cName = ptr->getClassName();
             if (m_objPtr->getClassName() == cName) {
-                m_myClassPtr = ptr;
-                m_beforeCode->setPlainText(QString::fromStdString(
-                        ptr->getBeforeDcl()));
-                m_behindCode->setPlainText(QString::fromStdString(
-                        ptr->getBehindDcl()));
+                m_objPtr->setParentClassPtr(ptr);
                 break;
             } else {
-                m_myClassPtr = nullptr;
+                m_objPtr->setParentClassPtr(nullptr);
             }
         }
     }
@@ -125,27 +166,28 @@ WtMyClassDec::setObjPtr(MyClassDec *  value)
                 m_objPtr->getClassName()));
         if (!m_itemPtr)  return;
 
-        QStandardItem *  parentItem = m_itemPtr->parent();
-        int const  count = parentItem->rowCount();
-        for (int  i = 0; i < count; ++i) {
-            QStandardItem *  item = parentItem->child(i);
-            Etype const  etp = static_cast<Etype>(item->data(
-                    Qt::UserRole + 1).toInt());
-            if (etp == Etype::eClass) {
-                MyClass *  ptr = static_cast<MyClass *>(item->data(
-                        Qt::UserRole + 2).value<void *>());
-                std::string const  cName = ptr->getClassName();
-                if (m_objPtr->getClassName() == cName) {
-                    m_myClassPtr = ptr;
-                    m_beforeCode->setPlainText(QString::fromStdString(
-                            ptr->getBeforeDcl()));
-                    m_behindCode->setPlainText(QString::fromStdString(
-                            ptr->getBehindDcl()));
-                    break;
-                } else {
-                    m_myClassPtr = nullptr;
-                }
+        updatePtr();
+        std::string const  uiBefore = m_beforeCode->toPlainText().
+                toUtf8().toStdString();
+        std::string const  uiBehind = m_behindCode->toPlainText().
+                toUtf8().toStdString();
+        MyClass *  cPtr = m_objPtr->getParentClassPtr();
+        if (cPtr) {
+            std::string const  dataBefore = cPtr->getBeforeDcl();
+            std::string const  dataBehind = cPtr->getBehindDcl();
+            m_beforeCode->setReadOnly(false);
+            m_behindCode->setReadOnly(false);
+            if (uiBefore != dataBefore) {
+                m_beforeCode->setPlainText(QString::fromStdString(dataBefore));
             }
+            if (uiBehind != dataBehind) {
+                m_behindCode->setPlainText(QString::fromStdString(dataBehind));
+            }
+        } else {
+            if (uiBefore.size() != 0)  m_beforeCode->clear();
+            if (uiBehind.size() != 0)  m_behindCode->clear();
+            m_beforeCode->setReadOnly(true);
+            m_behindCode->setReadOnly(true);
         }
     }
 }
