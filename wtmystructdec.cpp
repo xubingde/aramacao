@@ -15,7 +15,6 @@ namespace xu {
 WtMyStructDec::WtMyStructDec(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
         m_beforeCode(nullptr),
         m_behindCode(nullptr),
         m_structNameEdit(nullptr)
@@ -65,7 +64,8 @@ WtMyStructDec::~WtMyStructDec() noexcept
 void
 WtMyStructDec::beforeCode_textChanged()
 {
-    if (!m_objPtr || !m_itemPtr)  return;
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
 
     updatePtr();
     std::string  before = m_beforeCode->toPlainText().toUtf8().toStdString();
@@ -81,7 +81,8 @@ WtMyStructDec::beforeCode_textChanged()
 void
 WtMyStructDec::behindCode_textChanged()
 {
-    if (!m_objPtr || !m_itemPtr)  return;
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
 
     updatePtr();
     std::string  behind = m_behindCode->toPlainText().toUtf8().toStdString();
@@ -97,11 +98,12 @@ WtMyStructDec::behindCode_textChanged()
 void
 WtMyStructDec::structNameEdit_editingFinished()
 {
-    if (!m_objPtr || !m_itemPtr)  return;
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
 
     m_objPtr->setStructName(m_structNameEdit->text().toUtf8().toStdString());
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    itemPtr->setData(treeLabel, Qt::EditRole);
 
     updatePtr();
     std::string const  uiBefore = m_beforeCode->toPlainText().toUtf8().toStdString();
@@ -129,9 +131,10 @@ WtMyStructDec::structNameEdit_editingFinished()
 void
 WtMyStructDec::updatePtr()
 {
-    if (!m_objPtr || !m_itemPtr)  return;
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
 
-    QStandardItem *  parentItem = m_itemPtr->parent();
+    QStandardItem *  parentItem = itemPtr->parent();
     int const  count = parentItem->rowCount();
     for (int  i = 0; i < count; ++i) {
         QStandardItem *  item = parentItem->child(i);
@@ -164,7 +167,6 @@ WtMyStructDec::setObjPtr(MyStructDec *  value)
     if (m_objPtr) {
         m_structNameEdit->setText(QString::fromStdString(
                 m_objPtr->getStructName()));
-        if (!m_itemPtr)  return;
 
         updatePtr();
         std::string const  uiBefore = m_beforeCode->toPlainText().
@@ -190,18 +192,6 @@ WtMyStructDec::setObjPtr(MyStructDec *  value)
             m_behindCode->setReadOnly(true);
         }
     }
-}
-
-QStandardItem *
-WtMyStructDec::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtMyStructDec::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
 }
 
 }

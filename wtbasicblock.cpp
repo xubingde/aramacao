@@ -11,7 +11,6 @@ WtBasicBlock::WtBasicBlock(QWidget *  parent /* = nullptr */):
         m_codeEditor(nullptr)
 {
     m_codeEditor = new CodeEditor;
-    m_codeEditor->setReadOnly(true);
     new Highlighter(m_codeEditor->document());
 
     connect(m_codeEditor, &CodeEditor::textChanged,
@@ -45,12 +44,14 @@ void
 WtBasicBlock::setObjPtr(BasicBlock *  value)
 {
     m_objPtr = value;
+    std::string const  uiVal = m_codeEditor->toPlainText().toUtf8().toStdString();
     if (m_objPtr) {
-        m_codeEditor->setReadOnly(false);
-        m_codeEditor->setPlainText(QString::fromStdString(m_objPtr->getSourceCode()));
+        std::string const  dataVal = m_objPtr->getSourceCode();
+        if (uiVal != dataVal) {
+            m_codeEditor->setPlainText(QString::fromStdString(dataVal));
+        }
     } else {
-        m_codeEditor->clear();
-        m_codeEditor->setReadOnly(true);
+        if (uiVal.size() != 0)  m_codeEditor->clear();
     }
 }
 

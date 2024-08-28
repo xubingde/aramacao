@@ -45,9 +45,6 @@ public:
     MyStruct *  getObjPtr() const;
     void  setObjPtr(MyStruct *  value);
 
-    QStandardItem *  getItemPtr() const;
-    void  setItemPtr(QStandardItem *  value);
-
 protected:
 
 private:
@@ -56,7 +53,6 @@ private:
     bool  nameCheckDuplication(std::string const &  fnName);
 
     MyStruct *      m_objPtr;
-    QStandardItem *     m_itemPtr;
     QLineEdit *     m_structName;
     QLineEdit *     m_attribute;
     QLineEdit *     m_alignas;

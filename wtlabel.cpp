@@ -13,7 +13,6 @@ namespace xu {
 WtLabel::WtLabel(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
         m_beforeCode(nullptr),
         m_behindCode(nullptr),
         m_labelValueEdit(nullptr)
@@ -79,11 +78,12 @@ WtLabel::behindCode_textChanged()
 void
 WtLabel::labelValueEdit_editingFinished()
 {
-    if (!m_objPtr || !m_itemPtr)  return;
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
 
     m_objPtr->setLabelValue(m_labelValueEdit->text().toUtf8().toStdString());
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    itemPtr->setData(treeLabel, Qt::EditRole);
 }
 
 Label *
@@ -113,18 +113,6 @@ WtLabel::setObjPtr(Label *  value)
         m_behindCode->setReadOnly(true);
         m_labelValueEdit->setReadOnly(true);
     }
-}
-
-QStandardItem *
-WtLabel::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtLabel::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
 }
 
 }

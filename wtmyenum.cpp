@@ -16,7 +16,6 @@ namespace xu {
 WtMyEnum::WtMyEnum(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
         m_enumName(nullptr),
         m_enumType(nullptr),
         m_beforBehindPb(nullptr),
@@ -102,6 +101,7 @@ WtMyEnum::~WtMyEnum() noexcept
 void
 WtMyEnum::enumName_editingFinished()
 {
+    QStandardItem *  itemPtr = getItemPtr();
     if (!m_objPtr)  return;
 
     std::string const  oldVal = m_objPtr->getName();
@@ -113,7 +113,7 @@ WtMyEnum::enumName_editingFinished()
         m_enumName->setText(QString::fromStdString(newVal));
     }
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    itemPtr->setData(treeLabel, Qt::EditRole);
 }
 
 void
@@ -504,18 +504,6 @@ WtMyEnum::setObjPtr(MyEnum *  value)
         m_docmentEdit->setReadOnly(true);
         m_beforBehindPb->setEnabled(false);
     }
-}
-
-QStandardItem *
-WtMyEnum::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtMyEnum::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
 }
 
 }

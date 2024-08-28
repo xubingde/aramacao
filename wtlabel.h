@@ -30,15 +30,11 @@ public:
     Label *  getObjPtr() const;
     void  setObjPtr(Label *  value);
 
-    QStandardItem *  getItemPtr() const;
-    void  setItemPtr(QStandardItem *  value);
-
 protected:
 
 private:
 
     Label *         m_objPtr;
-    QStandardItem *     m_itemPtr;
     CodeEditor *    m_beforeCode;
     CodeEditor *    m_behindCode;
     QLineEdit *     m_labelValueEdit;

@@ -197,7 +197,7 @@ WtCtorFn::baseClassDefVal_editingFinished()
 {
     if (!m_objPtr)  return;
 
-    m_objPtr->setInhValueFirst(m_attribute->text().toUtf8().toStdString());
+    m_objPtr->setInhValueFirst(m_baseClassDefVal->text().toUtf8().toStdString());
 }
 
 void

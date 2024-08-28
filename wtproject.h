@@ -30,15 +30,11 @@ public:
     Project *  getObjPtr() const;
     void  setObjPtr(Project *  value);
 
-    QStandardItem *  getItemPtr() const;
-    void  setItemPtr(QStandardItem *  value);
-
 protected:
 
 private:
 
     Project *       m_objPtr;
-    QStandardItem *     m_itemPtr;
     QLineEdit *     m_projectName;
     QTextEdit *     m_docmentEdit;
 };

@@ -10,7 +10,6 @@ namespace xu {
 WtProject::WtProject(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
         m_projectName(nullptr),
         m_docmentEdit(nullptr)
 {
@@ -48,11 +47,12 @@ WtProject::~WtProject() noexcept
 void
 WtProject::projectName_editingFinished()
 {
+    QStandardItem *  itemPtr = getItemPtr();
     if (!m_objPtr)  return;
 
     m_objPtr->setProjectName(m_projectName->text().toUtf8().toStdString());
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    itemPtr->setData(treeLabel, Qt::EditRole);
 }
 
 void
@@ -86,18 +86,6 @@ WtProject::setObjPtr(Project *  value)
         m_projectName->setReadOnly(true);
         m_docmentEdit->setReadOnly(true);
     }
-}
-
-QStandardItem *
-WtProject::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtProject::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
 }
 
 }

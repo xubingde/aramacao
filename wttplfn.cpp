@@ -30,7 +30,6 @@ namespace xu {
 WtTplFn::WtTplFn(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
         m_functionName(nullptr),
         m_returnType(nullptr),
         m_attribute(nullptr),
@@ -196,6 +195,7 @@ WtTplFn::functionName_editingFinished()
 {
     if (!m_objPtr)  return;
 
+    QStandardItem *  itemPtr = getItemPtr();
     std::string const  oldVal = m_objPtr->getFunctionName();
     std::string const  currVal = m_functionName->text().toUtf8().toStdString();
     if (oldVal == currVal)  return;
@@ -205,7 +205,7 @@ WtTplFn::functionName_editingFinished()
         m_functionName->setText(QString::fromStdString(newVal));
     }
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    itemPtr->setData(treeLabel, Qt::EditRole);
 }
 
 void
@@ -1164,9 +1164,10 @@ WtTplFn::nameCheckDuplication(std::string const &  fnName)
 void
 WtTplFn::setVisible()
 {
-    if (!m_objPtr || !m_itemPtr)  return;
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
 
-    QStandardItem *  parentItem = m_itemPtr->parent();
+    QStandardItem *  parentItem = itemPtr->parent();
     QStandardItem *  rootItem = parentItem->parent();
     Etype const  parentEtp = static_cast<Etype>(parentItem->data(
             Qt::UserRole + 1).toInt());
@@ -1225,19 +1226,6 @@ WtTplFn::setObjPtr(Function *  value)
 
         setVisible();
     }
-}
-
-QStandardItem *
-WtTplFn::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtTplFn::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
-    setVisible();
 }
 
 }

@@ -32,9 +32,6 @@ public:
     MyStructDec *  getObjPtr() const;
     void  setObjPtr(MyStructDec *  value);
 
-    QStandardItem *  getItemPtr() const;
-    void  setItemPtr(QStandardItem *  value);
-
 protected:
 
 private:
@@ -42,7 +39,6 @@ private:
     void  updatePtr();
 
     MyStructDec *   m_objPtr;
-    QStandardItem *     m_itemPtr;
     CodeEditor *    m_beforeCode;
     CodeEditor *    m_behindCode;
     QLineEdit *     m_structNameEdit;

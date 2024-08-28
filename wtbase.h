@@ -4,6 +4,7 @@
 #define XU_WTBASE_H_
 
 #include <QAbstractScrollArea>
+#include <QStandardItem>
 
 namespace xu {
 
@@ -19,9 +20,14 @@ public:
     WtBase(QWidget *  parent = nullptr);
     virtual ~WtBase() noexcept;
 
+    QStandardItem *  getItemPtr() const;
+    void  setItemPtr(QStandardItem *  value);
+
 protected:
 
 private:
+
+    QStandardItem *     m_itemPtr;
 };
 
 }

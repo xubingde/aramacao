@@ -66,9 +66,6 @@ public:
     Function *  getObjPtr() const;
     void  setObjPtr(Function *  value);
 
-    QStandardItem *  getItemPtr() const;
-    void  setItemPtr(QStandardItem *  value);
-
 protected:
 
 private:
@@ -79,7 +76,6 @@ private:
     void  setVisible();
 
     Function *      m_objPtr;
-    QStandardItem *     m_itemPtr;
     QLineEdit *     m_functionName;
     QLineEdit *     m_returnType;
     QLineEdit *     m_attribute;

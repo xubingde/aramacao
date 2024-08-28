@@ -146,6 +146,7 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
 
     switch (selfEtp) {
     case Etype::eBasicBlock :
+        m_wtBasicBlock->setItemPtr(selfItem);
         m_wtBasicBlock->setObjPtr(static_cast<BasicBlock *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtBasicBlock) {
             m_spvMain->replaceWidget(1, m_wtBasicBlock);
@@ -180,18 +181,21 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         }
         break;
     case Etype::ePublicLabel :
+        m_wtPublicLabel->setItemPtr(selfItem);
         m_wtPublicLabel->setObjPtr(static_cast<PublicLabel *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtPublicLabel) {
             m_spvMain->replaceWidget(1, m_wtPublicLabel);
         }
         break;
     case Etype::eProtectedLabel :
+        m_wtProtectedLabel->setItemPtr(selfItem);
         m_wtProtectedLabel->setObjPtr(static_cast<ProtectedLabel *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtProtectedLabel) {
             m_spvMain->replaceWidget(1, m_wtProtectedLabel);
         }
         break;
     case Etype::ePrivateLabel :
+        m_wtPrivateLabel->setItemPtr(selfItem);
         m_wtPrivateLabel->setObjPtr(static_cast<PrivateLabel *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtPrivateLabel) {
             m_spvMain->replaceWidget(1, m_wtPrivateLabel);
@@ -232,12 +236,14 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
             }
             break;
         case Etype::eConstructors :
+            m_wtCtorFn->setItemPtr(selfItem);
             m_wtCtorFn->setObjPtr(static_cast<Function *>(selfPtr));
             if (m_spvMain->widget(1) != m_wtCtorFn) {
                 m_spvMain->replaceWidget(1, m_wtCtorFn);
             }
             break;
         case Etype::eTplConstructors :
+            m_wtTplCtorFn->setItemPtr(selfItem);
             m_wtTplCtorFn->setObjPtr(static_cast<Function *>(selfPtr));
             if (m_spvMain->widget(1) != m_wtTplCtorFn) {
                 m_spvMain->replaceWidget(1, m_wtTplCtorFn);

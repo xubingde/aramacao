@@ -44,9 +44,6 @@ public:
     MyEnum *  getObjPtr() const;
     void  setObjPtr(MyEnum *  value);
 
-    QStandardItem *  getItemPtr() const;
-    void  setItemPtr(QStandardItem *  value);
-
 protected:
 
 private:
@@ -55,7 +52,6 @@ private:
     bool  nameCheckDuplication(std::string const &  fnName);
 
     MyEnum *        m_objPtr;
-    QStandardItem *     m_itemPtr;
     QLineEdit *     m_enumName;
     QLineEdit *     m_enumType;
     QPushButton *   m_beforBehindPb;

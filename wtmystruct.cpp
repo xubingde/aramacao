@@ -18,7 +18,6 @@ namespace xu {
 WtMyStruct::WtMyStruct(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
-        m_itemPtr(nullptr),
         m_structName(nullptr),
         m_attribute(nullptr),
         m_alignas(),
@@ -122,6 +121,7 @@ WtMyStruct::~WtMyStruct() noexcept
 void
 WtMyStruct::structName_editingFinished()
 {
+    QStandardItem *  itemPtr = getItemPtr();
     if (!m_objPtr)  return;
 
     std::string const  oldVal = m_objPtr->getName();
@@ -133,9 +133,9 @@ WtMyStruct::structName_editingFinished()
         m_structName->setText(QString::fromStdString(newVal));
     }
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
-    m_itemPtr->setData(treeLabel, Qt::EditRole);
+    itemPtr->setData(treeLabel, Qt::EditRole);
 
-    QStandardItem *  parentItem = m_itemPtr->parent();
+    QStandardItem *  parentItem = itemPtr->parent();
     int const  count = parentItem->rowCount();
     for (int  i = 0; i < count; ++i) {
         QStandardItem *  item = parentItem->child(i);
@@ -610,18 +610,6 @@ WtMyStruct::setObjPtr(MyStruct *  value)
         m_docmentEdit->setText(QString::fromStdString(m_objPtr->getDocment()));
         repStructItem();
     }
-}
-
-QStandardItem *
-WtMyStruct::getItemPtr() const
-{
-    return m_itemPtr;
-}
-
-void
-WtMyStruct::setItemPtr(QStandardItem *  value)
-{
-    m_itemPtr = value;
 }
 
 }
