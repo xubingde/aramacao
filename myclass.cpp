@@ -43,7 +43,7 @@ MyClass::MyClass():
         m_styleField(),
         m_IDField(),
         m_serzField(),
-        m_className("MyClass"),
+        m_className("MyClass1"),
         m_replaceClassName(),
         m_docment(),
         m_testCode(),

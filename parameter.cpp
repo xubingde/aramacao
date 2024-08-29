@@ -7,7 +7,7 @@ namespace xu {
 
 Parameter::Parameter():
         m_type("int"),
-        m_parameterName("value"),
+        m_parameterName("v__value"),
         m_defalutValue(),
         m_docment()
 {

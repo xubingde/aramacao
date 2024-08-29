@@ -1002,7 +1002,7 @@ MainWindow::menuConnect()
         menuFollow->addAction(actFlwTplFnsCnex);
 
         connect(actAddFn, &QAction::triggered,
-                this, &MainWindow::fnsAddNewFn_triggered);
+                this, &MainWindow::addNewFunctionChild_triggered);
         connect(actDelete, &QAction::triggered,
                 this, &MainWindow::deleteRowValue_triggered);
         connect(actUp, &QAction::triggered,
@@ -1175,7 +1175,7 @@ MainWindow::menuConnect()
         m_fnMenu->addAction(actDeleteFn);
 
         connect(actAddNewFn, &QAction::triggered,
-                this, &MainWindow::addNewFunctionTail_triggered);
+                this, &MainWindow::addNewFunctionInsertEnd_triggered);
         connect(actInsertNewFn, &QAction::triggered,
                 this, &MainWindow::addNewFunctionInsert_triggered);
         connect(actFollowNewFn, &QAction::triggered,
@@ -1185,7 +1185,7 @@ MainWindow::menuConnect()
         connect(actCopyFnToNew, &QAction::triggered,
                 this, &MainWindow::addCopyFunctionFollow_triggered);
         connect(actCopyFnToNewEnd, &QAction::triggered,
-                this, &MainWindow::addCopyFunctionTail_triggered);
+                this, &MainWindow::addCopyFunctionInsertEnd_triggered);
 
         connect(actDeleteFn, &QAction::triggered,
                 this, &MainWindow::deleteRowFunction_triggered);
@@ -1836,7 +1836,7 @@ MainWindow::addModuleProject_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
     if (index.isValid()) {
-        insertModule(index, AddMethod::child, false);
+        insertModule(index, AddMethod::childAdd, false);
     }
 }
 
@@ -1849,7 +1849,7 @@ MainWindow::addModule_triggered()
     QModelIndex const  parentIndex = m_mainTreeModel->indexFromItem(parentItem);
 
     if (parentIndex.isValid()) {
-        insertModule(parentIndex, AddMethod::child, false);
+        insertModule(parentIndex, AddMethod::childAdd, false);
     }
 }
 
@@ -2004,8 +2004,10 @@ void
 MainWindow::addNewBasicBlockChild_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
+
     if (index.isValid()) {
-        insertBasicBlock(index, AddMethod::child, false);
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eBasicBlock, BasicBlock());
     }
 }
 
@@ -2013,8 +2015,10 @@ void
 MainWindow::addNewBasicBlockInsert_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
+
     if (index.isValid()) {
-        insertBasicBlock(index, AddMethod::insert, false);
+        insertValue(index, AddMethod::insert,
+                Etype::eBasicBlock, BasicBlock());
     }
 }
 
@@ -2022,8 +2026,10 @@ void
 MainWindow::addNewBasicBlockFollow_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
+
     if (index.isValid()) {
-        insertBasicBlock(index, AddMethod::follow, false);
+        insertValue(index, AddMethod::follow,
+                Etype::eBasicBlock, BasicBlock());
     }
 }
 
@@ -2035,8 +2041,8 @@ MainWindow::addCopyBasicBlockInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertBasicBlock(index, AddMethod::insert, true,
-                *static_cast<BasicBlock *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eBasicBlock, *static_cast<BasicBlock *>(ptr));
     }
 }
 
@@ -2048,8 +2054,8 @@ MainWindow::addCopyBasicBlockFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertBasicBlock(index, AddMethod::follow, true,
-                *static_cast<BasicBlock *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eBasicBlock, *static_cast<BasicBlock *>(ptr));
     }
 }
 
@@ -2062,7 +2068,8 @@ MainWindow::addNewLabelChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eLabel, AddMethod::child, false, Label());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eLabel, Label());
     }
 }
 
@@ -2076,7 +2083,8 @@ MainWindow::addNewLabelInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eLabel, AddMethod::insert, false, Label());
+        insertValue(index, AddMethod::insert,
+                Etype::eLabel, Label());
     }
 }
 
@@ -2090,7 +2098,8 @@ MainWindow::addNewLabelFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eLabel, AddMethod::follow, false, Label());
+        insertValue(index, AddMethod::follow,
+                Etype::eLabel, Label());
     }
 }
 
@@ -2102,8 +2111,8 @@ MainWindow::addCopyLabelInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eLabel, AddMethod::insert, true,
-                *static_cast<Label *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eLabel, *static_cast<Label *>(ptr));
     }
 }
 
@@ -2115,8 +2124,8 @@ MainWindow::addCopyLabelFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eLabel, AddMethod::follow, true,
-                *static_cast<Label *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eLabel, *static_cast<Label *>(ptr));
     }
 }
 
@@ -2129,7 +2138,8 @@ MainWindow::addNewPublicLabelChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePublicLabel, AddMethod::child, false, PublicLabel());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::ePublicLabel, PublicLabel());
     }
 }
 
@@ -2143,7 +2153,8 @@ MainWindow::addNewPublicLabelInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePublicLabel, AddMethod::insert, false, PublicLabel());
+        insertValue(index, AddMethod::insert,
+                Etype::ePublicLabel, PublicLabel());
     }
 }
 
@@ -2157,7 +2168,8 @@ MainWindow::addNewPublicLabelFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePublicLabel, AddMethod::follow, false, PublicLabel());
+        insertValue(index, AddMethod::follow,
+                Etype::ePublicLabel, PublicLabel());
     }
 }
 
@@ -2169,8 +2181,8 @@ MainWindow::addCopyPublicLabelInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePublicLabel, AddMethod::insert, true,
-                *static_cast<PublicLabel *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::ePublicLabel, *static_cast<PublicLabel *>(ptr));
     }
 }
 
@@ -2182,8 +2194,8 @@ MainWindow::addCopyPublicLabelFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePublicLabel, AddMethod::follow, true,
-                *static_cast<PublicLabel *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::ePublicLabel, *static_cast<PublicLabel *>(ptr));
     }
 }
 
@@ -2196,7 +2208,8 @@ MainWindow::addNewProtectedLabelChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eProtectedLabel, AddMethod::child, false, ProtectedLabel());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eProtectedLabel, ProtectedLabel());
     }
 }
 
@@ -2210,7 +2223,8 @@ MainWindow::addNewProtectedLabelInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eProtectedLabel, AddMethod::insert, false, ProtectedLabel());
+        insertValue(index, AddMethod::insert,
+                Etype::eProtectedLabel, ProtectedLabel());
     }
 }
 
@@ -2224,7 +2238,8 @@ MainWindow::addNewProtectedLabelFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eProtectedLabel, AddMethod::follow, false, ProtectedLabel());
+        insertValue(index, AddMethod::follow,
+                Etype::eProtectedLabel, ProtectedLabel());
     }
 }
 
@@ -2236,8 +2251,8 @@ MainWindow::addCopyProtectedLabelInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eProtectedLabel, AddMethod::insert, true,
-                *static_cast<ProtectedLabel *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eProtectedLabel, *static_cast<ProtectedLabel *>(ptr));
     }
 }
 
@@ -2249,8 +2264,8 @@ MainWindow::addCopyProtectedLabelFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eProtectedLabel, AddMethod::follow, true,
-                *static_cast<ProtectedLabel *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eProtectedLabel, *static_cast<ProtectedLabel *>(ptr));
     }
 }
 
@@ -2263,7 +2278,8 @@ MainWindow::addNewPrivateLabelChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePrivateLabel, AddMethod::child, false, PrivateLabel());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::ePrivateLabel, PrivateLabel());
     }
 }
 
@@ -2277,7 +2293,8 @@ MainWindow::addNewPrivateLabelInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePrivateLabel, AddMethod::insert, false, PrivateLabel());
+        insertValue(index, AddMethod::insert,
+                Etype::ePrivateLabel, PrivateLabel());
     }
 }
 
@@ -2291,7 +2308,8 @@ MainWindow::addNewPrivateLabelFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePrivateLabel, AddMethod::follow, false, PrivateLabel());
+        insertValue(index, AddMethod::follow,
+                Etype::ePrivateLabel, PrivateLabel());
     }
 }
 
@@ -2303,8 +2321,8 @@ MainWindow::addCopyPrivateLabelInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePrivateLabel, AddMethod::insert, true,
-                *static_cast<PrivateLabel *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::ePrivateLabel, *static_cast<PrivateLabel *>(ptr));
     }
 }
 
@@ -2316,8 +2334,8 @@ MainWindow::addCopyPrivateLabelFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::ePrivateLabel, AddMethod::follow, true,
-                *static_cast<PrivateLabel *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::ePrivateLabel, *static_cast<PrivateLabel *>(ptr));
     }
 }
 
@@ -2358,7 +2376,7 @@ MainWindow::deleteRowValue_triggered()
                         MyClassDec *  ptr = static_cast<MyClassDec *>(item->data(
                                 Qt::UserRole + 2).value<void *>());
                         std::string const  cName = ptr->getClassName();
-                        if (static_cast<MyClass *>(parentPtr)->getClassName() == cName) {
+                        if (static_cast<MyClass *>(selfPtr)->getClassName() == cName) {
                             ptr->setParentClassPtr(nullptr);
                         }
                     }
@@ -2377,7 +2395,7 @@ MainWindow::deleteRowValue_triggered()
                         MyStructDec *  ptr = static_cast<MyStructDec *>(item->data(
                                 Qt::UserRole + 2).value<void *>());
                         std::string const  cName = ptr->getStructName();
-                        if (static_cast<MyStruct *>(parentPtr)->getName() == cName) {
+                        if (static_cast<MyStruct *>(selfPtr)->getName() == cName) {
                             ptr->setParentStructPtr(nullptr);
                         }
                     }
@@ -2520,7 +2538,8 @@ MainWindow::addNewClassChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClass, AddMethod::child, false, MyClass());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eClass, MyClass());
     }
 }
 
@@ -2530,7 +2549,8 @@ MainWindow::addNewClassInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClass, AddMethod::insert, false, MyClass());
+        insertValue(index, AddMethod::insert,
+                Etype::eClass, MyClass());
     }
 }
 
@@ -2540,7 +2560,8 @@ MainWindow::addNewClassFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClass, AddMethod::follow, false, MyClass());
+        insertValue(index, AddMethod::follow,
+                Etype::eClass, MyClass());
     }
 }
 
@@ -2552,8 +2573,8 @@ MainWindow::addCopyClassInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClass, AddMethod::insert, true,
-                *static_cast<MyClass *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eClass, *static_cast<MyClass *>(ptr));
     }
 }
 
@@ -2565,8 +2586,8 @@ MainWindow::addCopyClassFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClass, AddMethod::follow, true,
-                *static_cast<MyClass *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eClass, *static_cast<MyClass *>(ptr));
     }
 }
 
@@ -2579,8 +2600,8 @@ MainWindow::addNewCtorsChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstructors, AddMethod::child,
-                false, Constructors());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eConstructors, Constructors());
     }
 }
 
@@ -2594,8 +2615,8 @@ MainWindow::addNewCtorsInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstructors, AddMethod::insert,
-                false, Constructors());
+        insertValue(index, AddMethod::insert,
+                Etype::eConstructors, Constructors());
     }
 }
 
@@ -2609,8 +2630,8 @@ MainWindow::addNewCtorsFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstructors, AddMethod::follow,
-                false, Constructors());
+        insertValue(index, AddMethod::follow,
+                Etype::eConstructors, Constructors());
     }
 }
 
@@ -2622,8 +2643,8 @@ MainWindow::addCopyCtorsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstructors, AddMethod::insert,
-                true, *static_cast<Constructors *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eConstructors, *static_cast<Constructors *>(ptr));
     }
 }
 
@@ -2635,8 +2656,8 @@ MainWindow::addCopyCtorsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstructors, AddMethod::follow,
-                true, *static_cast<Constructors *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eConstructors, *static_cast<Constructors *>(ptr));
     }
 }
 
@@ -2649,8 +2670,8 @@ MainWindow::addNewTplCtorsChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstructors, AddMethod::child,
-                false, TplConstructors());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eTplConstructors, TplConstructors());
     }
 }
 
@@ -2664,8 +2685,8 @@ MainWindow::addNewTplCtorsInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstructors, AddMethod::insert,
-                false, TplConstructors());
+        insertValue(index, AddMethod::insert,
+                Etype::eTplConstructors, TplConstructors());
     }
 }
 
@@ -2679,8 +2700,8 @@ MainWindow::addNewTplCtorsFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstructors, AddMethod::follow,
-                false, TplConstructors());
+        insertValue(index, AddMethod::follow,
+                Etype::eTplConstructors, TplConstructors());
     }
 }
 
@@ -2692,8 +2713,8 @@ MainWindow::addCopyTplCtorsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstructors, AddMethod::insert,
-                true, *static_cast<TplConstructors *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eTplConstructors, *static_cast<TplConstructors *>(ptr));
     }
 }
 
@@ -2705,8 +2726,8 @@ MainWindow::addCopyTplCtorsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstructors, AddMethod::follow,
-                true, *static_cast<TplConstructors *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eTplConstructors, *static_cast<TplConstructors *>(ptr));
     }
 }
 
@@ -2719,8 +2740,8 @@ MainWindow::addNewDefCtorFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDefaultConstructorFn, AddMethod::child,
-                false, DefaultConstructorFn());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eDefaultConstructorFn, DefaultConstructorFn());
     }
 }
 
@@ -2734,8 +2755,8 @@ MainWindow::addNewDefCtorFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDefaultConstructorFn, AddMethod::insert,
-                false, DefaultConstructorFn());
+        insertValue(index, AddMethod::insert,
+                Etype::eDefaultConstructorFn, DefaultConstructorFn());
     }
 }
 
@@ -2749,8 +2770,8 @@ MainWindow::addNewDefCtorFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDefaultConstructorFn, AddMethod::follow,
-                false, DefaultConstructorFn());
+        insertValue(index, AddMethod::follow,
+                Etype::eDefaultConstructorFn, DefaultConstructorFn());
     }
 }
 
@@ -2762,8 +2783,8 @@ MainWindow::addCopyDefCtorFnInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDefaultConstructorFn, AddMethod::insert,
-                true, *static_cast<DefaultConstructorFn *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eDefaultConstructorFn, *static_cast<DefaultConstructorFn *>(ptr));
     }
 }
 
@@ -2775,8 +2796,8 @@ MainWindow::addCopyDefCtorFnFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDefaultConstructorFn, AddMethod::follow,
-                true, *static_cast<DefaultConstructorFn *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eDefaultConstructorFn, *static_cast<DefaultConstructorFn *>(ptr));
     }
 }
 
@@ -2789,8 +2810,8 @@ MainWindow::addNewCopyCtorFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyConstructorFn, AddMethod::child,
-                false, CopyConstructorFn());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eCopyConstructorFn, CopyConstructorFn());
     }
 }
 
@@ -2804,8 +2825,8 @@ MainWindow::addNewCopyCtorFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyConstructorFn, AddMethod::insert,
-                false, CopyConstructorFn());
+        insertValue(index, AddMethod::insert,
+                Etype::eCopyConstructorFn, CopyConstructorFn());
     }
 }
 
@@ -2819,8 +2840,8 @@ MainWindow::addNewCopyCtorFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyConstructorFn, AddMethod::follow,
-                false, CopyConstructorFn());
+        insertValue(index, AddMethod::follow,
+                Etype::eCopyConstructorFn, CopyConstructorFn());
     }
 }
 
@@ -2832,8 +2853,8 @@ MainWindow::addCopyCopyCtorFnInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyConstructorFn, AddMethod::insert,
-                true, *static_cast<CopyConstructorFn *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eCopyConstructorFn, *static_cast<CopyConstructorFn *>(ptr));
     }
 }
 
@@ -2845,8 +2866,8 @@ MainWindow::addCopyCopyCtorFnFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyConstructorFn, AddMethod::follow,
-                true, *static_cast<CopyConstructorFn *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eCopyConstructorFn, *static_cast<CopyConstructorFn *>(ptr));
     }
 }
 
@@ -2859,8 +2880,8 @@ MainWindow::addNewMoveCtorFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveConstructorFn, AddMethod::child,
-                false, MoveConstructorFn());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eMoveConstructorFn, MoveConstructorFn());
     }
 }
 
@@ -2874,8 +2895,8 @@ MainWindow::addNewMoveCtorFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveConstructorFn, AddMethod::insert,
-                false, MoveConstructorFn());
+        insertValue(index, AddMethod::insert,
+                Etype::eMoveConstructorFn, MoveConstructorFn());
     }
 }
 
@@ -2889,8 +2910,8 @@ MainWindow::addNewMoveCtorFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveConstructorFn, AddMethod::follow,
-                false, MoveConstructorFn());
+        insertValue(index, AddMethod::follow,
+                Etype::eMoveConstructorFn, MoveConstructorFn());
     }
 }
 
@@ -2902,8 +2923,8 @@ MainWindow::addCopyMoveCtorFnInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveConstructorFn, AddMethod::insert,
-                true, *static_cast<MoveConstructorFn *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eMoveConstructorFn, *static_cast<MoveConstructorFn *>(ptr));
     }
 }
 
@@ -2915,8 +2936,8 @@ MainWindow::addCopyMoveCtorFnFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveConstructorFn, AddMethod::follow,
-                true, *static_cast<MoveConstructorFn *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eMoveConstructorFn, *static_cast<MoveConstructorFn *>(ptr));
     }
 }
 
@@ -2929,8 +2950,8 @@ MainWindow::addNewDtorFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDestructorFn, AddMethod::child,
-                false, DestructorFn());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eDestructorFn, DestructorFn());
     }
 }
 
@@ -2944,8 +2965,8 @@ MainWindow::addNewDtorFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDestructorFn, AddMethod::insert,
-                false, DestructorFn());
+        insertValue(index, AddMethod::insert,
+                Etype::eDestructorFn, DestructorFn());
     }
 }
 
@@ -2959,8 +2980,8 @@ MainWindow::addNewDtorFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDestructorFn, AddMethod::follow,
-                false, DestructorFn());
+        insertValue(index, AddMethod::follow,
+                Etype::eDestructorFn, DestructorFn());
     }
 }
 
@@ -2972,8 +2993,8 @@ MainWindow::addCopyDtorFnInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDestructorFn, AddMethod::insert,
-                true, *static_cast<DestructorFn *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eDestructorFn, *static_cast<DestructorFn *>(ptr));
     }
 }
 
@@ -2985,8 +3006,8 @@ MainWindow::addCopyDtorFnFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eDestructorFn, AddMethod::follow,
-                true, *static_cast<DestructorFn *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eDestructorFn, *static_cast<DestructorFn *>(ptr));
     }
 }
 
@@ -2999,8 +3020,8 @@ MainWindow::addNewCopyOpEqFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyOperatorEqFn, AddMethod::child,
-                false, CopyOperatorEqFn());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eCopyOperatorEqFn, CopyOperatorEqFn());
     }
 }
 
@@ -3014,8 +3035,8 @@ MainWindow::addNewCopyOpEqFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyOperatorEqFn, AddMethod::insert,
-                false, CopyOperatorEqFn());
+        insertValue(index, AddMethod::insert,
+                Etype::eCopyOperatorEqFn, CopyOperatorEqFn());
     }
 }
 
@@ -3029,8 +3050,8 @@ MainWindow::addNewCopyOpEqFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyOperatorEqFn, AddMethod::follow,
-                false, CopyOperatorEqFn());
+        insertValue(index, AddMethod::follow,
+                Etype::eCopyOperatorEqFn, CopyOperatorEqFn());
     }
 }
 
@@ -3042,8 +3063,8 @@ MainWindow::addCopyCopyOpEqFnInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyOperatorEqFn, AddMethod::insert,
-                true, *static_cast<CopyOperatorEqFn *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eCopyOperatorEqFn, *static_cast<CopyOperatorEqFn *>(ptr));
     }
 }
 
@@ -3055,8 +3076,8 @@ MainWindow::addCopyCopyOpEqFnFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eCopyOperatorEqFn, AddMethod::follow,
-                true, *static_cast<CopyOperatorEqFn *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eCopyOperatorEqFn, *static_cast<CopyOperatorEqFn *>(ptr));
     }
 }
 
@@ -3069,8 +3090,8 @@ MainWindow::addNewMoveOpEqFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveOperatorEqFn, AddMethod::child,
-                false, MoveOperatorEqFn());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eMoveOperatorEqFn, MoveOperatorEqFn());
     }
 }
 
@@ -3084,8 +3105,8 @@ MainWindow::addNewMoveOpEqFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveOperatorEqFn, AddMethod::insert,
-                false, MoveOperatorEqFn());
+        insertValue(index, AddMethod::insert,
+                Etype::eMoveOperatorEqFn, MoveOperatorEqFn());
     }
 }
 
@@ -3099,8 +3120,8 @@ MainWindow::addNewMoveOpEqFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveOperatorEqFn, AddMethod::follow,
-                false, MoveOperatorEqFn());
+        insertValue(index, AddMethod::follow,
+                Etype::eMoveOperatorEqFn, MoveOperatorEqFn());
     }
 }
 
@@ -3112,8 +3133,8 @@ MainWindow::addCopyMoveOpEqFnInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveOperatorEqFn, AddMethod::insert,
-                true, *static_cast<MoveOperatorEqFn *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eMoveOperatorEqFn, *static_cast<MoveOperatorEqFn *>(ptr));
     }
 }
 
@@ -3125,8 +3146,8 @@ MainWindow::addCopyMoveOpEqFnFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eMoveOperatorEqFn, AddMethod::follow,
-                true, *static_cast<MoveOperatorEqFn *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eMoveOperatorEqFn, *static_cast<MoveOperatorEqFn *>(ptr));
     }
 }
 
@@ -3136,8 +3157,8 @@ MainWindow::addNewClassDecChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClassDeclaration, AddMethod::child,
-                false, MyClassDec());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eClassDeclaration, MyClassDec());
     }
 }
 
@@ -3147,8 +3168,8 @@ MainWindow::addNewClassDecInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClassDeclaration, AddMethod::insert,
-                false, MyClassDec());
+        insertValue(index, AddMethod::insert,
+                Etype::eClassDeclaration, MyClassDec());
     }
 }
 
@@ -3158,8 +3179,8 @@ MainWindow::addNewClassDecFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClassDeclaration, AddMethod::follow,
-                false, MyClassDec());
+        insertValue(index, AddMethod::follow,
+                Etype::eClassDeclaration, MyClassDec());
     }
 }
 
@@ -3171,8 +3192,8 @@ MainWindow::addCopyClassDecInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClassDeclaration, AddMethod::insert,
-                true, *static_cast<MyClassDec *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eClassDeclaration, *static_cast<MyClassDec *>(ptr));
     }
 }
 
@@ -3184,8 +3205,8 @@ MainWindow::addCopyClassDecFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eClassDeclaration, AddMethod::follow,
-                true, *static_cast<MyClassDec *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eClassDeclaration, *static_cast<MyClassDec *>(ptr));
     }
 }
 
@@ -3195,8 +3216,8 @@ MainWindow::addNewStructChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStruct, AddMethod::child,
-                false, MyStruct());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eStruct, MyStruct());
     }
 }
 
@@ -3206,8 +3227,8 @@ MainWindow::addNewStructInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStruct, AddMethod::insert,
-                false, MyStruct());
+        insertValue(index, AddMethod::insert,
+                Etype::eStruct, MyStruct());
     }
 }
 
@@ -3217,8 +3238,8 @@ MainWindow::addNewStructFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStruct, AddMethod::follow,
-                false, MyStruct());
+        insertValue(index, AddMethod::follow,
+                Etype::eStruct, MyStruct());
     }
 }
 
@@ -3230,8 +3251,8 @@ MainWindow::addCopyStructInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStruct, AddMethod::insert,
-                true, *static_cast<MyStruct *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eStruct, *static_cast<MyStruct *>(ptr));
     }
 }
 
@@ -3243,8 +3264,8 @@ MainWindow::addCopyStructFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStruct, AddMethod::follow,
-                true, *static_cast<MyStruct *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eStruct, *static_cast<MyStruct *>(ptr));
     }
 }
 
@@ -3254,8 +3275,8 @@ MainWindow::addNewStructDecChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStructDeclaration, AddMethod::child,
-                false, MyStructDec());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eStructDeclaration, MyStructDec());
     }
 }
 
@@ -3265,8 +3286,8 @@ MainWindow::addNewStructDecInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStructDeclaration, AddMethod::insert,
-                false, MyStructDec());
+        insertValue(index, AddMethod::insert,
+                Etype::eStructDeclaration, MyStructDec());
     }
 }
 
@@ -3276,8 +3297,8 @@ MainWindow::addNewStructDecFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStructDeclaration, AddMethod::follow,
-                false, MyStructDec());
+        insertValue(index, AddMethod::follow,
+                Etype::eStructDeclaration, MyStructDec());
     }
 }
 
@@ -3289,8 +3310,8 @@ MainWindow::addCopyStructDecInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStructDeclaration, AddMethod::insert,
-                true, *static_cast<MyStructDec *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eStructDeclaration, *static_cast<MyStructDec *>(ptr));
     }
 }
 
@@ -3302,8 +3323,8 @@ MainWindow::addCopyStructDecFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStructDeclaration, AddMethod::follow,
-                true, *static_cast<MyStructDec *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eStructDeclaration, *static_cast<MyStructDec *>(ptr));
     }
 }
 
@@ -3313,8 +3334,7 @@ MainWindow::addNewEnumChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eEnum, AddMethod::child,
-                false, MyEnum());
+        insertChildValue(index, AddMethod::childAdd, Etype::eEnum, MyEnum());
     }
 }
 
@@ -3324,8 +3344,7 @@ MainWindow::addNewEnumInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eEnum, AddMethod::insert,
-                false, MyEnum());
+        insertValue(index, AddMethod::insert, Etype::eEnum, MyEnum());
     }
 }
 
@@ -3335,8 +3354,7 @@ MainWindow::addNewEnumFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eEnum, AddMethod::follow,
-                false, MyEnum());
+        insertValue(index, AddMethod::follow, Etype::eEnum, MyEnum());
     }
 }
 
@@ -3348,8 +3366,8 @@ MainWindow::addCopyEnumInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eEnum, AddMethod::insert,
-                true, *static_cast<MyEnum *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eEnum, *static_cast<MyEnum *>(ptr));
     }
 }
 
@@ -3361,8 +3379,8 @@ MainWindow::addCopyEnumFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eEnum, AddMethod::follow,
-                true, *static_cast<MyEnum *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eEnum, *static_cast<MyEnum *>(ptr));
     }
 }
 
@@ -3372,8 +3390,8 @@ MainWindow::addNewTypedefChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTypedef, AddMethod::child,
-                false, MyTypedef());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eTypedef, MyTypedef());
     }
 }
 
@@ -3383,8 +3401,8 @@ MainWindow::addNewTypedefInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTypedef, AddMethod::insert,
-                false, MyTypedef());
+        insertValue(index, AddMethod::insert,
+                Etype::eTypedef, MyTypedef());
     }
 }
 
@@ -3394,8 +3412,8 @@ MainWindow::addNewTypedefFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTypedef, AddMethod::follow,
-                false, MyTypedef());
+        insertValue(index, AddMethod::follow,
+                Etype::eTypedef, MyTypedef());
     }
 }
 
@@ -3407,8 +3425,8 @@ MainWindow::addCopyTypedefInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTypedef, AddMethod::insert,
-                true, *static_cast<MyTypedef *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eTypedef, *static_cast<MyTypedef *>(ptr));
     }
 }
 
@@ -3420,8 +3438,8 @@ MainWindow::addCopyTypedefFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTypedef, AddMethod::follow,
-                true, *static_cast<MyTypedef *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eTypedef, *static_cast<MyTypedef *>(ptr));
     }
 }
 
@@ -3431,8 +3449,8 @@ MainWindow::addNewFnsChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eFunctions, AddMethod::child,
-                false, Functions());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eFunctions, Functions());
     }
 }
 
@@ -3442,8 +3460,8 @@ MainWindow::addNewFnsInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eFunctions, AddMethod::insert,
-                false, Functions());
+        insertValue(index, AddMethod::insert,
+                Etype::eFunctions, Functions());
     }
 }
 
@@ -3453,8 +3471,8 @@ MainWindow::addNewFnsFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eFunctions, AddMethod::follow,
-                false, Functions());
+        insertValue(index, AddMethod::follow,
+                Etype::eFunctions, Functions());
     }
 }
 
@@ -3466,8 +3484,8 @@ MainWindow::addCopyFnsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eFunctions, AddMethod::insert,
-                true, *static_cast<Functions *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eFunctions, *static_cast<Functions *>(ptr));
     }
 }
 
@@ -3479,8 +3497,8 @@ MainWindow::addCopyFnsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eFunctions, AddMethod::follow,
-                true, *static_cast<Functions *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eFunctions, *static_cast<Functions *>(ptr));
     }
 }
 
@@ -3490,8 +3508,8 @@ MainWindow::addNewStaticFnsChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStaticFunctions, AddMethod::child,
-                false, StaticFunctions());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eStaticFunctions, StaticFunctions());
     }
 }
 
@@ -3501,8 +3519,8 @@ MainWindow::addNewStaticFnsInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStaticFunctions, AddMethod::insert,
-                false, StaticFunctions());
+        insertValue(index, AddMethod::insert,
+                Etype::eStaticFunctions, StaticFunctions());
     }
 }
 
@@ -3512,8 +3530,8 @@ MainWindow::addNewStaticFnsFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStaticFunctions, AddMethod::follow,
-                false, StaticFunctions());
+        insertValue(index, AddMethod::follow,
+                Etype::eStaticFunctions, StaticFunctions());
     }
 }
 
@@ -3525,8 +3543,8 @@ MainWindow::addCopyStaticFnsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStaticFunctions, AddMethod::insert,
-                true, *static_cast<StaticFunctions *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eStaticFunctions, *static_cast<StaticFunctions *>(ptr));
     }
 }
 
@@ -3538,8 +3556,8 @@ MainWindow::addCopyStaticFnsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eStaticFunctions, AddMethod::follow,
-                true, *static_cast<StaticFunctions *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eStaticFunctions, *static_cast<StaticFunctions *>(ptr));
     }
 }
 
@@ -3549,8 +3567,8 @@ MainWindow::addNewCoexFnsChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstexprFunctions, AddMethod::child,
-                false, ConstexprFunctions());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eConstexprFunctions, ConstexprFunctions());
     }
 }
 
@@ -3560,8 +3578,8 @@ MainWindow::addNewCoexFnsInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstexprFunctions, AddMethod::insert,
-                false, ConstexprFunctions());
+        insertValue(index, AddMethod::insert,
+                Etype::eConstexprFunctions, ConstexprFunctions());
     }
 }
 
@@ -3571,8 +3589,8 @@ MainWindow::addNewCoexFnsFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstexprFunctions, AddMethod::follow,
-                false, ConstexprFunctions());
+        insertValue(index, AddMethod::follow,
+                Etype::eConstexprFunctions, ConstexprFunctions());
     }
 }
 
@@ -3584,8 +3602,8 @@ MainWindow::addCopyCoexFnsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstexprFunctions, AddMethod::insert,
-                true, *static_cast<ConstexprFunctions *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eConstexprFunctions, *static_cast<ConstexprFunctions *>(ptr));
     }
 }
 
@@ -3597,8 +3615,8 @@ MainWindow::addCopyCoexFnsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eConstexprFunctions, AddMethod::follow,
-                true, *static_cast<ConstexprFunctions *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eConstexprFunctions, *static_cast<ConstexprFunctions *>(ptr));
     }
 }
 
@@ -3608,8 +3626,8 @@ MainWindow::addNewTplFnsChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplFunctions, AddMethod::child,
-                false, TplFunctions());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eTplFunctions, TplFunctions());
     }
 }
 
@@ -3619,8 +3637,8 @@ MainWindow::addNewTplFnsInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplFunctions, AddMethod::insert,
-                false, TplFunctions());
+        insertValue(index, AddMethod::insert,
+                Etype::eTplFunctions, TplFunctions());
     }
 }
 
@@ -3630,8 +3648,8 @@ MainWindow::addNewTplFnsFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplFunctions, AddMethod::follow,
-                false, TplFunctions());
+        insertValue(index, AddMethod::follow,
+                Etype::eTplFunctions, TplFunctions());
     }
 }
 
@@ -3643,8 +3661,8 @@ MainWindow::addCopyTplFnsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplFunctions, AddMethod::insert,
-                true, *static_cast<TplFunctions *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eTplFunctions, *static_cast<TplFunctions *>(ptr));
     }
 }
 
@@ -3656,8 +3674,8 @@ MainWindow::addCopyTplFnsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplFunctions, AddMethod::follow,
-                true, *static_cast<TplFunctions *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eTplFunctions, *static_cast<TplFunctions *>(ptr));
     }
 }
 
@@ -3667,8 +3685,8 @@ MainWindow::addNewTplStaticFnsChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplStaticFunctions, AddMethod::child,
-                false, TplStaticFunctions());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eTplStaticFunctions, TplStaticFunctions());
     }
 }
 
@@ -3678,8 +3696,8 @@ MainWindow::addNewTplStaticFnsInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplStaticFunctions, AddMethod::insert,
-                false, TplStaticFunctions());
+        insertValue(index, AddMethod::insert,
+                Etype::eTplStaticFunctions, TplStaticFunctions());
     }
 }
 
@@ -3689,8 +3707,8 @@ MainWindow::addNewTplStaticFnsFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplStaticFunctions, AddMethod::follow,
-                false, TplStaticFunctions());
+        insertValue(index, AddMethod::follow,
+                Etype::eTplStaticFunctions, TplStaticFunctions());
     }
 }
 
@@ -3702,8 +3720,8 @@ MainWindow::addCopyTplStaticFnsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplStaticFunctions, AddMethod::insert,
-                true, *static_cast<TplStaticFunctions *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eTplStaticFunctions, *static_cast<TplStaticFunctions *>(ptr));
     }
 }
 
@@ -3715,8 +3733,8 @@ MainWindow::addCopyTplStaticFnsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplStaticFunctions, AddMethod::follow,
-                true, *static_cast<TplStaticFunctions *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eTplStaticFunctions, *static_cast<TplStaticFunctions *>(ptr));
     }
 }
 
@@ -3726,8 +3744,8 @@ MainWindow::addNewTplCoexFnsChild_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstexprFunctions, AddMethod::child,
-                false, TplConstexprFunctions());
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eTplConstexprFunctions, TplConstexprFunctions());
     }
 }
 
@@ -3737,8 +3755,8 @@ MainWindow::addNewTplCoexFnsInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstexprFunctions, AddMethod::insert,
-                false, TplConstexprFunctions());
+        insertValue(index, AddMethod::insert,
+                Etype::eTplConstexprFunctions, TplConstexprFunctions());
     }
 }
 
@@ -3748,8 +3766,8 @@ MainWindow::addNewTplCoexFnsFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstexprFunctions, AddMethod::follow,
-                false, TplConstexprFunctions());
+        insertValue(index, AddMethod::follow,
+                Etype::eTplConstexprFunctions, TplConstexprFunctions());
     }
 }
 
@@ -3761,8 +3779,8 @@ MainWindow::addCopyTplCoexFnsInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstexprFunctions, AddMethod::insert,
-                true, *static_cast<TplConstexprFunctions *>(ptr));
+        insertValue(index, AddMethod::insert, Etype::eTplConstexprFunctions,
+                *static_cast<TplConstexprFunctions *>(ptr));
     }
 }
 
@@ -3774,56 +3792,33 @@ MainWindow::addCopyTplCoexFnsFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertValue(index, Etype::eTplConstexprFunctions, AddMethod::follow,
-                true, *static_cast<TplConstexprFunctions *>(ptr));
+        insertValue(index,AddMethod::follow, Etype::eTplConstexprFunctions,
+                *static_cast<TplConstexprFunctions *>(ptr));
     }
 }
 
 void
-MainWindow::fnsAddNewFn_triggered()
+MainWindow::addNewFunctionChild_triggered()
+{
+    QModelIndex const  index = m_mainTreeView->currentIndex();
+
+    if (index.isValid()) {
+        insertChildValue(index, AddMethod::childAdd,
+                Etype::eFunction, Function());
+    }
+}
+
+void
+MainWindow::addNewFunctionInsertEnd_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
     QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
 
     if (index.isValid()) {
-        void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
-        Etype const  etp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
-        std::shared_ptr<Function>  newMePtr = addNewFunction(ptr, etp);
-        if (!newMePtr)  return;
-
-        std::vector<ItemStack>  vecItemStack;
-        getItemStack(vecItemStack, index);
-
-        QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
-        QStandardItem *  rootItem = selfItem->parent();
-        Etype const  rootEtp = static_cast<Etype>(rootItem->data(
-                    Qt::UserRole + 1).toInt());
-        if (rootEtp == Etype::eClass) {
-            void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
-            newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
-        }
-
-        QStandardItem *  item = new QStandardItem(
-                QString::fromStdString(newMePtr->getTreeLabel()));
-        setItemProperty(item, Etype::eFunction, newMePtr);
-        selfItem->appendRow(item);
-
-        if (!m_mainTreeView->isExpanded(index)) {
-            m_mainTreeView->expand(index);
-        }
-    }
-}
-
-void
-MainWindow::addNewFunctionTail_triggered()
-{
-    QModelIndex const index = m_mainTreeView->currentIndex();
-    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
-
-    if (index.isValid()) {
         QStandardItem *  parentItem = selfItem->parent();
-        QModelIndex const parentIndex = m_mainTreeModel->indexFromItem(parentItem);
-        insertFunction(parentIndex, AddMethod::child, false);
+        QModelIndex const  parentIndex = m_mainTreeModel->indexFromItem(parentItem);
+        insertChildValue(parentIndex, AddMethod::childAdd,
+                Etype::eFunction, Function());
     }
 }
 
@@ -3833,7 +3828,8 @@ MainWindow::addNewFunctionInsert_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertFunction(index, AddMethod::insert, false);
+        insertValue(index, AddMethod::insert,
+                Etype::eFunction, Function());
     }
 }
 
@@ -3843,12 +3839,13 @@ MainWindow::addNewFunctionFollow_triggered()
     QModelIndex const  index = m_mainTreeView->currentIndex();
 
     if (index.isValid()) {
-        insertFunction(index, AddMethod::follow, false);
+        insertValue(index, AddMethod::follow,
+                Etype::eFunction, Function());
     }
 }
 
 void
-MainWindow::addCopyFunctionTail_triggered()
+MainWindow::addCopyFunctionInsertEnd_triggered()
 {
     QModelIndex const  index = m_mainTreeView->currentIndex();
     QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
@@ -3856,9 +3853,9 @@ MainWindow::addCopyFunctionTail_triggered()
 
     if (index.isValid()) {
         QStandardItem *  parentItem = selfItem->parent();
-        QModelIndex const parentIndex = m_mainTreeModel->indexFromItem(parentItem);
-        insertFunction(parentIndex, AddMethod::child, true,
-                *static_cast<Function *>(ptr));
+        QModelIndex const  parentIndex = m_mainTreeModel->indexFromItem(parentItem);
+        insertChildValue(parentIndex, AddMethod::childAdd,
+                Etype::eFunction, *static_cast<Function *>(ptr));
     }
 }
 
@@ -3870,8 +3867,8 @@ MainWindow::addCopyFunctionInsert_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertFunction(index, AddMethod::insert, true,
-                *static_cast<Function *>(ptr));
+        insertValue(index, AddMethod::insert,
+                Etype::eFunction, *static_cast<Function *>(ptr));
     }
 }
 
@@ -3883,8 +3880,8 @@ MainWindow::addCopyFunctionFollow_triggered()
     void *  ptr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
     if (index.isValid()) {
-        insertFunction(index, AddMethod::follow, true,
-                *static_cast<Function *>(ptr));
+        insertValue(index, AddMethod::follow,
+                Etype::eFunction, *static_cast<Function *>(ptr));
     }
 }
 
@@ -4305,7 +4302,7 @@ MainWindow::insertModule(QModelIndex const &  index,
             }
         }
         break;
-    case AddMethod::child :
+    case AddMethod::childAdd :
         {
             auto  vecMod = vec[row]->getEobjList();
             vecMod.push_back(newModulePtr);
@@ -4325,235 +4322,9 @@ MainWindow::insertModule(QModelIndex const &  index,
             }
         }
         break;
-    }
-}
-
-void
-MainWindow::insertBasicBlock(QModelIndex const &  index,
-                             MainWindow::AddMethod const  addmethod,
-                             bool const  isFromMould,
-                             BasicBlock const &  mouldVal /* = BasicBlock() */)
-{
-    if (!index.isValid())  return;
-    std::vector<ItemStack>  vecItemStack;
-    getItemStack(vecItemStack, index);
-
-    std::shared_ptr<BasicBlock>  newMePtr;
-    if (isFromMould) {
-        newMePtr = std::make_shared<BasicBlock>(mouldVal);
-    } else {
-        newMePtr = std::make_shared<BasicBlock>();
-    }
-    std::pair<Etype, std::shared_ptr<EObject>>  selfData;
-    selfData.first = Etype::eBasicBlock;
-    selfData.second = newMePtr;
-
-    switch (addmethod) {
-    case AddMethod::insert :
-        {
-            void *  ptrTmp = vecItemStack[1].getVecPtr();
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
-                    parentVec = static_cast<std::vector<std::pair<Etype,
-                    std::shared_ptr<EObject>>> *>(ptrTmp);
-            int const  selfRow = vecItemStack[0].getSelfRow();
-            parentVec->insert(parentVec->begin() + selfRow, selfData);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eBasicBlock, newMePtr);
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            parentItem->insertRow(selfRow, item);
-        }
-        break;
-    case AddMethod::follow :
-        {
-            void *  ptrTmp = vecItemStack[1].getVecPtr();
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
-                    parentVec = static_cast<std::vector<std::pair<Etype,
-                    std::shared_ptr<EObject>>> *>(ptrTmp);
-            int const  selfRow = vecItemStack[0].getSelfRow();
-            parentVec->insert(parentVec->begin() + selfRow + 1, selfData);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eBasicBlock, newMePtr);
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            parentItem->insertRow(selfRow + 1, item);
-        }
-        break;
-    case AddMethod::child :
-        {
-            void *  ptrTmp = vecItemStack[0].getVecPtr();
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
-                    parentVec = static_cast<std::vector<std::pair<Etype,
-                    std::shared_ptr<EObject>>> *>(ptrTmp);
-            parentVec->push_back(selfData);
-
-            QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eBasicBlock, newMePtr);
-            selfItem->appendRow(item);
-
-            if (!m_mainTreeView->isExpanded(index)) {
-                m_mainTreeView->expand(index);
-            }
-        }
-        break;
-    }
-}
-
-void
-MainWindow::insertFunction(QModelIndex const &  index,
-                           MainWindow::AddMethod const  addmethod,
-                           bool const  isFromMould,
-                           Function const &  mouldVal /* = Function() */)
-{
-    if (!index.isValid())  return;
-    std::vector<ItemStack>  vecItemStack;
-    getItemStack(vecItemStack, index);
-
-    std::shared_ptr<Function>  newMePtr;
-    if (isFromMould) {
-        newMePtr = std::make_shared<Function>(mouldVal);
-    } else {
-        newMePtr = std::make_shared<Function>();
-    }
-
-    switch (addmethod) {
-    case AddMethod::insert :
-        {
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            QStandardItem *  rootItem = parentItem->parent();
-            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
-                    Qt::UserRole + 1).toInt());
-            if (rootEtp == Etype::eClass) {
-                void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
-                newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
-            }
-
-            Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
-                    Qt::UserRole + 2).value<void *>());
-            parentPtr->procFunction(*newMePtr);
-
-            void *  ptrTmp = vecItemStack[1].getVecPtr();
-            std::vector<std::shared_ptr<Function>> *  parentVec =
-                    static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
-            int const  selfRow = vecItemStack[0].getSelfRow();
-            parentVec->insert(parentVec->begin() + selfRow, newMePtr);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eFunction, newMePtr);
-            parentItem->insertRow(selfRow, item);
-        }
-        break;
-    case AddMethod::follow :
-        {
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            QStandardItem *  rootItem = parentItem->parent();
-            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
-                    Qt::UserRole + 1).toInt());
-            if (rootEtp == Etype::eClass) {
-                void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
-                newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
-            }
-
-            Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
-                    Qt::UserRole + 2).value<void *>());
-            parentPtr->procFunction(*newMePtr);
-
-            void *  ptrTmp = vecItemStack[1].getVecPtr();
-            std::vector<std::shared_ptr<Function>> *  parentVec =
-                    static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
-            int const  selfRow = vecItemStack[0].getSelfRow();
-            parentVec->insert(parentVec->begin() + selfRow + 1, newMePtr);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eFunction, newMePtr);
-            parentItem->insertRow(selfRow + 1, item);
-        }
-        break;
-    case AddMethod::child :
-        {
-            QStandardItem *  parentItem = vecItemStack[0].getSelfItem();
-            QStandardItem *  rootItem = parentItem->parent();
-            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
-                    Qt::UserRole + 1).toInt());
-            if (rootEtp == Etype::eClass) {
-                void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
-                newMePtr->setParentClassPtr(static_cast<MyClass *>(rootPtr));
-            }
-
-            Functions *  parentPtr = static_cast<Functions *>(parentItem->data(
-                    Qt::UserRole + 2).value<void *>());
-            parentPtr->procFunction(*newMePtr);
-
-            void *  ptrTmp = vecItemStack[0].getVecPtr();
-            std::vector<std::shared_ptr<Function>> *  parentVec =
-                    static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
-            parentVec->push_back(newMePtr);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, Etype::eFunction, newMePtr);
-            parentItem->appendRow(item);
-
-            if (!m_mainTreeView->isExpanded(index)) {
-                m_mainTreeView->expand(index);
-            }
-        }
-        break;
-    }
-}
-
-std::shared_ptr<Function>
-MainWindow::addNewFunction(void *  fnsPtr,
-                           Etype const  etp)
-{
-    Function  fn;
-    fn.setFunctionName("new__fn");
-    return addMouldValFunction(fnsPtr, etp, fn);
-}
-
-std::shared_ptr<Function>
-MainWindow::addMouldValFunction(void *  fnsPtr,
-                                Etype const  etp,
-                                Function const &  mouldVal)
-{
-    std::shared_ptr<Function>  newMePtr;
-
-    switch (etp) {
-    case Etype::eFunctions :
-        newMePtr = static_cast<Functions *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eStaticFunctions :
-        newMePtr = static_cast<StaticFunctions *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eConstexprFunctions :
-        newMePtr = static_cast<ConstexprFunctions *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eTplFunctions :
-        newMePtr = static_cast<TplFunctions *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eTplStaticFunctions :
-        newMePtr = static_cast<TplStaticFunctions *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eTplConstexprFunctions :
-        newMePtr = static_cast<TplConstexprFunctions *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eConstructors :
-        newMePtr = static_cast<Constructors *>(fnsPtr)->appendFunction(mouldVal);
-        break;
-    case Etype::eTplConstructors :
-        newMePtr = static_cast<TplConstructors *>(fnsPtr)->appendFunction(mouldVal);
-        break;
     default :
         break;
     }
-
-    return newMePtr;
 }
 
 void

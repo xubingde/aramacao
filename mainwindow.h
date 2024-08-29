@@ -48,7 +48,8 @@ public:
     enum class AddMethod {
         insert,
         follow,
-        child
+        childAdd,
+        childInsert
     };
 
     MainWindow(QWidget *  parent = nullptr);
@@ -206,17 +207,22 @@ public:
     void  addNewTplCoexFnsFollow_triggered();
     void  addCopyTplCoexFnsInsert_triggered();
     void  addCopyTplCoexFnsFollow_triggered();
-    void  fnsAddNewFn_triggered();
-    void  addNewFunctionTail_triggered();
+    void  addNewFunctionChild_triggered();
+    void  addNewFunctionInsertEnd_triggered();
     void  addNewFunctionInsert_triggered();
     void  addNewFunctionFollow_triggered();
-    void  addCopyFunctionTail_triggered();
+    void  addCopyFunctionInsertEnd_triggered();
     void  addCopyFunctionInsert_triggered();
     void  addCopyFunctionFollow_triggered();
     void  deleteRowFunction_triggered();
     void  upRowFunction_triggered();
     void  downRowFunction_triggered();
     void  moveToRowFunction_triggered();
+
+    template <typename T>
+    void  insertValue(QModelIndex const &  index, AddMethod const  addmethod, Etype const  newEtp, T const &  mouldVal);
+    template <typename T>
+    void  insertChildValue(QModelIndex const &  index, AddMethod const  addmethod, Etype const  newEtp, T const &  mouldVal, int const  insertRow = 0);
 
 protected:
 
@@ -234,10 +240,6 @@ private:
     void  getItemStack(std::vector<ItemStack> &  res, QModelIndex const &  index);
     void  insertProject(QModelIndex const &  index, bool const  isFromMould, Project const &  mouldVal = Project());
     void  insertModule(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, Module const &  mouldVal = Module());
-    void  insertBasicBlock(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, BasicBlock const &  mouldVal = BasicBlock());
-    void  insertFunction(QModelIndex const &  index, AddMethod const  addmethod, bool const  isFromMould, Function const &  mouldVal = Function());
-    std::shared_ptr<Function>  addNewFunction(void *  fnsPtr, Etype const  etp);
-    std::shared_ptr<Function>  addMouldValFunction(void *  fnsPtr, Etype const  etp, Function const &  mouldVal);
     void  deleteRowValue(QModelIndex const &  index);
     void  deleteRowValueFunction(QModelIndex const &  index);
     void  upRowValue(QModelIndex const &  index);
@@ -246,9 +248,6 @@ private:
     void  downRowValueFunction(QModelIndex const &  index);
     void  moveToRowValue(QModelIndex const &  index);
     void  moveToRowValueFunction(QModelIndex const &  index);
-
-    template <typename T>
-    void  insertValue(QModelIndex const &  index, Etype const  etpValue, AddMethod const  addmethod, bool const  isFromMould, T const &  mouldVal);
 
     Manager         m_obj;
     QPushButton *   m_open;
@@ -288,110 +287,237 @@ private:
 template <typename T> inline
 void
 MainWindow::insertValue(QModelIndex const &  index,
-                        Etype const  etpValue,
                         MainWindow::AddMethod const  addmethod,
-                        bool const  isFromMould,
+                        Etype const  newEtp,
                         T const &  mouldVal)
 {
     if (!index.isValid())  return;
     std::vector<ItemStack>  vecItemStack;
     getItemStack(vecItemStack, index);
 
-    std::shared_ptr<T>  newMePtr;
-    if (isFromMould) {
-        newMePtr = std::make_shared<T>(mouldVal);
-    } else {
-        newMePtr = std::make_shared<T>();
-    }
-    std::pair<Etype, std::shared_ptr<EObject>>  selfData;
-    selfData.first = etpValue;
-    selfData.second = newMePtr;
+    QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
+    Etype const  selfEtp = static_cast<Etype>(selfItem->data(
+            Qt::UserRole + 1).toInt());
+    void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
+    QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+    Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+            Qt::UserRole + 1).toInt());
+    void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+    std::shared_ptr<T>  newMePtr = std::make_shared<T>(mouldVal);
+    std::pair<Etype, std::shared_ptr<EObject>>  newData;
+    newData.first = newEtp;
+    newData.second = newMePtr;
+
+    switch (newEtp) {
+    case Etype::eClass :
+        if (parentEtp == Etype::eModule) {
+            std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
+                    static_cast<Module *>(parentPtr));
+        }
+        break;
+    case Etype::eFunction :
+        {
+            QStandardItem *  rootItem = parentItem->parent();
+            Etype const  rootEtp = static_cast<Etype>(rootItem->data(
+                    Qt::UserRole + 1).toInt());
+            void *  rootPtr = rootItem->data(Qt::UserRole + 2).value<void *>();
+            if (rootEtp == Etype::eClass) {
+                std::dynamic_pointer_cast<Function>(newMePtr)
+                        ->setParentClassPtr(static_cast<MyClass *>(rootPtr));
+            }
+
+            switch (parentEtp) {
+            case Etype::eFunctions :
+            case Etype::eStaticFunctions :
+            case Etype::eConstexprFunctions :
+            case Etype::eTplFunctions :
+            case Etype::eTplStaticFunctions :
+            case Etype::eTplConstexprFunctions :
+            case Etype::eConstructors :
+            case Etype::eTplConstructors :
+                static_cast<Functions *>(parentPtr)->procFunction(
+                        *std::dynamic_pointer_cast<Function>(newMePtr));
+                break;
+            default :
+                break;
+            }
+        }
+        break;
+    case Etype::eFunctions :
+    case Etype::eStaticFunctions :
+    case Etype::eConstexprFunctions :
+    case Etype::eTplFunctions :
+    case Etype::eTplStaticFunctions :
+    case Etype::eTplConstexprFunctions :
+    case Etype::eConstructors :
+    case Etype::eTplConstructors :
+        if (parentEtp == Etype::eClass) {
+            std::dynamic_pointer_cast<Functions>(newMePtr)->setParentClassPtr(
+                    static_cast<MyClass *>(parentPtr));
+        }
+        break;
+    case Etype::eDefaultConstructorFn :
+    case Etype::eCopyConstructorFn :
+    case Etype::eMoveConstructorFn :
+    case Etype::eDestructorFn :
+    case Etype::eCopyOperatorEqFn :
+    case Etype::eMoveOperatorEqFn :
+        if (parentEtp == Etype::eClass) {
+            std::dynamic_pointer_cast<Function>(newMePtr)->setParentClassPtr(
+                    static_cast<MyClass *>(parentPtr));
+        }
+        break;
+    default :
+        break;
+    }
+
+    int  selfRow = 0;
     switch (addmethod) {
     case AddMethod::insert :
-        {
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
-                    Qt::UserRole + 1).toInt());
-            if (parentEtp == Etype::eModule && etpValue == Etype::eClass) {
-                void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
-                std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
-                        static_cast<Module *>(parentPtr));
-            }
-
-            void *  ptrTmp = vecItemStack[1].getVecPtr();
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
-                    parentVec = static_cast<std::vector<std::pair<Etype,
-                    std::shared_ptr<EObject>>> *>(ptrTmp);
-            int const  selfRow = vecItemStack[0].getSelfRow();
-            parentVec->insert(parentVec->begin() + selfRow, selfData);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, etpValue, newMePtr);
-            parentItem->insertRow(selfRow, item);
-            if (isFromMould && etpValue == Etype::eClass) {
-                fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
-            }
-        }
+        selfRow = vecItemStack[0].getSelfRow();
         break;
     case AddMethod::follow :
+        selfRow = vecItemStack[0].getSelfRow();
+        selfRow++;
+        break;
+    default :
+        break;
+    }
+
+    if (newEtp == Etype::eFunction) {
+        void *  ptrTmp = vecItemStack[1].getVecPtr();
+        std::vector<std::shared_ptr<Function>> *  parentVec =
+                static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
+        parentVec->insert(parentVec->begin() + selfRow,
+                std::dynamic_pointer_cast<Function>(newMePtr));
+    } else {
+        void *  ptrTmp = vecItemStack[1].getVecPtr();
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
+                parentVec = static_cast<std::vector<std::pair<Etype,
+                std::shared_ptr<EObject>>> *>(ptrTmp);
+        parentVec->insert(parentVec->begin() + selfRow, newData);
+    }
+
+    QStandardItem *  item = new QStandardItem(
+            QString::fromStdString(newMePtr->getTreeLabel()));
+    setItemProperty(item, newEtp, newMePtr);
+    parentItem->insertRow(selfRow, item);
+}
+
+template <typename T> inline
+void
+MainWindow::insertChildValue(QModelIndex const &  index,
+                             MainWindow::AddMethod const  addmethod,
+                             Etype const  newEtp,
+                             T const &  mouldVal,
+                             int const  insertRow /* = 0 */)
+{
+    if (!index.isValid())  return;
+    std::vector<ItemStack>  vecItemStack;
+    getItemStack(vecItemStack, index);
+
+    QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
+    Etype const  selfEtp = static_cast<Etype>(selfItem->data(
+            Qt::UserRole + 1).toInt());
+    void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
+
+    QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+    Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+            Qt::UserRole + 1).toInt());
+    void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+    std::shared_ptr<T>  newMePtr = std::make_shared<T>(mouldVal);
+    std::pair<Etype, std::shared_ptr<EObject>>  newData;
+    newData.first = newEtp;
+    newData.second = newMePtr;
+
+    switch (newEtp) {
+    case Etype::eClass :
+        if (selfEtp == Etype::eModule) {
+            std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
+                    static_cast<Module *>(selfPtr));
+        }
+        break;
+    case Etype::eFunction :
         {
-            QStandardItem *  parentItem = vecItemStack[0].getParentItem();
-            Etype const  parentEtp = static_cast<Etype>(parentItem->data(
-                    Qt::UserRole + 1).toInt());
-            if (parentEtp == Etype::eModule && etpValue == Etype::eClass) {
-                void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
-                std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
-                        static_cast<Module *>(parentPtr));
+            if (parentEtp == Etype::eClass) {
+                std::dynamic_pointer_cast<Function>(newMePtr)
+                        ->setParentClassPtr(static_cast<MyClass *>(parentPtr));
             }
 
-            void *  ptrTmp = vecItemStack[1].getVecPtr();
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
-                    parentVec = static_cast<std::vector<std::pair<Etype,
-                    std::shared_ptr<EObject>>> *>(ptrTmp);
-            int const  selfRow = vecItemStack[0].getSelfRow();
-            parentVec->insert(parentVec->begin() + selfRow + 1, selfData);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, etpValue, newMePtr);
-            parentItem->insertRow(selfRow + 1, item);
-            if (isFromMould && etpValue == Etype::eClass) {
-                fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
+            switch (selfEtp) {
+            case Etype::eFunctions :
+            case Etype::eStaticFunctions :
+            case Etype::eConstexprFunctions :
+            case Etype::eTplFunctions :
+            case Etype::eTplStaticFunctions :
+            case Etype::eTplConstexprFunctions :
+            case Etype::eConstructors :
+            case Etype::eTplConstructors :
+                static_cast<Functions *>(selfPtr)->procFunction(
+                        *std::dynamic_pointer_cast<Function>(newMePtr));
+                break;
+            default :
+                break;
             }
         }
         break;
-    case AddMethod::child :
-        {
-            QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
-            Etype const  parentEtp = static_cast<Etype>(selfItem->data(
-                    Qt::UserRole + 1).toInt());
-            if (parentEtp == Etype::eModule && etpValue == Etype::eClass) {
-                void *  parentPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
-                std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
-                        static_cast<Module *>(parentPtr));
-            }
-
-            void *  ptrTmp = vecItemStack[0].getVecPtr();
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
-                    parentVec = static_cast<std::vector<std::pair<Etype,
-                    std::shared_ptr<EObject>>> *>(ptrTmp);
-            parentVec->push_back(selfData);
-
-            QStandardItem *  item = new QStandardItem(
-                    QString::fromStdString(newMePtr->getTreeLabel()));
-            setItemProperty(item, etpValue, newMePtr);
-            selfItem->appendRow(item);
-            if (isFromMould && etpValue == Etype::eClass) {
-                fillClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), item);
-            }
-
-            if (!m_mainTreeView->isExpanded(index)) {
-                m_mainTreeView->expand(index);
-            }
+    case Etype::eFunctions :
+    case Etype::eStaticFunctions :
+    case Etype::eConstexprFunctions :
+    case Etype::eTplFunctions :
+    case Etype::eTplStaticFunctions :
+    case Etype::eTplConstexprFunctions :
+    case Etype::eConstructors :
+    case Etype::eTplConstructors :
+        if (selfEtp == Etype::eClass) {
+            std::dynamic_pointer_cast<Functions>(newMePtr)->setParentClassPtr(
+                    static_cast<MyClass *>(selfPtr));
         }
         break;
+    case Etype::eDefaultConstructorFn :
+    case Etype::eCopyConstructorFn :
+    case Etype::eMoveConstructorFn :
+    case Etype::eDestructorFn :
+    case Etype::eCopyOperatorEqFn :
+    case Etype::eMoveOperatorEqFn :
+        if (selfEtp == Etype::eClass) {
+            std::dynamic_pointer_cast<Function>(newMePtr)->setParentClassPtr(
+                    static_cast<MyClass *>(selfPtr));
+        }
+        break;
+    default :
+        break;
+    }
+
+    int  selfRow = selfItem->rowCount();
+    if (addmethod == AddMethod::childInsert) {
+        selfRow = insertRow;
+    }
+
+    if (newEtp == Etype::eFunction) {
+        void *  ptrTmp = vecItemStack[0].getVecPtr();
+        std::vector<std::shared_ptr<Function>> *  parentVec =
+                static_cast<std::vector<std::shared_ptr<Function>> *>(ptrTmp);
+        parentVec->insert(parentVec->begin() + selfRow,
+                std::dynamic_pointer_cast<Function>(newMePtr));
+    } else {
+        void *  ptrTmp = vecItemStack[0].getVecPtr();
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
+                parentVec = static_cast<std::vector<std::pair<Etype,
+                std::shared_ptr<EObject>>> *>(ptrTmp);
+        parentVec->insert(parentVec->begin() + selfRow, newData);
+    }
+
+    QStandardItem *  item = new QStandardItem(
+            QString::fromStdString(newMePtr->getTreeLabel()));
+    setItemProperty(item, newEtp, newMePtr);
+    selfItem->insertRow(selfRow, item);
+
+    if (!m_mainTreeView->isExpanded(index)) {
+        m_mainTreeView->expand(index);
     }
 }
 
