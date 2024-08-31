@@ -4227,7 +4227,9 @@ MainWindow::insertProject(QModelIndex const &  index,
 
     std::shared_ptr<Project>  newProjPtr;
     if (isFromMould) {
-        newProjPtr = std::make_shared<Project>(mouldVal);
+        Project  proj = mouldVal;
+        nameCheckProject(proj, rootItem);
+        newProjPtr = std::make_shared<Project>(std::move(proj));
     } else {
         newProjPtr = std::make_shared<Project>();
     }
@@ -4264,7 +4266,9 @@ MainWindow::insertModule(QModelIndex const &  index,
 
     std::shared_ptr<Module>  newModulePtr;
     if (isFromMould) {
-        newModulePtr = std::make_shared<Module>(mouldVal);
+        Module  mdObj = mouldVal;
+        nameCheckModule(mdObj, parentItem);
+        newModulePtr = std::make_shared<Module>(std::move(mdObj));
     } else {
         newModulePtr = std::make_shared<Module>();
     }
@@ -4545,6 +4549,186 @@ MainWindow::moveToRowValueFunction(QModelIndex const &  index)
         QModelIndex const  idx = index.sibling(static_cast<int>(movetoRow), 0);
         m_mainTreeView->setCurrentIndex(idx);
     }
+}
+
+void
+MainWindow::nameCheckProject(Project &  objVal,
+                             QStandardItem *  parentItem)
+{
+    std::vector<std::string>  vecName;
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+         QStandardItem *  chItem = parentItem->child(i);
+         Etype const  etp = static_cast<Etype>(chItem->data(Qt::UserRole + 1).toInt());
+         void *  ptr = chItem->data(Qt::UserRole + 2).value<void *>();
+         if (etp == Etype::eProject) {
+             vecName.push_back(static_cast<Project *>(ptr)->getProjectName());
+         }
+    }
+
+    std::string const  oldName = objVal.getProjectName();
+    std::string const  baseNewName = oldName + "_copy";
+    std::string  newName;
+    size_t  nameIdx = 0;
+    while (true) {
+        ++nameIdx;
+        newName = baseNewName + std::to_string(nameIdx);
+        auto  itor = std::find(vecName.begin(), vecName.end(), newName);
+        if (itor == vecName.end()) {
+            break;
+        }
+    }
+    objVal.setProjectName(newName);
+}
+
+void
+MainWindow::nameCheckModule(Module &  objVal,
+                            QStandardItem *  parentItem)
+{
+    std::vector<std::string>  vecName;
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+         QStandardItem *  chItem = parentItem->child(i);
+         Etype const  etp = static_cast<Etype>(chItem->data(Qt::UserRole + 1).toInt());
+         void *  ptr = chItem->data(Qt::UserRole + 2).value<void *>();
+         if (etp == Etype::eModule) {
+             vecName.push_back(static_cast<Module *>(ptr)->getFilename());
+         }
+    }
+
+    std::string const  oldName = objVal.getFilename();
+    std::string const  baseNewName = oldName + "_copy";
+    std::string  newName;
+    size_t  nameIdx = 0;
+    while (true) {
+        ++nameIdx;
+        newName = baseNewName + std::to_string(nameIdx);
+        auto  itor = std::find(vecName.begin(), vecName.end(), newName);
+        if (itor == vecName.end()) {
+            break;
+        }
+    }
+    objVal.setFilename(newName);
+}
+
+void
+MainWindow::nameCheckClass(MyClass &  objVal,
+                           QStandardItem *  parentItem)
+{
+    std::vector<std::string>  vecName;
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+         QStandardItem *  chItem = parentItem->child(i);
+         Etype const  etp = static_cast<Etype>(chItem->data(Qt::UserRole + 1).toInt());
+         void *  ptr = chItem->data(Qt::UserRole + 2).value<void *>();
+         if (etp == Etype::eClass) {
+             vecName.push_back(static_cast<MyClass *>(ptr)->getClassName());
+         }
+    }
+
+    std::string const  oldName = objVal.getClassName();
+    std::string const  baseNewName = oldName + "_";
+    std::string  newName;
+    size_t  nameIdx = 0;
+    while (true) {
+        ++nameIdx;
+        newName = baseNewName + std::to_string(nameIdx);
+        auto  itor = std::find(vecName.begin(), vecName.end(), newName);
+        if (itor == vecName.end()) {
+            break;
+        }
+    }
+    objVal.setClassName(newName);
+}
+
+void
+MainWindow::nameCheckStruct(MyStruct &  objVal,
+                            QStandardItem *  parentItem)
+{
+    std::vector<std::string>  vecName;
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+         QStandardItem *  chItem = parentItem->child(i);
+         Etype const  etp = static_cast<Etype>(chItem->data(Qt::UserRole + 1).toInt());
+         void *  ptr = chItem->data(Qt::UserRole + 2).value<void *>();
+         if (etp == Etype::eStruct) {
+             vecName.push_back(static_cast<MyStruct *>(ptr)->getName());
+         }
+    }
+
+    std::string const  oldName = objVal.getName();
+    std::string const  baseNewName = oldName + "_";
+    std::string  newName;
+    size_t  nameIdx = 0;
+    while (true) {
+        ++nameIdx;
+        newName = baseNewName + std::to_string(nameIdx);
+        auto  itor = std::find(vecName.begin(), vecName.end(), newName);
+        if (itor == vecName.end()) {
+            break;
+        }
+    }
+    objVal.setName(newName);
+}
+
+void
+MainWindow::nameCheckEnum(MyEnum &  objVal,
+                          QStandardItem *  parentItem)
+{
+    std::vector<std::string>  vecName;
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+         QStandardItem *  chItem = parentItem->child(i);
+         Etype const  etp = static_cast<Etype>(chItem->data(Qt::UserRole + 1).toInt());
+         void *  ptr = chItem->data(Qt::UserRole + 2).value<void *>();
+         if (etp == Etype::eEnum) {
+             vecName.push_back(static_cast<MyEnum *>(ptr)->getName());
+         }
+    }
+
+    std::string const  oldName = objVal.getName();
+    std::string const  baseNewName = oldName + "_";
+    std::string  newName;
+    size_t  nameIdx = 0;
+    while (true) {
+        ++nameIdx;
+        newName = baseNewName + std::to_string(nameIdx);
+        auto  itor = std::find(vecName.begin(), vecName.end(), newName);
+        if (itor == vecName.end()) {
+            break;
+        }
+    }
+    objVal.setName(newName);
+}
+
+void
+MainWindow::nameCheckFunction(Function &  objVal,
+                              QStandardItem *  parentItem)
+{
+    std::vector<std::string>  vecName;
+    int const  count = parentItem->rowCount();
+    for (int  i = 0; i < count; ++i) {
+         QStandardItem *  chItem = parentItem->child(i);
+         Etype const  etp = static_cast<Etype>(chItem->data(Qt::UserRole + 1).toInt());
+         void *  ptr = chItem->data(Qt::UserRole + 2).value<void *>();
+         if (etp == Etype::eFunction) {
+             vecName.push_back(static_cast<Function *>(ptr)->getFunctionName());
+         }
+    }
+
+    std::string const  oldName = objVal.getFunctionName();
+    std::string const  baseNewName = oldName + "_";
+    std::string  newName;
+    size_t  nameIdx = 0;
+    while (true) {
+        ++nameIdx;
+        newName = baseNewName + std::to_string(nameIdx);
+        auto  itor = std::find(vecName.begin(), vecName.end(), newName);
+        if (itor == vecName.end()) {
+            break;
+        }
+    }
+    objVal.setFunctionName(newName);
 }
 
 }

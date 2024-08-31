@@ -248,6 +248,12 @@ private:
     void  downRowValueFunction(QModelIndex const &  index);
     void  moveToRowValue(QModelIndex const &  index);
     void  moveToRowValueFunction(QModelIndex const &  index);
+    void  nameCheckProject(Project &  objVal, QStandardItem *  parentItem);
+    void  nameCheckModule(Module &  objVal, QStandardItem *  parentItem);
+    void  nameCheckClass(MyClass &  objVal, QStandardItem *  parentItem);
+    void  nameCheckStruct(MyStruct &  objVal, QStandardItem *  parentItem);
+    void  nameCheckEnum(MyEnum &  objVal, QStandardItem *  parentItem);
+    void  nameCheckFunction(Function &  objVal, QStandardItem *  parentItem);
 
     Manager         m_obj;
     QPushButton *   m_open;
@@ -312,12 +318,20 @@ MainWindow::insertValue(QModelIndex const &  index,
 
     switch (newEtp) {
     case Etype::eClass :
+        nameCheckClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), parentItem);
         if (parentEtp == Etype::eModule) {
             std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
                     static_cast<Module *>(parentPtr));
         }
         break;
+    case Etype::eStruct :
+        nameCheckStruct(*std::dynamic_pointer_cast<MyStruct>(newMePtr), parentItem);
+        break;
+    case Etype::eEnum :
+        nameCheckEnum(*std::dynamic_pointer_cast<MyEnum>(newMePtr), parentItem);
+        break;
     case Etype::eFunction :
+        nameCheckFunction(*std::dynamic_pointer_cast<Function>(newMePtr), parentItem);
         {
             QStandardItem *  rootItem = parentItem->parent();
             Etype const  rootEtp = static_cast<Etype>(rootItem->data(
@@ -435,12 +449,20 @@ MainWindow::insertChildValue(QModelIndex const &  index,
 
     switch (newEtp) {
     case Etype::eClass :
+        nameCheckClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), selfItem);
         if (selfEtp == Etype::eModule) {
             std::dynamic_pointer_cast<MyClass>(newMePtr)->setParentModulePtr(
                     static_cast<Module *>(selfPtr));
         }
         break;
+    case Etype::eStruct :
+        nameCheckStruct(*std::dynamic_pointer_cast<MyStruct>(newMePtr), selfItem);
+        break;
+    case Etype::eEnum :
+        nameCheckEnum(*std::dynamic_pointer_cast<MyEnum>(newMePtr), selfItem);
+        break;
     case Etype::eFunction :
+        nameCheckFunction(*std::dynamic_pointer_cast<Function>(newMePtr), selfItem);
         {
             if (parentEtp == Etype::eClass) {
                 std::dynamic_pointer_cast<Function>(newMePtr)
