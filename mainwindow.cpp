@@ -217,43 +217,13 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         }
         break;
     case Etype::eDefaultConstructorFn :
-        m_wtAutoFnEdit->setItemPtr(selfItem);
-        m_wtAutoFnEdit->setObjPtr(static_cast<DefaultConstructorFn *>(selfPtr));
-        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
-            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
-        }
-        break;
     case Etype::eCopyConstructorFn :
-        m_wtAutoFnEdit->setItemPtr(selfItem);
-        m_wtAutoFnEdit->setObjPtr(static_cast<CopyConstructorFn *>(selfPtr));
-        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
-            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
-        }
-        break;
     case Etype::eMoveConstructorFn :
-        m_wtAutoFnEdit->setItemPtr(selfItem);
-        m_wtAutoFnEdit->setObjPtr(static_cast<MoveConstructorFn *>(selfPtr));
-        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
-            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
-        }
-        break;
     case Etype::eDestructorFn :
-        m_wtAutoFnEdit->setItemPtr(selfItem);
-        m_wtAutoFnEdit->setObjPtr(static_cast<DestructorFn *>(selfPtr));
-        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
-            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
-        }
-        break;
     case Etype::eCopyOperatorEqFn :
-        m_wtAutoFnEdit->setItemPtr(selfItem);
-        m_wtAutoFnEdit->setObjPtr(static_cast<CopyOperatorEqFn *>(selfPtr));
-        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
-            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
-        }
-        break;
     case Etype::eMoveOperatorEqFn :
         m_wtAutoFnEdit->setItemPtr(selfItem);
-        m_wtAutoFnEdit->setObjPtr(static_cast<MoveOperatorEqFn *>(selfPtr));
+        m_wtAutoFnEdit->setObjPtr(static_cast<Function *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
             m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
         }

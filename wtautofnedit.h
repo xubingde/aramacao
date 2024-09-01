@@ -28,12 +28,21 @@ public:
     virtual ~WtAutoFnEdit() noexcept;
 
     void  insertCode_textChanged();
-    void  isDefault_stateChanged();
-    void  isDelete_stateChanged();
+    void  isDefault_stateChanged(int  status);
+    void  isDelete_stateChanged(int  status);
     void  attribute_editingFinished();
     void  beforBehindPb_clicked();
-    void  insertIndexConnect();
+    void  displayCodeConnect();
+    void  displayCode_Previous_triggered();
+    void  displayCode_Update_triggered();
     void  deleteIndexConnect();
+    void  deleteIndex_Add_triggered();
+    void  deleteIndex_Delete_triggered();
+    void  insertIndexConnect();
+    void  insertIndex_Add_triggered();
+    void  insertIndex_Delete_triggered();
+    void  insertIndex_Modify_triggered();
+    void  insertIndex_RowChanged();
 
     Function *  getObjPtr() const;
     void  setObjPtr(Function *  value);
@@ -44,6 +53,7 @@ private:
 
     void  repDeleteIndex();
     void  repInsertIndex();
+    void  currInsert(int const  idx = INT_MAX);
     void  setVisible();
 
     Function *      m_objPtr;
