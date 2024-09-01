@@ -37,6 +37,7 @@ public:
     virtual void  setFunctionName(std::string const &  value) override;
     virtual void  setParam(std::vector<Parameter> const &  value) override;
     virtual void  setParam(std::vector<Parameter> &&  value) override;
+    virtual void  init() override;
 
     Action  getAction() const;
     virtual void  setAction(const Action  value);
@@ -53,8 +54,6 @@ protected:
     virtual bool  deserialize(const char *  data, const size_t  size) override;
 
 private:
-
-    void  init();
 
     Action          m_action;
     Field *         m_parentFieldPtr;

@@ -117,6 +117,20 @@ CopyConstructorFn::setParentClassPtr(MyClass *  value)
 }
 
 void
+CopyConstructorFn::init()
+{
+    setTreeLabel("A   Copy Constructor");
+    setBaseType(Etype::eCopyConstructorFn);
+
+    setClassFunction(true);
+    setConstructor(true);
+    setAutoSource(true);
+    CopyConstructorFn::setFunctionName("");
+    CopyConstructorFn::setParam({});
+    updateDefualtValue();
+}
+
+void
 CopyConstructorFn::updateDefualtValue()
 {
     std::vector<Field>  vecField;
@@ -135,20 +149,6 @@ CopyConstructorFn::updateDefualtValue()
         std::vector<std::string>  valueBaseClass(size, "other");
         setInhValueBaseClass(valueBaseClass);
     }
-}
-
-void
-CopyConstructorFn::init()
-{
-    setTreeLabel("A   Copy Constructor");
-    setBaseType(Etype::eCopyConstructorFn);
-
-    setClassFunction(true);
-    setConstructor(true);
-    setAutoSource(true);
-    CopyConstructorFn::setFunctionName("");
-    CopyConstructorFn::setParam({});
-    updateDefualtValue();
 }
 
 bool

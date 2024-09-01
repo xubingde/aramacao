@@ -33,6 +33,7 @@ public:
     virtual void  setParam(std::vector<Parameter> const &) override;
     virtual void  setParam(std::vector<Parameter> &&  value) override;
     virtual void  setParentClassPtr(MyClass *  value) override;
+    virtual void  init() override;
 
     std::string  getClassName() const;
     virtual void  setClassName(const std::string &  value);
@@ -47,8 +48,6 @@ protected:
     virtual bool  deserialize(const char *  data, const size_t  size) override;
 
 private:
-
-    void  init();
 
     std::string     m_className;
 };

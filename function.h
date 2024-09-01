@@ -42,6 +42,7 @@ public:
     std::string  updateAutoCode(std::string const &  tabStr = std::string()) const;
     std::string  updateMCode(std::string const &  code, std::string const &  tabStr = std::string(), bool const  hasInsertObj = false) const;
     virtual std::string  autoCode() const;
+    virtual void  init();
 
     std::vector<size_t>  getStringErr() const;
 
@@ -206,7 +207,6 @@ protected:
 private:
 
     std::string  multipleInh() const;
-    void  init();
 
     std::vector<size_t>     m_stringErr;
     MyClass *       m_parentClassPtr;

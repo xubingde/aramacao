@@ -36,6 +36,7 @@ public:
     virtual void  setFunctionName(std::string const &) override;
     virtual void  setParam(std::vector<Parameter> const &) override;
     virtual void  setParam(std::vector<Parameter> &&) override;
+    virtual void  init() override;
 
 protected:
 
@@ -46,8 +47,6 @@ protected:
     virtual bool  deserialize(const char *  data, const size_t  size) override;
 
 private:
-
-    void  init();
 };
 
 }

@@ -31,6 +31,7 @@ public:
     virtual std::string  autoCode() const override;
     virtual void  setFunctionName(std::string const &) override;
     virtual void  setParentClassPtr(MyClass *  value) override;
+    virtual void  init() override;
 
 protected:
 
@@ -43,7 +44,6 @@ protected:
 private:
 
     void  updateDefualtValue();
-    void  init();
 };
 
 }

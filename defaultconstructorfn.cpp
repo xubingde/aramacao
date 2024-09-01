@@ -95,6 +95,19 @@ DefaultConstructorFn::setParentClassPtr(MyClass *  value)
 }
 
 void
+DefaultConstructorFn::init()
+{
+    setTreeLabel("A   Default Constructor");
+    setBaseType(Etype::eDefaultConstructorFn);
+
+    setClassFunction(true);
+    setConstructor(true);
+    setAutoSource(true);
+    DefaultConstructorFn::setFunctionName("");
+    updateDefualtValue();
+}
+
+void
 DefaultConstructorFn::updateDefualtValue()
 {
     std::vector<Field>  vecField;
@@ -113,19 +126,6 @@ DefaultConstructorFn::updateDefualtValue()
         std::vector<std::string>  valueBaseClass(size, "");
         setInhValueBaseClass(valueBaseClass);
     }
-}
-
-void
-DefaultConstructorFn::init()
-{
-    setTreeLabel("A   Default Constructor");
-    setBaseType(Etype::eDefaultConstructorFn);
-
-    setClassFunction(true);
-    setConstructor(true);
-    setAutoSource(true);
-    DefaultConstructorFn::setFunctionName("");
-    updateDefualtValue();
 }
 
 bool

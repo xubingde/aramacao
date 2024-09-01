@@ -18,10 +18,15 @@ main(int  argc,
 
     QFile  qss;
     xu::StyleType  stype = xu::getGuiStyle();
-    if (stype == xu::StyleType::dark) {
+    switch (stype) {
+    case xu::StyleType::dark :
         qss.setFileName(":qdarkstyle/dark/darkstyle.qss");
-    } else {
+        break;
+    case xu::StyleType::light :
         qss.setFileName(":qdarkstyle/light/lightstyle.qss");
+        break;
+    case xu::StyleType::defaultStyle :
+        break;
     }
 
     qss.open(QFile::ReadOnly);

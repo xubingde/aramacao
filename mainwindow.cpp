@@ -93,7 +93,8 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_wtTplCtorFn(nullptr),
         m_wtMyClassDec(nullptr),
         m_wtMyStructDec(nullptr),
-        m_wtMyStruct(nullptr)
+        m_wtMyStruct(nullptr),
+        m_wtAutoFnEdit(nullptr)
 {
     setWindowTitle("AraMacao");
     init_obj();
@@ -213,6 +214,48 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         m_wtProject->setObjPtr(static_cast<Project *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtProject) {
             m_spvMain->replaceWidget(1, m_wtProject);
+        }
+        break;
+    case Etype::eDefaultConstructorFn :
+        m_wtAutoFnEdit->setItemPtr(selfItem);
+        m_wtAutoFnEdit->setObjPtr(static_cast<DefaultConstructorFn *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
+            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
+        }
+        break;
+    case Etype::eCopyConstructorFn :
+        m_wtAutoFnEdit->setItemPtr(selfItem);
+        m_wtAutoFnEdit->setObjPtr(static_cast<CopyConstructorFn *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
+            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
+        }
+        break;
+    case Etype::eMoveConstructorFn :
+        m_wtAutoFnEdit->setItemPtr(selfItem);
+        m_wtAutoFnEdit->setObjPtr(static_cast<MoveConstructorFn *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
+            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
+        }
+        break;
+    case Etype::eDestructorFn :
+        m_wtAutoFnEdit->setItemPtr(selfItem);
+        m_wtAutoFnEdit->setObjPtr(static_cast<DestructorFn *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
+            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
+        }
+        break;
+    case Etype::eCopyOperatorEqFn :
+        m_wtAutoFnEdit->setItemPtr(selfItem);
+        m_wtAutoFnEdit->setObjPtr(static_cast<CopyOperatorEqFn *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
+            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
+        }
+        break;
+    case Etype::eMoveOperatorEqFn :
+        m_wtAutoFnEdit->setItemPtr(selfItem);
+        m_wtAutoFnEdit->setObjPtr(static_cast<MoveOperatorEqFn *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtAutoFnEdit) {
+            m_spvMain->replaceWidget(1, m_wtAutoFnEdit);
         }
         break;
     case Etype::eFunction :
@@ -3020,8 +3063,9 @@ MainWindow::addNewCopyOpEqFnChild_triggered()
     if (selfEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
+        CopyOperatorEqFn  fn;
         insertChildValue(index, AddMethod::childAdd,
-                Etype::eCopyOperatorEqFn, CopyOperatorEqFn());
+                Etype::eCopyOperatorEqFn, fn);
     }
 }
 
@@ -3035,8 +3079,9 @@ MainWindow::addNewCopyOpEqFnInsert_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
+        CopyOperatorEqFn  fn;
         insertValue(index, AddMethod::insert,
-                Etype::eCopyOperatorEqFn, CopyOperatorEqFn());
+                Etype::eCopyOperatorEqFn, fn);
     }
 }
 
@@ -3050,8 +3095,9 @@ MainWindow::addNewCopyOpEqFnFollow_triggered()
     if (parentEtp != Etype::eClass)  return;
 
     if (index.isValid()) {
+        CopyOperatorEqFn  fn;
         insertValue(index, AddMethod::follow,
-                Etype::eCopyOperatorEqFn, CopyOperatorEqFn());
+                Etype::eCopyOperatorEqFn, fn);
     }
 }
 
@@ -3968,6 +4014,7 @@ MainWindow::init_obj()
     m_wtMyClassDec = new WtMyClassDec;
     m_wtMyStructDec = new WtMyStructDec;
     m_wtMyStruct = new WtMyStruct;
+    m_wtAutoFnEdit = new WtAutoFnEdit;
 }
 
 void

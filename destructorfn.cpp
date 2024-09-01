@@ -98,6 +98,20 @@ DestructorFn::setParentClassPtr(MyClass *  value)
 }
 
 void
+DestructorFn::init()
+{
+    setTreeLabel("A   ~Destructor");
+    setBaseType(Etype::eDestructorFn);
+
+    setClassFunction(true);
+    setAutoSource(true);
+    setNoexcept(true);
+    setReturnType("");
+    DestructorFn::setFunctionName("");
+    updateDefualtValue();
+}
+
+void
 DestructorFn::updateDefualtValue()
 {
     ClassType  ct = ClassType::cppFinal;
@@ -111,19 +125,6 @@ DestructorFn::updateDefualtValue()
     } else {
         Function::setVirtual(true);
     }
-}
-
-void
-DestructorFn::init()
-{
-    setTreeLabel("A   ~Destructor");
-    setBaseType(Etype::eDestructorFn);
-
-    setClassFunction(true);
-    setAutoSource(true);
-    setNoexcept(true);
-    DestructorFn::setFunctionName("");
-    updateDefualtValue();
 }
 
 bool

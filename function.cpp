@@ -813,6 +813,13 @@ Function::autoCode() const
     return res;
 }
 
+void
+Function::init()
+{
+    setTreeLabel("F   " + m_functionName);
+    setBaseType(Etype::eFunction);
+}
+
 std::string
 Function::friendDecl(std::string const &  tabStr,
                      bool const  isFriendFn) const
@@ -962,13 +969,6 @@ Function::multipleInh() const
     return res;
 }
 
-void
-Function::init()
-{
-    setTreeLabel("F   " + m_functionName);
-    setBaseType(Etype::eFunction);
-}
-
 std::vector<size_t>
 Function::getStringErr() const
 {
@@ -985,7 +985,7 @@ void
 Function::setParentClassPtr(MyClass *  value)
 {
     m_parentClassPtr = value;
-    if (m_parentClassPtr)  setConstructor(m_constructor);
+    if (m_parentClassPtr)  setFunctionName(m_functionName);
 }
 
 std::string

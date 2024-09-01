@@ -30,6 +30,7 @@
 #include "wtmyclassdec.h"
 #include "wtmystructdec.h"
 #include "wtmystruct.h"
+#include "wtautofnedit.h"
 
 namespace xu {
 
@@ -288,6 +289,7 @@ private:
     WtMyClassDec *      m_wtMyClassDec;
     WtMyStructDec *     m_wtMyStructDec;
     WtMyStruct *    m_wtMyStruct;
+    WtAutoFnEdit *      m_wtAutoFnEdit;
 };
 
 template <typename T> inline
@@ -358,6 +360,7 @@ MainWindow::insertValue(QModelIndex const &  index,
                 break;
             }
         }
+        std::dynamic_pointer_cast<Function>(newMePtr)->init();
         break;
     case Etype::eFunctions :
     case Etype::eStaticFunctions :
@@ -382,6 +385,7 @@ MainWindow::insertValue(QModelIndex const &  index,
             std::dynamic_pointer_cast<Function>(newMePtr)->setParentClassPtr(
                     static_cast<MyClass *>(parentPtr));
         }
+        std::dynamic_pointer_cast<Function>(newMePtr)->init();
         break;
     default :
         break;
@@ -509,6 +513,7 @@ MainWindow::insertChildValue(QModelIndex const &  index,
             std::dynamic_pointer_cast<Function>(newMePtr)->setParentClassPtr(
                     static_cast<MyClass *>(selfPtr));
         }
+        std::dynamic_pointer_cast<Function>(newMePtr)->init();
         break;
     default :
         break;

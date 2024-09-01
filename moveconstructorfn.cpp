@@ -112,6 +112,21 @@ MoveConstructorFn::setParentClassPtr(MyClass *  value)
 }
 
 void
+MoveConstructorFn::init()
+{
+    setTreeLabel("A   Move Constructor");
+    setBaseType(Etype::eMoveConstructorFn);
+
+    setClassFunction(true);
+    setConstructor(true);
+    setAutoSource(true);
+    setNoexcept(true);
+    MoveConstructorFn::setFunctionName("");
+    MoveConstructorFn::setParam({});
+    updateDefualtValue();
+}
+
+void
 MoveConstructorFn::updateDefualtValue()
 {
     std::vector<Field>  vecField;
@@ -130,21 +145,6 @@ MoveConstructorFn::updateDefualtValue()
         std::vector<std::string>  valueBaseClass(size, "std::move(other)");
         setInhValueBaseClass(valueBaseClass);
     }
-}
-
-void
-MoveConstructorFn::init()
-{
-    setTreeLabel("A   Move Constructor");
-    setBaseType(Etype::eMoveConstructorFn);
-
-    setClassFunction(true);
-    setConstructor(true);
-    setAutoSource(true);
-    setNoexcept(true);
-    MoveConstructorFn::setFunctionName("");
-    MoveConstructorFn::setParam({});
-    updateDefualtValue();
 }
 
 bool

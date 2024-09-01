@@ -12,8 +12,9 @@
 namespace xu {
 
 enum class StyleType {
-    dark,
-    light
+    dark = 0,
+    light = 1,
+    defaultStyle = 99
 };
 
 StyleType  getGuiStyle();
