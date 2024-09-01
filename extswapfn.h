@@ -33,6 +33,7 @@ public:
     virtual void  setParam(std::vector<Parameter> const &) override;
     virtual void  setParam(std::vector<Parameter> &&  value) override;
     virtual void  setParentClassPtr(MyClass *  value) override;
+    virtual std::string  autoCode() const override;
     virtual void  init() override;
 
     std::string  getClassName() const;

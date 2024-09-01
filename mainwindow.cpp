@@ -222,6 +222,25 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
     case Etype::eDestructorFn :
     case Etype::eCopyOperatorEqFn :
     case Etype::eMoveOperatorEqFn :
+
+    case Etype::eVirtualEqFn :
+    case Etype::eVirtualLessFn :
+    case Etype::eVirtualExchangeFn :
+    case Etype::eVirtualSerializeFn :
+    case Etype::eDeserializeFn :
+
+    case Etype::eNotEqFn :
+    case Etype::eLessEqFn :
+    case Etype::eGreaterFn :
+    case Etype::eGreaterEqFn :
+    case Etype::eExtSwapFn :
+    case Etype::eExtFromStringFn :
+
+    case Etype::eEqFn :
+    case Etype::eLessFn :
+    case Etype::eInSwapFn :
+    case Etype::eInFromStringFn :
+    case Etype::eToStringFn :
         m_wtAutoFnEdit->setItemPtr(selfItem);
         m_wtAutoFnEdit->setObjPtr(static_cast<Function *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtAutoFnEdit) {

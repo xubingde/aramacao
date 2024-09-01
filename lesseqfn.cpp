@@ -98,14 +98,24 @@ LessEqFn::setParentClassPtr(MyClass *  value)
     if (value)  setClassName(value->getClassName());
 }
 
+std::string
+LessEqFn::autoCode() const
+{
+    std::string  res;
+    std::string const  tab1(getDefTab());
+
+    res += tab1 + "return !(" + getLhs() + " > " + getRhs() + ");\n";
+    return res;
+}
+
 void
 LessEqFn::init()
 {
     setBaseType(Etype::eLessEqFn);
 
+    setAutoSource(true);
     LessEqFn::setFunctionName("operator<=");
     setReturnType("bool");
-    setMCode(getDefTab() + "return !(" + getLhs() + " > " + getRhs() + ");\n");
     LessEqFn::setParam({});
     LessEqFn::setParentClassPtr(getParentClassPtr());
     setFriendClassName({m_className});

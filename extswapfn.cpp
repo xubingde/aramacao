@@ -98,16 +98,27 @@ ExtSwapFn::setParentClassPtr(MyClass *  value)
     if (value)  setClassName(value->getClassName());
 }
 
+std::string
+ExtSwapFn::autoCode() const
+{
+    std::string  res;
+    std::string const  tab1(getDefTab());
+
+    res += tab1 + "if (&" + getLhs() + " == &" + getRhs() + ") return true;\n";
+    res += tab1 + "return " + getLhs() + ".swap(" + getRhs() + ");\n";
+    return res;
+}
+
 void
 ExtSwapFn::init()
 {
     setBaseType(Etype::eExtSwapFn);
 
+    setAutoSource(true);
     setNoexcept(true);
     ExtSwapFn::setFunctionName("swap");
     setReturnType("bool");
-    setMCode(getDefTab() + "if (&" + getLhs() + " == &" + getRhs() + ") return true;\n" +
-            getDefTab() + "return " + getLhs() + ".swap(" + getRhs() + ");\n");
+
     ExtSwapFn::setParam({});
 }
 

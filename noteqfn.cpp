@@ -98,14 +98,24 @@ NotEqFn::setParentClassPtr(MyClass *  value)
     if (value)  setClassName(value->getClassName());
 }
 
+std::string
+NotEqFn::autoCode() const
+{
+    std::string  res;
+    std::string const  tab1(getDefTab());
+
+    res += tab1 + "return !(" + getLhs() + " == " + getRhs() + ");\n";
+    return res;
+}
+
 void
 NotEqFn::init()
 {
     setBaseType(Etype::eNotEqFn);
 
+    setAutoSource(true);
     NotEqFn::setFunctionName("operator!=");
     setReturnType("bool");
-    setMCode(getDefTab() + "return !(" + getLhs() + " == " + getRhs() + ");\n");
     NotEqFn::setParam({});
     NotEqFn::setParentClassPtr(getParentClassPtr());
     setFriendClassName({m_className});

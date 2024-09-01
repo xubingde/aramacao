@@ -98,14 +98,24 @@ GreaterEqFn::setParentClassPtr(MyClass *  value)
     if (value)  setClassName(value->getClassName());
 }
 
+std::string
+GreaterEqFn::autoCode() const
+{
+    std::string  res;
+    std::string const  tab1(getDefTab());
+
+    res += tab1 + "return !(" + getLhs() + " < " + getRhs() + ");\n";
+    return res;
+}
+
 void
 GreaterEqFn::init()
 {
     setBaseType(Etype::eGreaterEqFn);
 
+    setAutoSource(true);
     GreaterEqFn::setFunctionName("operator>=");
     setReturnType("bool");
-    setMCode(getDefTab() + "return !(" + getLhs() + " < " + getRhs() + ");\n");
     GreaterEqFn::setParam({});
     GreaterEqFn::setParentClassPtr(getParentClassPtr());
     setFriendClassName({m_className});

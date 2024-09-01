@@ -98,14 +98,24 @@ ExtFromStringFn::setParentClassPtr(MyClass *  value)
     if (value)  setClassName(value->getClassName());
 }
 
+std::string
+ExtFromStringFn::autoCode() const
+{
+    std::string  res;
+    std::string const  tab1(getDefTab());
+
+    res += tab1 + "return value.fromString(data, size);\n";
+    return res;
+}
+
 void
 ExtFromStringFn::init()
 {
     setBaseType(Etype::eExtFromStringFn);
 
+    setAutoSource(true);
     ExtFromStringFn::setFunctionName("fromString");
     setReturnType("bool");
-    setMCode(getDefTab() + "return value.fromString(data, size);\n");
     ExtFromStringFn::setParam({});
 }
 
