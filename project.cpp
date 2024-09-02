@@ -53,7 +53,8 @@ Project::Project():
         EObject(),
         m_eobjList(),
         m_projectName("project1"),
-        m_docment()
+        m_docment(),
+        m_dir()
 {
     setTreeLabel("P   " + m_projectName);
     setBaseType(Etype::eProject);
@@ -63,7 +64,8 @@ Project::Project(const Project &  other):
         EObject(other),
         m_eobjList(other.m_eobjList),
         m_projectName(other.m_projectName),
-        m_docment(other.m_docment)
+        m_docment(other.m_docment),
+        m_dir(other.m_dir)
 {
 }
 
@@ -71,7 +73,8 @@ Project::Project(Project &&  other) noexcept:
         EObject(std::move(other)),
         m_eobjList(std::move(other.m_eobjList)),
         m_projectName(std::move(other.m_projectName)),
-        m_docment(std::move(other.m_docment))
+        m_docment(std::move(other.m_docment)),
+        m_dir(std::move(other.m_dir))
 {
 }
 
@@ -89,6 +92,7 @@ Project::operator=(const Project &  other)
     m_eobjList = other.m_eobjList;
     m_projectName = other.m_projectName;
     m_docment = other.m_docment;
+    m_dir = other.m_dir;
 
     return *this;
 }
@@ -103,6 +107,7 @@ Project::operator=(Project &&  other) noexcept
     m_eobjList = std::move(other.m_eobjList);
     m_projectName = std::move(other.m_projectName);
     m_docment = std::move(other.m_docment);
+    m_dir = std::move(other.m_dir);
 
     return *this;
 }
@@ -301,6 +306,18 @@ Project::setDocment(std::string &&  value)
     m_docment = std::move(value);
 }
 
+std::string
+Project::getDir() const
+{
+    return m_dir;
+}
+
+void
+Project::setDir(const std::string &  value)
+{
+    m_dir = xu::trim(value);
+}
+
 bool
 Project::equal(const EObject &  value) const
 {
@@ -318,6 +335,9 @@ Project::equal(const EObject &  value) const
         if (!result) return result;
 
         result = ( m_docment == rhs.m_docment );
+        if (!result) return result;
+
+        result = ( m_dir == rhs.m_dir );
         if (!result) return result;
 
     } catch (const std::bad_cast &) {
@@ -344,6 +364,9 @@ Project::less(const EObject &  value) const
         if (m_docment < rhs.m_docment) return true;
         if (rhs.m_docment < m_docment) return false;
 
+        if (m_dir < rhs.m_dir) return true;
+        if (rhs.m_dir < m_dir) return false;
+
     } catch (const std::bad_cast &) {
         ;
     }
@@ -360,6 +383,7 @@ Project::serialize() const
     xu::append(res, xu::toString(m_eobjList));
     xu::append(res, xu::toString(m_projectName));
     xu::append(res, xu::toString(m_docment));
+    xu::append(res, xu::toString(m_dir));
 
     return res;
 }
@@ -372,12 +396,13 @@ Project::deserialize(const char *  data,
     std::vector<size_t>  err;
     const auto  vi { xu::viewIcode(data, size) };
 
-    if (vi.size() > 3) {
+    if (vi.size() > 4) {
         if (!me.EObject::deserialize(vi[0].data(), vi[0].size()))  err.push_back({0});
 
         if (!xu::fromString(me.m_eobjList, vi[1]))  err.push_back({1});
         if (!xu::fromString(me.m_projectName, vi[2]))  err.push_back({2});
         if (!xu::fromString(me.m_docment, vi[3]))  err.push_back({3});
+        if (!xu::fromString(me.m_dir, vi[4]))  err.push_back({4});
     }
     bool  result = false;
 
@@ -401,6 +426,7 @@ Project::exchange(EObject &  value) noexcept
         swap(m_eobjList, rhs.m_eobjList);
         swap(m_projectName, rhs.m_projectName);
         swap(m_docment, rhs.m_docment);
+        swap(m_dir, rhs.m_dir);
 
         result = true;
     }

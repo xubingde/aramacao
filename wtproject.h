@@ -25,6 +25,7 @@ public:
     virtual ~WtProject() noexcept;
 
     void  projectName_editingFinished();
+    void  projectDir_editingFinished();
     void  docmentEdit_textChanged();
 
     Project *  getObjPtr() const;
@@ -36,6 +37,7 @@ private:
 
     Project *       m_objPtr;
     QLineEdit *     m_projectName;
+    QLineEdit *     m_projectDir;
     QTextEdit *     m_docmentEdit;
 };
 

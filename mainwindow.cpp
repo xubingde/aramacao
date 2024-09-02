@@ -2382,7 +2382,6 @@ MainWindow::deleteRowValue_triggered()
         void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
         QStandardItem *  parentItem = selfItem->parent();
-        void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
 
         switch (selfEtp) {
         case Etype::eFunctions :

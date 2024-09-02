@@ -58,6 +58,9 @@ public:
     void  setDocment(const std::string &  value);
     void  setDocment(std::string &&  value);
 
+    std::string  getDir() const;
+    void  setDir(const std::string &  value);
+
 protected:
 
     virtual bool  equal(const EObject &  value) const override;
@@ -71,6 +74,7 @@ private:
     std::vector<std::shared_ptr<Module>>    m_eobjList;
     std::string     m_projectName;
     std::string     m_docment;
+    std::string     m_dir;
 };
 
 }
