@@ -276,8 +276,17 @@ WtMyClass::field_AddItem_triggered()
     items << item0 << item1 << item2 << isPtr;
 
     m_objPtr->appendField(std::move(newData));
+    repFieldIdRegular();
+    repFieldIdToString();
+    repFieldAction();
 
     m_fieldModel->appendRow(items);
+
+    int const  count = m_fieldModel->rowCount();
+    QVariant const  filedIdx = QVariant::fromValue(QString::fromStdString(
+            std::to_string(count - 1)));
+    m_fieldModel->setHeaderData(count - 1, Qt::Vertical, filedIdx,
+            Qt::EditRole | Qt::DisplayRole);
 }
 
 void
@@ -301,8 +310,19 @@ WtMyClass::field_InsertNew_triggered()
         items << item0 << item1 << item2 << isPtr;
 
         m_objPtr->insertField(std::move(newData), row);
+        repFieldIdRegular();
+        repFieldIdToString();
+        repFieldAction();
 
         m_fieldModel->insertRow(row, items);
+
+        int const  count = m_fieldModel->rowCount();
+        for (int  i = row; i < count; ++i) {
+            QVariant const  newHeader = QVariant::fromValue(
+                    QString::fromStdString(std::to_string(i)));
+            m_fieldModel->setHeaderData(i, Qt::Vertical, newHeader,
+                    Qt::EditRole | Qt::DisplayRole);
+        }
     } else {
         field_AddItem_triggered();
     }
@@ -328,6 +348,26 @@ WtMyClass::field_Delete_triggered()
         } else if (count == 1) {
             m_fieldView->setCurrentIndex(m_fieldModel->index(0, index.column()));
         }
+
+        for (int i = 0; i < count; ++i) {
+            QVariant const  oldHeader = m_fieldModel->headerData(i,
+                    Qt::Vertical, Qt::DisplayRole);
+            if (std::stoi(oldHeader.toString().toUtf8().toStdString()) > row) {
+                QVariant const  newHeader = QVariant::fromValue(
+                        QString::fromStdString(std::to_string(std::stoi(
+                        oldHeader.toString().toUtf8().toStdString()) - 1)));
+                m_fieldModel->setHeaderData(i, Qt::Vertical, newHeader,
+                        Qt::EditRole | Qt::DisplayRole);
+            }
+        }
+
+        field_selectChanged();
+
+        repFieldIdRegular();
+        repFieldId();
+        repFieldIdToString();
+
+        repFieldAction();
     }
 }
 
@@ -367,6 +407,18 @@ WtMyClass::field_CopyToNew_triggered()
         items << item0 << item1 << item2 << isPtr;
 
         m_fieldModel->insertRow(row + 1, items);
+
+        int const  count = m_fieldModel->rowCount();
+        for (int  i = row; i < count; ++i) {
+            QVariant const  newHeader = QVariant::fromValue(
+                    QString::fromStdString(std::to_string(i)));
+            m_fieldModel->setHeaderData(i, Qt::Vertical, newHeader,
+                    Qt::EditRole | Qt::DisplayRole);
+        }
+
+        repFieldIdRegular();
+        repFieldIdToString();
+        repFieldAction();
     }
 }
 
@@ -384,6 +436,19 @@ WtMyClass::field_Up_triggered()
         m_fieldModel->insertRow(row - 1, item);
         QModelIndex const  idx = index.sibling(row - 1, index.column());
         m_fieldView->setCurrentIndex(idx);
+
+        QVariant const  headerIdx1(QString::fromStdString(std::to_string(row - 1)));
+        QVariant const  headerIdx2(QString::fromStdString(std::to_string(row)));
+        m_fieldModel->setHeaderData(row - 1, Qt::Vertical, headerIdx1,
+                Qt::EditRole | Qt::DisplayRole);
+        m_fieldModel->setHeaderData(row, Qt::Vertical, headerIdx2,
+                Qt::EditRole | Qt::DisplayRole);
+
+        repFieldIdRegular();
+        repFieldId();
+        repFieldIdToString();
+
+        repFieldAction();
     }
 }
 
@@ -402,6 +467,19 @@ WtMyClass::field_Down_triggered()
         m_fieldModel->insertRow(row, item);
         QModelIndex const  idx = index.sibling(row + 1, index.column());
         m_fieldView->setCurrentIndex(idx);
+
+        QVariant const  headerIdx1(QString::fromStdString(std::to_string(row)));
+        QVariant const  headerIdx2(QString::fromStdString(std::to_string(row + 1)));
+        m_fieldModel->setHeaderData(row, Qt::Vertical, headerIdx1,
+                Qt::EditRole | Qt::DisplayRole);
+        m_fieldModel->setHeaderData(row + 1, Qt::Vertical, headerIdx2,
+                Qt::EditRole | Qt::DisplayRole);
+
+        repFieldIdRegular();
+        repFieldId();
+        repFieldIdToString();
+
+        repFieldAction();
     }
 }
 
@@ -421,10 +499,15 @@ WtMyClass::field_MoveToRow_triggered()
 
         m_objPtr->moveField(currRow, movetoRow);
 
-        auto const  item = m_fieldModel->takeRow(static_cast<int>(currRow));
-        m_fieldModel->insertRow(static_cast<int>(movetoRow), item);
-        QModelIndex  idx = index.sibling(static_cast<int>(movetoRow), index.column());
+        repField();
+        QModelIndex const  idx = index.sibling(static_cast<int>(movetoRow), index.column());
         m_fieldView->setCurrentIndex(idx);
+
+        repFieldId();
+        repFieldIdRegular();
+        repFieldIdToString();
+
+        repFieldAction();
     }
 }
 
@@ -498,6 +581,11 @@ WtMyClass::field_itemDelegate_closeEditor()
             }
             break;
         }
+
+        repFieldIdRegular();
+        repFieldId();
+        repFieldIdToString();
+        repFieldAction();
     }
 }
 
@@ -625,6 +713,425 @@ WtMyClass::field_isMutable_stateChanged(int const  status)
 }
 
 void
+WtMyClass::fieldIdRegularConnect()
+{
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveTo = new QAction(tr("Move To Row"));
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveTo->setParent(this);
+    m_fieldIdRegularView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldIdRegularView->addAction(actUp);
+    m_fieldIdRegularView->addAction(actDown);
+    m_fieldIdRegularView->addAction(actMoveTo);
+
+    connect(actUp, &QAction::triggered,
+            this, &WtMyClass::fieldIdRegular_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtMyClass::fieldIdRegular_Down_triggered);
+    connect(actMoveTo, &QAction::triggered,
+            this, &WtMyClass::fieldIdRegular_MoveTo_triggered);
+}
+
+void
+WtMyClass::fieldIdRegular_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdRegularView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && index.row() != 0) {
+        auto  dVal = m_objPtr->getStyleField();
+        std::swap(dVal[row], dVal[row - 1]);
+        m_objPtr->setStyleField(dVal);
+
+        auto const  item = m_fieldIdRegularModel->takeRow(row);
+        m_fieldIdRegularModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_fieldIdRegularView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::fieldIdRegular_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdRegularView->currentIndex();
+    int const  row = index.row();
+    const int  count = m_fieldIdRegularModel->rowCount();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        auto  dVal = m_objPtr->getStyleField();
+        std::swap(dVal[index.row()], dVal[index.row() + 1]);
+        m_objPtr->setStyleField(dVal);
+
+        auto const  item = m_fieldIdRegularModel->takeRow(row + 1);
+        m_fieldIdRegularModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_fieldIdRegularView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::fieldIdRegular_MoveTo_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdRegularView->currentIndex();
+    int const  count = m_fieldIdRegularModel->rowCount();
+    int const  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        int  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            if (movetoRow > 0)  movetoRow--;
+            if (movetoRow >= count)  movetoRow = count - 1;
+            if (currRow != movetoRow) {
+                auto  nsp = m_objPtr->getStyleField();
+                auto const  dval = nsp[currRow];
+                nsp.erase(nsp.begin() + currRow);
+                nsp.insert(nsp.begin() + movetoRow, dval);
+                m_objPtr->setStyleField(nsp);
+
+                repFieldIdRegular();
+                QModelIndex const  idx = index.sibling(movetoRow, index.column());
+                m_fieldIdRegularView->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
+void
+WtMyClass::fieldIdConnect()
+{
+    QAction *  actAdd = new QAction(tr("Add New"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    QAction *  actSpt = new QAction;
+    actSpt->setSeparator(true);
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveTo = new QAction(tr("Move To Row"));
+    actSpt->setParent(this);
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveTo->setParent(this);
+    m_fieldIdView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldIdView->addAction(actAdd);
+    m_fieldIdView->addAction(actDelete);
+    m_fieldIdView->addAction(actSpt);
+    m_fieldIdView->addAction(actUp);
+    m_fieldIdView->addAction(actDown);
+    m_fieldIdView->addAction(actMoveTo);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::fieldId_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::fieldId_Delete_triggered);
+    connect(actUp, &QAction::triggered,
+            this, &WtMyClass::fieldId_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtMyClass::fieldId_Down_triggered);
+    connect(actMoveTo, &QAction::triggered,
+            this, &WtMyClass::fieldId_MoveTo_triggered);
+}
+
+void
+WtMyClass::fieldId_Add_triggered()
+{
+    if (!m_objPtr)  return;
+
+    bool  ok = false;
+    int  inputIdx = QInputDialog::getInt(this, "Input Field Index",
+                "Field Index: ", 0, 0, 2000000, 1, &ok);
+    if (ok) {
+        auto  sID = m_objPtr->getIDField();
+        sID.push_back(inputIdx);
+        m_objPtr->setIDField(sID);
+        repFieldId();
+    }
+}
+
+void
+WtMyClass::fieldId_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdView->currentIndex();
+    if (index.isValid()) {
+        auto  sID = m_objPtr->getIDField();
+        sID.erase(sID.begin() + index.row());
+        m_objPtr->setIDField(sID);
+        repFieldId();
+    }
+}
+
+void
+WtMyClass::fieldId_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && row != 0) {
+        auto  dVal = m_objPtr->getIDField();
+        std::swap(dVal[row], dVal[row - 1]);
+        m_objPtr->setIDField(dVal);
+
+        auto const  item = m_fieldIdModel->takeRow(row);
+        m_fieldIdModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_fieldIdView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::fieldId_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdView->currentIndex();
+    int const  row = index.row();
+    int const  count = m_fieldIdModel->rowCount();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        auto  dVal = m_objPtr->getIDField();
+        std::swap(dVal[row], dVal[row + 1]);
+        m_objPtr->setIDField(dVal);
+
+        auto const  item = m_fieldIdModel->takeRow(row + 1);
+        m_fieldIdModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_fieldIdView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::fieldId_MoveTo_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdView->currentIndex();
+    int const  count = m_fieldIdModel->rowCount();
+    int const  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        int  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            if (movetoRow > 0)  movetoRow--;
+            if (movetoRow >= count)  movetoRow = count - 1;
+            if (currRow != movetoRow) {
+                auto  nsp = m_objPtr->getIDField();
+                const auto  dval = nsp[currRow];
+                nsp.erase(nsp.begin() + currRow);
+                nsp.insert(nsp.begin() + movetoRow, dval);
+                m_objPtr->setIDField(nsp);
+
+                repFieldId();
+                QModelIndex const  idx = index.sibling(movetoRow, index.column());
+                m_fieldIdView->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
+void
+WtMyClass::fieldIdToStringConnect()
+{
+    QAction *  actAdd = new QAction(tr("Add New"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    QAction *  actSpt = new QAction;
+    actSpt->setSeparator(true);
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveTo = new QAction(tr("Move To Row"));
+    actSpt->setParent(this);
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveTo->setParent(this);
+    m_fieldIdToStringView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldIdToStringView->addAction(actAdd);
+    m_fieldIdToStringView->addAction(actDelete);
+    m_fieldIdToStringView->addAction(actSpt);
+    m_fieldIdToStringView->addAction(actUp);
+    m_fieldIdToStringView->addAction(actDown);
+    m_fieldIdToStringView->addAction(actMoveTo);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::fieldIdToString_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::fieldIdToString_Delete_triggered);
+    connect(actUp, &QAction::triggered,
+            this, &WtMyClass::fieldIdToString_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtMyClass::fieldIdToString_Down_triggered);
+    connect(actMoveTo, &QAction::triggered,
+            this, &WtMyClass::fieldIdToString_MoveTo_triggered);
+}
+
+void
+WtMyClass::fieldIdToString_Add_triggered()
+{
+    if (!m_objPtr)  return;
+
+    bool  ok = false;
+    int  inputIdx = QInputDialog::getInt(this, "Input Field Index",
+                "Field Index: ", 0, 0, 2000000, 1, &ok);
+    if (ok) {
+        auto  sID = m_objPtr->getSerzField();
+        sID.push_back(inputIdx);
+        m_objPtr->setSerzField(sID);
+        repFieldIdToString();
+    }
+}
+
+void
+WtMyClass::fieldIdToString_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdToStringView->currentIndex();
+    if (index.isValid()) {
+        auto  sID = m_objPtr->getSerzField();
+        sID.erase(sID.begin() + index.row());
+        m_objPtr->setSerzField(sID);
+        repFieldIdToString();
+    }
+}
+
+void
+WtMyClass::fieldIdToString_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdToStringView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && row != 0) {
+        auto  dVal = m_objPtr->getSerzField();
+        std::swap(dVal[row], dVal[row - 1]);
+        m_objPtr->setSerzField(dVal);
+
+        auto const  item = m_fieldIdToStringModel->takeRow(row);
+        m_fieldIdToStringModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_fieldIdToStringView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::fieldIdToString_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdToStringView->currentIndex();
+    int const  count = m_fieldIdToStringModel->rowCount();
+    int const  row = index.row();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        auto  dVal = m_objPtr->getSerzField();
+        std::swap(dVal[row], dVal[row + 1]);
+        m_objPtr->setSerzField(dVal);
+
+        auto const  item = m_fieldIdToStringModel->takeRow(row + 1);
+        m_fieldIdToStringModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_fieldIdToStringView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::fieldIdToString_MoveTo_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldIdToStringView->currentIndex();
+    int const  count = m_fieldIdToStringModel->rowCount();
+    int const  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        int  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            if (movetoRow > 0)  movetoRow--;
+            if (movetoRow >= count)  movetoRow = count - 1;
+            if (currRow != movetoRow) {
+                auto  nsp = m_objPtr->getSerzField();
+                auto const  dval = nsp[currRow];
+                nsp.erase(nsp.begin() + currRow);
+                nsp.insert(nsp.begin() + movetoRow, dval);
+                m_objPtr->setSerzField(nsp);
+
+                repFieldIdToString();
+                QModelIndex const  idx = index.sibling(movetoRow, index.column());
+                m_fieldIdToStringView->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
+void
+WtMyClass::fieldActionConnect()
+{
+    QAction *  actSpt1 = new QAction;
+    actSpt1->setSeparator(true);
+    actSpt1->setParent(this);
+    QAction *  actAddActionFalse = new QAction(tr("Add Action"));
+    QAction *  actDeleteAction = new QAction(tr("Delete Action"));
+    QAction *  actInsertBeforBehind = new QAction(tr("Insert && Follow"));
+    actAddActionFalse->setParent(this);
+    actDeleteAction->setParent(this);
+    actInsertBeforBehind->setParent(this);
+    m_fieldActionView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldActionView->addAction(actAddActionFalse);
+    m_fieldActionView->addAction(actDeleteAction);
+    m_fieldActionView->addAction(actSpt1);
+    m_fieldActionView->addAction(actInsertBeforBehind);
+
+    connect(actAddActionFalse, &QAction::triggered,
+            this, &WtMyClass::fieldAction_AddActionFalse_triggered);
+    connect(actDeleteAction, &QAction::triggered,
+            this, &WtMyClass::fieldAction_DeleteAction_triggered);
+    connect(actInsertBeforBehind, &QAction::triggered,
+            this, &WtMyClass::fieldAction_InsBeforBehind_triggered);
+
+    connect(m_fieldActionView->selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            this, &WtMyClass::fieldAction_selectChanged);
+}
+
+void
+WtMyClass::fieldAction_selectChanged()
+{
+    if (!m_objPtr)  return;
+
+}
+
+void
+WtMyClass::fieldAction_AddActionFalse_triggered()
+{
+    if (!m_objPtr)  return;
+
+}
+
+void
+WtMyClass::fieldAction_DeleteAction_triggered()
+{
+    if (!m_objPtr)  return;
+
+}
+
+void
+WtMyClass::fieldAction_InsBeforBehind_triggered()
+{
+    if (!m_objPtr)  return;
+
+}
+
+void
 WtMyClass::init_obj()
 {
     m_className = new QLineEdit;
@@ -698,6 +1205,11 @@ WtMyClass::init_obj()
                         new QStandardItem(tr("Defalut Value")));
     m_templateView->setModel(m_templateModel);
 
+    m_templateView->setColumnWidth(0, 200);
+    m_templateView->setColumnWidth(1, 200);
+    m_templateView->setColumnWidth(2, 200);
+    m_templateView->setColumnWidth(3, 160);
+
     m_mulInhClassView = new QTableView;
     m_mulInhClassModel = new QStandardItemModel;
     m_mulInhClassModel->setHorizontalHeaderItem(0,
@@ -707,6 +1219,10 @@ WtMyClass::init_obj()
     m_mulInhClassModel->setHorizontalHeaderItem(2,
                         new QStandardItem(tr("isVirtual")));
     m_mulInhClassView->setModel(m_mulInhClassModel);
+
+    m_mulInhClassView->setColumnWidth(0, 160);
+    m_mulInhClassView->setColumnWidth(1, 125);
+    m_mulInhClassView->setColumnWidth(2, 85);
 
     m_fieldView = new QTableView;
     m_fieldModel = new QStandardItemModel;
@@ -734,6 +1250,9 @@ WtMyClass::init_obj()
     m_fieldIdRegularView->setModel(m_fieldIdRegularModel);
     m_fieldIdRegularView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    m_fieldIdRegularView->setColumnWidth(0, 55);
+    m_fieldIdRegularView->setColumnWidth(1, 160);
+
     m_fieldIdView = new QTableView;
     m_fieldIdModel = new QStandardItemModel;
     m_fieldIdModel->setHorizontalHeaderItem(0,
@@ -742,6 +1261,9 @@ WtMyClass::init_obj()
                         new QStandardItem(tr("Field Name")));
     m_fieldIdView->setModel(m_fieldIdModel);
     m_fieldIdView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    m_fieldIdView->setColumnWidth(0, 55);
+    m_fieldIdView->setColumnWidth(1, 160);
 
     m_fieldIdToStringView = new QTableView;
     m_fieldIdToStringModel = new QStandardItemModel;
@@ -753,6 +1275,9 @@ WtMyClass::init_obj()
     m_fieldIdToStringView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_fieldIdIsToString = new QCheckBox(tr("Append Field"));
 
+    m_fieldIdToStringView->setColumnWidth(0, 55);
+    m_fieldIdToStringView->setColumnWidth(1, 160);
+
     m_fieldActionView = new QTreeView;
     m_fieldActionModel = new QStandardItemModel;
     m_fieldActionModel->setHorizontalHeaderItem(0,
@@ -762,6 +1287,9 @@ WtMyClass::init_obj()
     m_fieldActionView->setModel(m_fieldActionModel);
     m_fieldActionView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    m_fieldActionView->setColumnWidth(0, 200);
+    m_fieldActionView->setColumnWidth(1, 415);
+
     m_fieldActionDelIdxView = new QTableView;
     m_fieldActionDelIdxModel = new QStandardItemModel;
     m_fieldActionDelIdxModel->setHorizontalHeaderItem(0,
@@ -769,12 +1297,16 @@ WtMyClass::init_obj()
     m_fieldActionDelIdxView->setModel(m_fieldActionDelIdxModel);
     m_fieldActionDelIdxView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    m_fieldActionDelIdxView->setColumnWidth(0, 60);
+
     m_fieldActionInsertIdxView = new QTableView;
     m_fieldActionInsertIdxModel = new QStandardItemModel;
     m_fieldActionInsertIdxModel->setHorizontalHeaderItem(0,
                         new QStandardItem(tr("Index")));
     m_fieldActionInsertIdxView->setModel(m_fieldActionInsertIdxModel);
     m_fieldActionInsertIdxView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    m_fieldActionInsertIdxView->setColumnWidth(0, 60);
 }
 
 void
@@ -792,19 +1324,28 @@ WtMyClass::connect_obj()
             this, &WtMyClass::docmentEdit_textChanged);
 
     fieldConnect();
+
+    fieldIdRegularConnect();
+    fieldIdConnect();
+    fieldIdToStringConnect();
+
+    fieldActionConnect();
 }
 
 void
 WtMyClass::display_obj()
 {
     QVBoxLayout *  vbox = new QVBoxLayout(this);
-    vbox->setContentsMargins(0, 0, 0, 0);
+    vbox->setContentsMargins(0, 3, 0, 0);
 
     QHBoxLayout *  hboxClass = new QHBoxLayout;
+    QHBoxLayout *  hboxLine = new QHBoxLayout;
     QHBoxLayout *  hboxProperty = new QHBoxLayout;
     hboxClass->setContentsMargins(0, 0, 0, 0);
+    hboxLine->setContentsMargins(0, 0, 0, 0);
     hboxProperty->setContentsMargins(0, 0, 0, 0);
     vbox->addLayout(hboxClass);
+    vbox->addLayout(hboxLine);
     vbox->addLayout(hboxProperty);
 
     {
@@ -834,18 +1375,29 @@ WtMyClass::display_obj()
         hboxClass->setStretch(3, 15);
     }
     {
+        QFrame *  tlvline = new QFrame;
+        hboxLine->addWidget(tlvline);
+        tlvline->setFrameStyle(QFrame::HLine | QFrame::Plain);
+        tlvline->setLineWidth(1);
+    }
+    {
         hboxProperty->addWidget(m_mainTab);
     }
 
     QSplitter *  spvField = new QSplitter(Qt::Vertical);
+    QSplitter *  spvFieldId = new QSplitter;
     spvField->setHandleWidth(1);
-    QAbstractScrollArea *  spvFieldId = new QAbstractScrollArea;
+    spvFieldId->setHandleWidth(1);
     QAbstractScrollArea *  spvFieldAction = new QAbstractScrollArea;
     QAbstractScrollArea *  spvGeneral = new QAbstractScrollArea;
+    QAbstractScrollArea *  spvDotH = new QAbstractScrollArea;
+    QAbstractScrollArea *  spvDotCpp = new QAbstractScrollArea;
     m_mainTab->addTab(spvField, tr(" Field "));
     m_mainTab->addTab(spvFieldId, tr(" Field_Id "));
     m_mainTab->addTab(spvFieldAction, tr(" Field_Action "));
     m_mainTab->addTab(spvGeneral, tr(" Class_General "));
+    m_mainTab->addTab(spvDotH, tr(" .h "));
+    m_mainTab->addTab(spvDotCpp, tr(" .cpp "));
 
     {
         QFrame *  fr = new QFrame;
@@ -885,6 +1437,38 @@ WtMyClass::display_obj()
         spvField->setStretchFactor(1, 9);
         spvField->setStretchFactor(2, 1);
     }
+    {
+        QFrame *  fr1 = new QFrame;
+        QFrame *  fr2 = new QFrame;
+        QFrame *  fr3 = new QFrame;
+        fr1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        fr2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        fr3->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        spvFieldId->addWidget(fr1);
+        spvFieldId->addWidget(fr2);
+        spvFieldId->addWidget(fr3);
+
+        QVBoxLayout *  vbox1 = new QVBoxLayout(fr1);
+        QVBoxLayout *  vbox2 = new QVBoxLayout(fr2);
+        QVBoxLayout *  vbox3 = new QVBoxLayout(fr3);
+        vbox1->setContentsMargins(0, 0, 0, 0);
+        vbox2->setContentsMargins(0, 0, 0, 0);
+        vbox3->setContentsMargins(0, 0, 0, 0);
+
+        QLabel *  label1 = new QLabel(tr("ragular sort"));
+        QLabel *  label2 = new QLabel(tr("Id sort"));
+        QLabel *  label3 = new QLabel(tr("toString sort"));
+        vbox1->addWidget(label1);
+        vbox1->addWidget(m_fieldIdRegularView);
+        vbox2->addWidget(label2);
+        vbox2->addWidget(m_fieldIdView);
+        vbox3->addWidget(label3);
+        vbox3->addWidget(m_fieldIdIsToString);
+        vbox3->addWidget(m_fieldIdToStringView);
+    }
+    {
+
+    }
 }
 
 void
@@ -895,8 +1479,14 @@ WtMyClass::fillData()
     m_alignas->setText(QString::fromStdString(
             std::to_string(m_objPtr->getAlignByte())));
     m_docmentClass->setText(QString::fromStdString(m_objPtr->getDocment()));
+    m_fieldIdIsToString->setChecked(m_objPtr->isUpdateToString());
 
     repField();
+    field_selectChanged();
+
+    repFieldIdRegular();
+    repFieldId();
+    repFieldIdToString();
 }
 
 void
@@ -904,19 +1494,89 @@ WtMyClass::repField()
 {
     m_fieldModel->removeRows(0, m_fieldModel->rowCount());
     std::vector<Field> const  fds = m_objPtr->getField();
-    for (auto const &  it: fds) {
+    size_t const  fdSize = fds.size();
+    for (size_t  i = 0; i < fdSize; ++i) {
         QList<QStandardItem *>  items;
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-                it.getFieldName()));
+                fds[i].getFieldName()));
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
-                it.getTypeName()));
+                fds[i].getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                it.getDefValue()));
+                fds[i].getDefValue()));
         QStandardItem *  isPtr = new QStandardItem;
-        isPtr->setData(QVariant(it.isPointer()), Qt::EditRole | Qt::DisplayRole);
+        isPtr->setData(QVariant(fds[i].isPointer()), Qt::EditRole | Qt::DisplayRole);
         items << item0 << item1 << item2 << isPtr;
         m_fieldModel->appendRow(items);
+
+        QVariant const  headerIdx(QString::fromStdString(std::to_string(i)));
+        m_fieldModel->setHeaderData(static_cast<int>(i), Qt::Vertical,
+                headerIdx, Qt::EditRole | Qt::DisplayRole);
     }
+}
+
+void
+WtMyClass::repFieldIdRegular()
+{
+    m_fieldIdRegularModel->removeRows(0, m_fieldIdRegularModel->rowCount());
+    int const  colWidth = m_fieldIdRegularView->columnWidth(0);
+    std::vector<Field>  fdVec = m_objPtr->getField();
+    std::vector<size_t>  styleID = m_objPtr->getStyleField();
+    for (auto const &  it: styleID) {
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
+                std::to_string(it)));
+        item1->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+        QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
+                fdVec[it].getFieldName()));
+        QList<QStandardItem *>  items;
+        items << item1 << item2;
+        m_fieldIdRegularModel->appendRow(items);
+    }
+    m_fieldIdRegularView->setColumnWidth(0, colWidth);
+}
+
+void
+WtMyClass::repFieldId()
+{
+    m_fieldIdModel->removeRows(0, m_fieldIdModel->rowCount());
+    const int  colWidth = m_fieldIdView->columnWidth(0);
+    std::vector<Field>  fdVec = m_objPtr->getField();
+    std::vector<size_t>  sID = m_objPtr->getIDField();
+    for (auto const &  it: sID) {
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
+                std::to_string(it)));
+        item1->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+        QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
+                fdVec[it].getFieldName()));
+        QList<QStandardItem *>  items;
+        items << item1 << item2;
+        m_fieldIdModel->appendRow(items);
+    }
+    m_fieldIdView->setColumnWidth(0, colWidth);
+}
+
+void
+WtMyClass::repFieldIdToString()
+{
+    m_fieldIdToStringModel->removeRows(0, m_fieldIdToStringModel->rowCount());
+    const int  colWidth = m_fieldIdToStringView->columnWidth(0);
+    std::vector<Field>  fdVec = m_objPtr->getField();
+    std::vector<size_t>  serzID = m_objPtr->getSerzField();
+    for (auto const &  it: serzID) {
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
+                std::to_string(it)));
+        item1->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+        QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
+                fdVec[it].getFieldName()));
+        QList<QStandardItem *>  items;
+        items << item1 << item2;
+        m_fieldIdToStringModel->appendRow(items);
+    }
+    m_fieldIdToStringView->setColumnWidth(0, colWidth);
+}
+
+void
+WtMyClass::repFieldAction()
+{
 }
 
 bool

@@ -56,6 +56,27 @@ public:
     void  field_alignas_editingFinished();
     void  field_docment_textChanged();
     void  field_isMutable_stateChanged(int const  status);
+    void  fieldIdRegularConnect();
+    void  fieldIdRegular_Up_triggered();
+    void  fieldIdRegular_Down_triggered();
+    void  fieldIdRegular_MoveTo_triggered();
+    void  fieldIdConnect();
+    void  fieldId_Add_triggered();
+    void  fieldId_Delete_triggered();
+    void  fieldId_Up_triggered();
+    void  fieldId_Down_triggered();
+    void  fieldId_MoveTo_triggered();
+    void  fieldIdToStringConnect();
+    void  fieldIdToString_Add_triggered();
+    void  fieldIdToString_Delete_triggered();
+    void  fieldIdToString_Up_triggered();
+    void  fieldIdToString_Down_triggered();
+    void  fieldIdToString_MoveTo_triggered();
+    void  fieldActionConnect();
+    void  fieldAction_selectChanged();
+    void  fieldAction_AddActionFalse_triggered();
+    void  fieldAction_DeleteAction_triggered();
+    void  fieldAction_InsBeforBehind_triggered();
 
     MyClass *  getObjPtr() const;
     void  setObjPtr(MyClass *  value);
@@ -69,6 +90,10 @@ private:
     void  display_obj();
     void  fillData();
     void  repField();
+    void  repFieldIdRegular();
+    void  repFieldId();
+    void  repFieldIdToString();
+    void  repFieldAction();
     bool  nameCheckDuplication(std::string const &  fnName);
 
     MyClass *       m_objPtr;
