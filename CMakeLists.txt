@@ -196,6 +196,8 @@ set(PROJECT_SOURCES
         wtmystruct.h
         wtautofnedit.cpp
         wtautofnedit.h
+        wtmyclass.cpp
+        wtmyclass.h
         ${TS_FILES}
 )
 

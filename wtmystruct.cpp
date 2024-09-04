@@ -365,7 +365,7 @@ WtMyStruct::structItem_CopyToNew_triggered()
         auto  rawDataVec = m_objPtr->getField();
         Field  newData = rawDataVec[row];
         std::string const  oldName = rawDataVec[row].getFieldName();
-        std::string const  baseNewName = oldName + "_copy";
+        std::string const  baseNewName = oldName + "_";
         std::string  newName;
         size_t  nameIdx = 0;
         while (true) {
