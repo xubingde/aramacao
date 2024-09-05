@@ -31,15 +31,29 @@ WtMyClass::WtMyClass(QWidget *  parent /* = nullptr */):
         m_beforBehindPb(nullptr),
         m_mainTab(nullptr),
         m_docmentClass(nullptr),
+        m_replaceClassName(nullptr),
         m_isFinalClass(nullptr),
         m_isSetterReturnThis(nullptr),
         m_isTemplate(nullptr),
+        m_isUpdateFilename(nullptr),
+        m_isImpl(nullptr),
+        m_isInternal(nullptr),
+        m_isIndPublicLabel(nullptr),
+        m_hasDefCtor(nullptr),
+        m_hasCopyCtor(nullptr),
+        m_hasMoveCtor(nullptr),
+        m_hasDtor(nullptr),
+        m_hasCopyOpEq(nullptr),
+        m_hasMoveOpEq(nullptr),
         m_classTypeGroup(nullptr),
         m_finalClass(nullptr),
         m_baseClass(nullptr),
         m_inheritClass(nullptr),
+        m_baseClassPrarm(nullptr),
         m_templateView(nullptr),
         m_templateModel(nullptr),
+        m_friendClassView(nullptr),
+        m_friendClassModel(nullptr),
         m_classNameInherit(nullptr),
         m_inheritIsVirtual(nullptr),
         m_inheritIdGroup(nullptr),
@@ -76,7 +90,9 @@ WtMyClass::WtMyClass(QWidget *  parent /* = nullptr */):
         m_fieldActionDelIdxModel(nullptr),
         m_fieldActionInsertIdxView(nullptr),
         m_fieldActionInsertIdxModel(nullptr),
-        m_fieldActionInsertCode(nullptr)
+        m_fieldActionInsertCode(nullptr),
+        m_dotH(nullptr),
+        m_dotCpp(nullptr)
 {
     init_obj();
     connect_obj();
@@ -1154,16 +1170,26 @@ WtMyClass::init_obj()
 
     m_fieldActionAutoCode = new CodeEditor;
     new Highlighter(m_fieldActionAutoCode->document());
+    m_dotH = new CodeEditor;
+    new Highlighter(m_dotH->document());
+    m_dotH->setReadOnly(true);
+    m_dotCpp = new CodeEditor;
+    new Highlighter(m_dotCpp->document());
+    m_dotCpp->setReadOnly(true);
+
     m_fieldActionDoc = new QTextEdit;
     new Highlighter(m_fieldActionDoc->document());
     m_fieldActionInsertCode = new CodeEditor;
     new Highlighter(m_fieldActionInsertCode->document());
     m_fieldActionAttribute = new QLineEdit;
 
+    m_replaceClassName = new QLineEdit;
+    m_baseClassPrarm = new QLineEdit;
+
     m_isFinalClass = new QCheckBox(tr("Class isFinal"));
     m_isSetterReturnThis = new QCheckBox(tr("setter is return *this"));
     m_isTemplate = new QCheckBox(tr("is Template Class"));
-    m_inheritIsVirtual = new QCheckBox(tr("Base Class isVirtual"));
+    m_inheritIsVirtual = new QCheckBox(tr("First Base Class isVirtual"));
 
     m_fieldIdIsToString = new QCheckBox(tr("Append Field"));
 
@@ -1173,7 +1199,18 @@ WtMyClass::init_obj()
     m_fieldActionFinal = new QCheckBox(tr("final"));
     m_fieldActionNoexcept = new QCheckBox(tr("noexcept"));
 
+    m_hasDefCtor = new QCheckBox(tr("Default_Ctor"));
+    m_hasCopyCtor = new QCheckBox(tr("Copy_Ctor"));
+    m_hasMoveCtor = new QCheckBox(tr("Move_Ctor "));
+    m_hasDtor = new QCheckBox(tr("~Destructor"));
+    m_hasCopyOpEq = new QCheckBox(tr("Copy operator="));
+    m_hasMoveOpEq = new QCheckBox(tr("Move operator="));
+
     m_fieldIsMutable = new QCheckBox(tr("mutable"));
+    m_isUpdateFilename = new QCheckBox(tr("Class Name Update Module File Name"));
+    m_isImpl = new QCheckBox(tr("Impl Class"));
+    m_isInternal = new QCheckBox(tr("is Internal"));
+    m_isIndPublicLabel = new QCheckBox(tr("public label"));
 
     m_classTypeGroup = new QButtonGroup(this);
     m_finalClass = new QRadioButton(tr("Final_Class"));
@@ -1223,6 +1260,14 @@ WtMyClass::init_obj()
     m_mulInhClassView->setColumnWidth(0, 160);
     m_mulInhClassView->setColumnWidth(1, 125);
     m_mulInhClassView->setColumnWidth(2, 85);
+
+    m_friendClassView = new QTableView;
+    m_friendClassModel = new QStandardItemModel;
+    m_friendClassModel->setHorizontalHeaderItem(0,
+                        new QStandardItem(tr("Friend Class")));
+    m_friendClassView->setModel(m_friendClassModel);
+
+    m_friendClassView->setColumnWidth(0, 220);
 
     m_fieldView = new QTableView;
     m_fieldModel = new QStandardItemModel;
@@ -1386,18 +1431,18 @@ WtMyClass::display_obj()
 
     QSplitter *  spvField = new QSplitter(Qt::Vertical);
     QSplitter *  spvFieldId = new QSplitter;
+    QSplitter *  spvFieldAction = new QSplitter(Qt::Vertical);
+    QFrame * spvGeneral = new QFrame;
+    spvGeneral->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     spvField->setHandleWidth(1);
     spvFieldId->setHandleWidth(1);
-    QAbstractScrollArea *  spvFieldAction = new QAbstractScrollArea;
-    QAbstractScrollArea *  spvGeneral = new QAbstractScrollArea;
-    QAbstractScrollArea *  spvDotH = new QAbstractScrollArea;
-    QAbstractScrollArea *  spvDotCpp = new QAbstractScrollArea;
+    spvFieldAction->setHandleWidth(1);
     m_mainTab->addTab(spvField, tr(" Field "));
     m_mainTab->addTab(spvFieldId, tr(" Field_Id "));
     m_mainTab->addTab(spvFieldAction, tr(" Field_Action "));
     m_mainTab->addTab(spvGeneral, tr(" Class_General "));
-    m_mainTab->addTab(spvDotH, tr(" .h "));
-    m_mainTab->addTab(spvDotCpp, tr(" .cpp "));
+    m_mainTab->addTab(m_dotH, tr(" .h "));
+    m_mainTab->addTab(m_dotCpp, tr(" .cpp "));
 
     {
         QFrame *  fr = new QFrame;
@@ -1467,7 +1512,153 @@ WtMyClass::display_obj()
         vbox3->addWidget(m_fieldIdToStringView);
     }
     {
+        QSplitter *  sptr1 = new QSplitter;
+        QSplitter *  sptr2 = new QSplitter;
+        QSplitter *  sptr3 = new QSplitter;
+        sptr1->setHandleWidth(1);
+        sptr2->setHandleWidth(1);
+        sptr3->setHandleWidth(1);
+        spvFieldAction->addWidget(sptr1);
+        spvFieldAction->addWidget(sptr2);
+        spvFieldAction->addWidget(sptr3);
+        spvFieldAction->setStretchFactor(0, 50);
+        spvFieldAction->setStretchFactor(1, 15);
+        spvFieldAction->setStretchFactor(2, 35);
 
+        QAbstractScrollArea *  faAfr = new QAbstractScrollArea;
+        sptr1->addWidget(m_fieldActionView);
+        sptr1->addWidget(faAfr);
+        sptr1->setStretchFactor(0, 88);
+        sptr1->setStretchFactor(1, 12);
+        QVBoxLayout *  vbox1 = new QVBoxLayout(faAfr);
+        vbox1->setContentsMargins(2, 0, 2, 0);
+        vbox1->setAlignment(Qt::AlignTop);
+        vbox1->addWidget(m_fieldActionNoexcept);
+        vbox1->addWidget(m_fieldActionInline);
+        vbox1->addWidget(m_fieldActionVirtual);
+        vbox1->addWidget(m_fieldActionOverride);
+        vbox1->addWidget(m_fieldActionFinal);
+        QLabel *  label0 = new QLabel(tr("Attribute"));
+        vbox1->addWidget(label0);
+        vbox1->addWidget(m_fieldActionAttribute);
+
+        QFrame *  spt2fr = new QFrame;
+        QVBoxLayout *  spt2vbox = new QVBoxLayout(spt2fr);
+        spt2vbox->setContentsMargins(0, 0, 0, 0);
+        QLabel *  labelSp2 = new QLabel(tr("Delete Row"));
+        spt2vbox->addWidget(labelSp2);
+        spt2vbox->addWidget(m_fieldActionDelIdxView);
+        sptr2->addWidget(spt2fr);
+        sptr2->addWidget(m_fieldActionAutoCode);
+        sptr2->setStretchFactor(0, 12);
+        sptr2->setStretchFactor(1, 88);
+
+        QFrame *  spt3fr = new QFrame;
+        QVBoxLayout *  spt3vbox = new QVBoxLayout(spt3fr);
+        spt3vbox->setContentsMargins(0, 0, 0, 0);
+        QLabel *  labelSp3 = new QLabel(tr("Insert Row"));
+        spt3vbox->addWidget(labelSp3);
+        spt3vbox->addWidget(m_fieldActionInsertIdxView);
+        sptr3->addWidget(spt3fr);
+        sptr3->addWidget(m_fieldActionInsertCode);
+        sptr3->setStretchFactor(0, 12);
+        sptr3->setStretchFactor(1, 88);
+    }
+    {
+        QVBoxLayout *  gVbox = new QVBoxLayout(spvGeneral);
+        gVbox->setContentsMargins(0, 0, 0, 0);
+        QHBoxLayout *  hbox0 = new QHBoxLayout;
+        QHBoxLayout *  hbox1 = new QHBoxLayout;
+        QHBoxLayout *  hbox2 = new QHBoxLayout;
+        QHBoxLayout *  hbox3 = new QHBoxLayout;
+        QHBoxLayout *  hbox4 = new QHBoxLayout;
+        QHBoxLayout *  hbox5 = new QHBoxLayout;
+        QHBoxLayout *  hbox6 = new QHBoxLayout;
+        QHBoxLayout *  hbox7 = new QHBoxLayout;
+        QHBoxLayout *  hbox8 = new QHBoxLayout;
+        hbox0->setContentsMargins(0, 0, 0, 0);
+        hbox1->setContentsMargins(0, 0, 0, 0);
+        hbox2->setContentsMargins(0, 0, 0, 0);
+        hbox3->setContentsMargins(0, 0, 0, 0);
+        hbox4->setContentsMargins(0, 0, 11, 0);
+        hbox5->setContentsMargins(0, 0, 0, 0);
+        hbox6->setContentsMargins(0, 0, 0, 0);
+        hbox7->setContentsMargins(0, 0, 0, 0);
+        hbox8->setContentsMargins(0, 0, 0, 0);
+        gVbox->addLayout(hbox0);
+        gVbox->addLayout(hbox1);
+        gVbox->addLayout(hbox2);
+        gVbox->addLayout(hbox3);
+        gVbox->addLayout(hbox4);
+        gVbox->addLayout(hbox5);
+        gVbox->addLayout(hbox6);
+        gVbox->addLayout(hbox7);
+        gVbox->addLayout(hbox8);
+
+        QLabel *  repClassDfLabel = new QLabel(tr("replace class definition"));
+        hbox0->addWidget(repClassDfLabel);
+        hbox0->addWidget(m_replaceClassName);
+
+        hbox1->setAlignment(Qt::AlignLeft);
+        hbox1->addWidget(m_isInternal);
+        hbox1->addSpacing(9);
+        hbox1->addWidget(m_isIndPublicLabel);
+        hbox1->addSpacing(28);
+        hbox1->addWidget(m_finalClass);
+        hbox1->addSpacing(11);
+        hbox1->addWidget(m_baseClass);
+        hbox1->addSpacing(11);
+        hbox1->addWidget(m_inheritClass);
+        hbox1->addSpacing(11);
+        hbox1->addWidget(m_isFinalClass);
+
+        hbox2->setAlignment(Qt::AlignLeft);
+        hbox2->addWidget(m_isTemplate);
+        hbox2->addSpacing(11);
+        hbox2->addWidget(m_isSetterReturnThis);
+        hbox2->addSpacing(11);
+        hbox2->addWidget(m_isUpdateFilename);
+        hbox2->addSpacing(11);
+        hbox2->addWidget(m_isImpl);
+
+        hbox3->addWidget(m_templateView);
+
+        QLabel *  baseClassLabel = new QLabel(tr("First Base Class"));
+        hbox4->addWidget(baseClassLabel);
+        hbox4->addWidget(m_classNameInherit);
+        hbox4->addSpacing(11);
+        hbox4->addWidget(m_inheritIsVirtual);
+
+        hbox5->setAlignment(Qt::AlignLeft);
+        hbox5->addWidget(m_baseId);
+        hbox5->addSpacing(11);
+        hbox5->addWidget(m_borthId);
+        hbox5->addSpacing(11);
+        hbox5->addWidget(m_inheritId);
+        hbox5->addSpacing(18);
+        QLabel *  baseClassPrarmLb = new QLabel(tr("Base Class Parameter"));
+        hbox5->addWidget(baseClassPrarmLb);
+        hbox5->addWidget(m_baseClassPrarm);
+
+        hbox6->addWidget(m_mulInhClassView);
+        hbox6->addWidget(m_friendClassView);
+        hbox6->setStretch(0, 75);
+        hbox6->setStretch(1, 25);
+
+        hbox7->setAlignment(Qt::AlignLeft);
+        hbox7->addWidget(m_hasDefCtor);
+        hbox7->addSpacing(11);
+        hbox7->addWidget(m_hasCopyCtor);
+        hbox7->addSpacing(11);
+        hbox7->addWidget(m_hasMoveCtor);
+        hbox7->addSpacing(11);
+        hbox7->addWidget(m_hasDtor);
+        hbox7->addSpacing(11);
+        hbox7->addWidget(m_hasCopyOpEq);
+        hbox7->addSpacing(11);
+        hbox7->addWidget(m_hasMoveOpEq);
+
+        hbox8->addWidget(m_docmentClass);
     }
 }
 

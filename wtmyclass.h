@@ -103,15 +103,29 @@ private:
     QPushButton *   m_beforBehindPb;
     QTabWidget *    m_mainTab;
     QTextEdit *     m_docmentClass;
+    QLineEdit *     m_replaceClassName;
     QCheckBox *     m_isFinalClass;
     QCheckBox *     m_isSetterReturnThis;
     QCheckBox *     m_isTemplate;
+    QCheckBox *     m_isUpdateFilename;
+    QCheckBox *     m_isImpl;
+    QCheckBox *     m_isInternal;
+    QCheckBox *     m_isIndPublicLabel;
+    QCheckBox *     m_hasDefCtor;
+    QCheckBox *     m_hasCopyCtor;
+    QCheckBox *     m_hasMoveCtor;
+    QCheckBox *     m_hasDtor;
+    QCheckBox *     m_hasCopyOpEq;
+    QCheckBox *     m_hasMoveOpEq;
     QButtonGroup *      m_classTypeGroup;
     QRadioButton *      m_finalClass;
     QRadioButton *      m_baseClass;
     QRadioButton *      m_inheritClass;
+    QLineEdit *     m_baseClassPrarm;
     QTableView *    m_templateView;
     QStandardItemModel *    m_templateModel;
+    QTableView *    m_friendClassView;
+    QStandardItemModel *    m_friendClassModel;
     QLineEdit *     m_classNameInherit;
     QCheckBox *     m_inheritIsVirtual;
     QButtonGroup *      m_inheritIdGroup;
@@ -149,6 +163,8 @@ private:
     QTableView *    m_fieldActionInsertIdxView;
     QStandardItemModel *    m_fieldActionInsertIdxModel;
     CodeEditor *    m_fieldActionInsertCode;
+    CodeEditor *    m_dotH;
+    CodeEditor *    m_dotCpp;
 };
 
 }

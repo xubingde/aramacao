@@ -73,7 +73,13 @@ MyClass::MyClass():
         m_swapFunction(false),
         m_toStringFunction(false),
         m_internal(false),
-        m_indPublicLabel(false)
+        m_indPublicLabel(false),
+        m_defCtor(false),
+        m_copyCtor(false),
+        m_moveCtor(false),
+        m_dtor(false),
+        m_copyOpEq(false),
+        m_moveOpEq(false)
 {
     setBaseType(Etype::eClass);
     setClassName("MyClass1");
@@ -119,7 +125,13 @@ MyClass::MyClass(const MyClass &  other):
         m_swapFunction(other.m_swapFunction),
         m_toStringFunction(other.m_toStringFunction),
         m_internal(other.m_internal),
-        m_indPublicLabel(other.m_indPublicLabel)
+        m_indPublicLabel(other.m_indPublicLabel),
+        m_defCtor(other.m_defCtor),
+        m_copyCtor(other.m_copyCtor),
+        m_moveCtor(other.m_moveCtor),
+        m_dtor(other.m_dtor),
+        m_copyOpEq(other.m_copyOpEq),
+        m_moveOpEq(other.m_moveOpEq)
 {
 }
 
@@ -162,7 +174,13 @@ MyClass::MyClass(MyClass &&  other) noexcept:
         m_swapFunction(std::move(other.m_swapFunction)),
         m_toStringFunction(std::move(other.m_toStringFunction)),
         m_internal(std::move(other.m_internal)),
-        m_indPublicLabel(std::move(other.m_indPublicLabel))
+        m_indPublicLabel(std::move(other.m_indPublicLabel)),
+        m_defCtor(std::move(other.m_defCtor)),
+        m_copyCtor(std::move(other.m_copyCtor)),
+        m_moveCtor(std::move(other.m_moveCtor)),
+        m_dtor(std::move(other.m_dtor)),
+        m_copyOpEq(std::move(other.m_copyOpEq)),
+        m_moveOpEq(std::move(other.m_moveOpEq))
 {
 }
 
@@ -215,6 +233,12 @@ MyClass::operator=(const MyClass &  other)
     m_toStringFunction = other.m_toStringFunction;
     m_internal = other.m_internal;
     m_indPublicLabel = other.m_indPublicLabel;
+    m_defCtor = other.m_defCtor;
+    m_copyCtor = other.m_copyCtor;
+    m_moveCtor = other.m_moveCtor;
+    m_dtor = other.m_dtor;
+    m_copyOpEq = other.m_copyOpEq;
+    m_moveOpEq = other.m_moveOpEq;
 
     return *this;
 }
@@ -264,6 +288,12 @@ MyClass::operator=(MyClass &&  other) noexcept
     m_toStringFunction = std::move(other.m_toStringFunction);
     m_internal = std::move(other.m_internal);
     m_indPublicLabel = std::move(other.m_indPublicLabel);
+    m_defCtor = std::move(other.m_defCtor);
+    m_copyCtor = std::move(other.m_copyCtor);
+    m_moveCtor = std::move(other.m_moveCtor);
+    m_dtor = std::move(other.m_dtor);
+    m_copyOpEq = std::move(other.m_copyOpEq);
+    m_moveOpEq = std::move(other.m_moveOpEq);
 
     return *this;
 }
@@ -3369,6 +3399,78 @@ MyClass::setIndPublicLabel(const bool  value)
 }
 
 bool
+MyClass::hasDefCtor() const
+{
+    return m_defCtor;
+}
+
+void
+MyClass::setDefCtor(const bool  value)
+{
+    m_defCtor = value;
+}
+
+bool
+MyClass::hasCopyCtor() const
+{
+    return m_copyCtor;
+}
+
+void
+MyClass::setCopyCtor(const bool  value)
+{
+    m_copyCtor = value;
+}
+
+bool
+MyClass::hasMoveCtor() const
+{
+    return m_moveCtor;
+}
+
+void
+MyClass::setMoveCtor(const bool  value)
+{
+    m_moveCtor = value;
+}
+
+bool
+MyClass::hasDtor() const
+{
+    return m_dtor;
+}
+
+void
+MyClass::setDtor(const bool  value)
+{
+    m_dtor = value;
+}
+
+bool
+MyClass::hasCopyOpEq() const
+{
+    return m_copyOpEq;
+}
+
+void
+MyClass::setCopyOpEq(const bool  value)
+{
+    m_copyOpEq = value;
+}
+
+bool
+MyClass::hasMoveOpEq() const
+{
+    return m_moveOpEq;
+}
+
+void
+MyClass::setMoveOpEq(const bool  value)
+{
+    m_moveOpEq = value;
+}
+
+bool
 MyClass::equal(const EObject &  value) const
 {
     bool  result = false;
@@ -3449,7 +3551,7 @@ MyClass::serialize() const
     xu::append(res, xu::toString(m_beforeDcl));
     xu::append(res, xu::toString(m_behindDcl));
     {
-        std::string  boolBit("\0\0");
+        std::string  boolBit("\0\0\0");
 
         if (m_updateToString)    boolBit[0] |= 0b00'000'001;
         if (m_finalClass)        boolBit[0] |= 0b00'000'010;
@@ -3464,6 +3566,13 @@ MyClass::serialize() const
         if (m_toStringFunction)  boolBit[1] |= 0b00'000'100;
         if (m_internal)          boolBit[1] |= 0b00'001'000;
         if (m_indPublicLabel)    boolBit[1] |= 0b00'010'000;
+        if (m_defCtor)           boolBit[1] |= 0b00'100'000;
+        if (m_copyCtor)          boolBit[1] |= 0b01'000'000;
+
+        if (m_moveCtor)          boolBit[2] |= 0b00'000'001;
+        if (m_dtor)              boolBit[2] |= 0b00'000'010;
+        if (m_copyOpEq)          boolBit[2] |= 0b00'000'100;
+        if (m_moveOpEq)          boolBit[2] |= 0b00'001'000;
 
         xu::append(res, xu::toString(boolBit));
     }
@@ -3515,7 +3624,7 @@ MyClass::deserialize(const char *  data,
         return result;
     } else {
         std::string  boolBit;
-        if (xu::fromString(boolBit, vi[25]) && boolBit.size() == 2) {
+        if (xu::fromString(boolBit, vi[25]) && boolBit.size() == 3) {
             me.m_updateToString =   boolBit[0] & 0b00'000'001;
             me.m_finalClass =       boolBit[0] & 0b00'000'010;
             me.m_template =         boolBit[0] & 0b00'000'100;
@@ -3529,6 +3638,13 @@ MyClass::deserialize(const char *  data,
             me.m_toStringFunction = boolBit[1] & 0b00'000'100;
             me.m_internal =         boolBit[1] & 0b00'001'000;
             me.m_indPublicLabel =   boolBit[1] & 0b00'010'000;
+            me.m_defCtor =          boolBit[1] & 0b00'100'000;
+            me.m_copyCtor =         boolBit[1] & 0b01'000'000;
+
+            me.m_moveCtor =         boolBit[2] & 0b00'000'001;
+            me.m_dtor =             boolBit[2] & 0b00'000'010;
+            me.m_copyOpEq =         boolBit[2] & 0b00'000'100;
+            me.m_moveOpEq =         boolBit[2] & 0b00'001'000;
         } else {
             err.push_back({25});
         }
@@ -3589,6 +3705,12 @@ MyClass::exchange(EObject &  value) noexcept
         swap(m_toStringFunction, rhs.m_toStringFunction);
         swap(m_internal, rhs.m_internal);
         swap(m_indPublicLabel, rhs.m_indPublicLabel);
+        swap(m_defCtor, rhs.m_defCtor);
+        swap(m_copyCtor, rhs.m_copyCtor);
+        swap(m_moveCtor, rhs.m_moveCtor);
+        swap(m_dtor, rhs.m_dtor);
+        swap(m_copyOpEq, rhs.m_copyOpEq);
+        swap(m_moveOpEq, rhs.m_moveOpEq);
 
         result = true;
     }

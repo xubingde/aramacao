@@ -199,6 +199,24 @@ public:
     bool  isIndPublicLabel() const;
     virtual void  setIndPublicLabel(const bool  value);
 
+    bool  hasDefCtor() const;
+    virtual void  setDefCtor(const bool  value);
+
+    bool  hasCopyCtor() const;
+    virtual void  setCopyCtor(const bool  value);
+
+    bool  hasMoveCtor() const;
+    virtual void  setMoveCtor(const bool  value);
+
+    bool  hasDtor() const;
+    virtual void  setDtor(const bool  value);
+
+    bool  hasCopyOpEq() const;
+    virtual void  setCopyOpEq(const bool  value);
+
+    bool  hasMoveOpEq() const;
+    virtual void  setMoveOpEq(const bool  value);
+
 protected:
 
     virtual bool  equal(const EObject &  value) const override;
@@ -268,6 +286,12 @@ private:
     bool            m_toStringFunction;
     bool            m_internal;
     bool            m_indPublicLabel;
+    bool            m_defCtor;
+    bool            m_copyCtor;
+    bool            m_moveCtor;
+    bool            m_dtor;
+    bool            m_copyOpEq;
+    bool            m_moveOpEq;
 };
 
 }
