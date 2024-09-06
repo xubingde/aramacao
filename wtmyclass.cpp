@@ -69,6 +69,10 @@ WtMyClass::WtMyClass(QWidget *  parent /* = nullptr */):
         m_fieldAttribute(nullptr),
         m_fieldArray(nullptr),
         m_fieldIsMutable(nullptr),
+        m_hasLessFunction(nullptr),
+        m_hasEqFunction(nullptr),
+        m_hasSwapFunction(nullptr),
+        m_hasToStringFunction(nullptr),
         m_fieldIdRegularView(nullptr),
         m_fieldIdRegularModel(nullptr),
         m_fieldIdView(nullptr),
@@ -202,6 +206,161 @@ WtMyClass::docmentEdit_textChanged()
 }
 
 void
+WtMyClass::replaceClassName_editingFinished()
+{
+}
+
+void
+WtMyClass::isFinalClass_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::isTemplate_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::isSetterReturnThis_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::isUpdateFilename_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::isImpl_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::isInternal_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::isIndPublicLabel_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasDefCtor_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasCopyCtor_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasMoveCtor_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasDtor_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasCopyOpEq_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasMoveOpEq_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::finalClass_toggled(bool const  isChecked)
+{
+}
+
+void
+WtMyClass::baseClass_toggled(bool const  isChecked)
+{
+}
+
+void
+WtMyClass::inheritClass_toggled(bool const  isChecked)
+{
+}
+
+void
+WtMyClass::mulInhClassConnect()
+{
+}
+
+void
+WtMyClass::templateConnect()
+{
+}
+
+void
+WtMyClass::friendClassConnect()
+{
+}
+
+void
+WtMyClass::baseClassPrarm_editingFinished()
+{
+}
+
+void
+WtMyClass::classNameInherit_editingFinished()
+{
+}
+
+void
+WtMyClass::inheritIsVirtual_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::baseId_toggled(bool const  isChecked)
+{
+}
+
+void
+WtMyClass::borthId_toggled(bool const  isChecked)
+{
+}
+
+void
+WtMyClass::inheritId_toggled(bool const  isChecked)
+{
+}
+
+void
+WtMyClass::hasLessFunction_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasEqFunction_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasSwapFunction_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::hasToStringFunction_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::fieldIdIsToString_stateChanged(int const  status)
+{
+}
+
+void
 WtMyClass::fieldConnect()
 {
     QAction *  actAddItem = new QAction(tr("Add New"));
@@ -261,17 +420,6 @@ WtMyClass::fieldConnect()
     connect(m_fieldView->selectionModel(),
             &QItemSelectionModel::selectionChanged,
             this, &WtMyClass::field_selectChanged);
-
-    connect(m_fieldAttribute, &QLineEdit::editingFinished,
-            this, &WtMyClass::field_attribute_editingFinished);
-    connect(m_fieldArray, &QLineEdit::editingFinished,
-            this, &WtMyClass::field_array_editingFinished);
-    connect(m_fieldAlignas, &QLineEdit::editingFinished,
-            this, &WtMyClass::field_alignas_editingFinished);
-    connect(m_fieldDocment, &QTextEdit::textChanged,
-            this, &WtMyClass::field_docment_textChanged);
-    connect(m_fieldIsMutable, &QCheckBox::stateChanged,
-            this, &WtMyClass::field_isMutable_stateChanged);
 }
 
 void
@@ -1148,6 +1296,56 @@ WtMyClass::fieldAction_InsBeforBehind_triggered()
 }
 
 void
+WtMyClass::fieldActionAutoCodeConnect()
+{
+}
+
+void
+WtMyClass::fieldActionDelIdxConnect()
+{
+}
+
+void
+WtMyClass::fieldActionInsertIdxConnect()
+{
+}
+
+void
+WtMyClass::fdActAttribute_editingFinished()
+{
+}
+
+void
+WtMyClass::fdActInline_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::fdActNoexcept_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::fdActVirtual_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::fdActOverride_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::fdActFinal_stateChanged(int const  status)
+{
+}
+
+void
+WtMyClass::fdActInsertCode_textChanged()
+{
+}
+
+void
 WtMyClass::init_obj()
 {
     m_className = new QLineEdit;
@@ -1198,6 +1396,11 @@ WtMyClass::init_obj()
     m_fieldActionOverride = new QCheckBox(tr("override"));
     m_fieldActionFinal = new QCheckBox(tr("final"));
     m_fieldActionNoexcept = new QCheckBox(tr("noexcept"));
+
+    m_hasLessFunction = new QCheckBox(tr("has operator< <= > >="));
+    m_hasEqFunction = new QCheckBox(tr("has operator== !="));
+    m_hasSwapFunction = new QCheckBox(tr("has swap"));
+    m_hasToStringFunction = new QCheckBox(tr("has toString"));
 
     m_hasDefCtor = new QCheckBox(tr("Default_Ctor"));
     m_hasCopyCtor = new QCheckBox(tr("Copy_Ctor"));
@@ -1365,16 +1568,116 @@ WtMyClass::connect_obj()
             this, &WtMyClass::alignas_editingFinished);
     connect(m_beforBehindPb, &QPushButton::clicked,
             this, &WtMyClass::beforBehindPb_clicked);
+
     connect(m_docmentClass, &QTextEdit::textChanged,
             this, &WtMyClass::docmentEdit_textChanged);
 
+    connect(m_replaceClassName, &QLineEdit::editingFinished,
+            this, &WtMyClass::replaceClassName_editingFinished);
+    connect(m_isFinalClass, &QCheckBox::stateChanged,
+            this, &WtMyClass::isFinalClass_stateChanged);
+    connect(m_isTemplate, &QCheckBox::stateChanged,
+            this, &WtMyClass::isTemplate_stateChanged);
+    connect(m_isUpdateFilename, &QCheckBox::stateChanged,
+            this, &WtMyClass::isUpdateFilename_stateChanged);
+    connect(m_isImpl, &QCheckBox::stateChanged,
+            this, &WtMyClass::isImpl_stateChanged);
+    connect(m_isSetterReturnThis, &QCheckBox::stateChanged,
+            this, &WtMyClass::isSetterReturnThis_stateChanged);
+    connect(m_isInternal, &QCheckBox::stateChanged,
+            this, &WtMyClass::isInternal_stateChanged);
+    connect(m_isIndPublicLabel, &QCheckBox::stateChanged,
+            this, &WtMyClass::isIndPublicLabel_stateChanged);
+
+    connect(m_hasDefCtor, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasDefCtor_stateChanged);
+    connect(m_hasCopyCtor, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasCopyCtor_stateChanged);
+    connect(m_hasMoveCtor, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasMoveCtor_stateChanged);
+    connect(m_hasDtor, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasDtor_stateChanged);
+    connect(m_hasCopyOpEq, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasCopyOpEq_stateChanged);
+    connect(m_hasMoveOpEq, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasMoveOpEq_stateChanged);
+
+    connect(m_finalClass, &QRadioButton::toggled,
+            this, &WtMyClass::finalClass_toggled);
+    connect(m_baseClass, &QRadioButton::toggled,
+            this, &WtMyClass::baseClass_toggled);
+    connect(m_inheritClass, &QRadioButton::toggled,
+            this, &WtMyClass::inheritClass_toggled);
+
+    templateConnect();
+    friendClassConnect();
+
+    connect(m_baseClassPrarm, &QLineEdit::editingFinished,
+            this, &WtMyClass::baseClassPrarm_editingFinished);
+    connect(m_classNameInherit, &QLineEdit::editingFinished,
+            this, &WtMyClass::classNameInherit_editingFinished);
+
+    connect(m_inheritIsVirtual, &QCheckBox::stateChanged,
+            this, &WtMyClass::inheritIsVirtual_stateChanged);
+
+    connect(m_baseId, &QRadioButton::toggled,
+            this, &WtMyClass::baseId_toggled);
+    connect(m_borthId, &QRadioButton::toggled,
+            this, &WtMyClass::borthId_toggled);
+    connect(m_inheritId, &QRadioButton::toggled,
+            this, &WtMyClass::inheritId_toggled);
+
+    mulInhClassConnect();
+
     fieldConnect();
+
+    connect(m_fieldAttribute, &QLineEdit::editingFinished,
+            this, &WtMyClass::field_attribute_editingFinished);
+    connect(m_fieldArray, &QLineEdit::editingFinished,
+            this, &WtMyClass::field_array_editingFinished);
+    connect(m_fieldAlignas, &QLineEdit::editingFinished,
+            this, &WtMyClass::field_alignas_editingFinished);
+    connect(m_fieldDocment, &QTextEdit::textChanged,
+            this, &WtMyClass::field_docment_textChanged);
+    connect(m_fieldIsMutable, &QCheckBox::stateChanged,
+            this, &WtMyClass::field_isMutable_stateChanged);
+
+    connect(m_hasLessFunction, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasLessFunction_stateChanged);
+    connect(m_hasEqFunction, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasEqFunction_stateChanged);
+    connect(m_hasSwapFunction, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasSwapFunction_stateChanged);
+    connect(m_hasToStringFunction, &QCheckBox::stateChanged,
+            this, &WtMyClass::hasToStringFunction_stateChanged);
+
+    connect(m_fieldIdIsToString, &QCheckBox::stateChanged,
+            this, &WtMyClass::fieldIdIsToString_stateChanged);
 
     fieldIdRegularConnect();
     fieldIdConnect();
     fieldIdToStringConnect();
 
     fieldActionConnect();
+    fieldActionAutoCodeConnect();
+    fieldActionDelIdxConnect();
+    fieldActionInsertIdxConnect();
+
+    connect(m_fieldActionAttribute, &QLineEdit::editingFinished,
+            this, &WtMyClass::fdActAttribute_editingFinished);
+    connect(m_fieldActionInline, &QCheckBox::stateChanged,
+            this, &WtMyClass::fdActInline_stateChanged);
+    connect(m_fieldActionNoexcept, &QCheckBox::stateChanged,
+            this, &WtMyClass::fdActNoexcept_stateChanged);
+    connect(m_fieldActionVirtual, &QCheckBox::stateChanged,
+            this, &WtMyClass::fdActVirtual_stateChanged);
+    connect(m_fieldActionOverride, &QCheckBox::stateChanged,
+            this, &WtMyClass::fdActOverride_stateChanged);
+    connect(m_fieldActionFinal, &QCheckBox::stateChanged,
+            this, &WtMyClass::fdActFinal_stateChanged);
+
+    connect(m_fieldActionInsertCode, &CodeEditor::textChanged,
+            this, &WtMyClass::fdActInsertCode_textChanged);
 }
 
 void
@@ -1430,12 +1733,12 @@ WtMyClass::display_obj()
     }
 
     QSplitter *  spvField = new QSplitter(Qt::Vertical);
-    QSplitter *  spvFieldId = new QSplitter;
+    QWidget * spvFieldId = new QWidget;
+    spvFieldId->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QSplitter *  spvFieldAction = new QSplitter(Qt::Vertical);
-    QFrame * spvGeneral = new QFrame;
+    QWidget * spvGeneral = new QWidget;
     spvGeneral->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     spvField->setHandleWidth(1);
-    spvFieldId->setHandleWidth(1);
     spvFieldAction->setHandleWidth(1);
     m_mainTab->addTab(spvField, tr(" Field "));
     m_mainTab->addTab(spvFieldId, tr(" Field_Id "));
@@ -1483,33 +1786,55 @@ WtMyClass::display_obj()
         spvField->setStretchFactor(2, 1);
     }
     {
+        QVBoxLayout *  vbox1 = new QVBoxLayout(spvFieldId);
+        vbox1->setContentsMargins(0, 0, 0, 0);
+        QHBoxLayout *  hbox1 = new QHBoxLayout;
+        QHBoxLayout *  hbox2 = new QHBoxLayout;
+        hbox1->setContentsMargins(0, 0, 0, 0);
+        hbox2->setContentsMargins(0, 0, 0, 0);
+        vbox1->addLayout(hbox1);
+        vbox1->addLayout(hbox2);
+
+        QSplitter *  fdidSp = new QSplitter;
+        fdidSp->setHandleWidth(1);
+        hbox1->addWidget(fdidSp);
+
         QFrame *  fr1 = new QFrame;
         QFrame *  fr2 = new QFrame;
         QFrame *  fr3 = new QFrame;
         fr1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         fr2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         fr3->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        spvFieldId->addWidget(fr1);
-        spvFieldId->addWidget(fr2);
-        spvFieldId->addWidget(fr3);
+        fdidSp->addWidget(fr1);
+        fdidSp->addWidget(fr2);
+        fdidSp->addWidget(fr3);
 
-        QVBoxLayout *  vbox1 = new QVBoxLayout(fr1);
-        QVBoxLayout *  vbox2 = new QVBoxLayout(fr2);
-        QVBoxLayout *  vbox3 = new QVBoxLayout(fr3);
-        vbox1->setContentsMargins(0, 0, 0, 0);
-        vbox2->setContentsMargins(0, 0, 0, 0);
-        vbox3->setContentsMargins(0, 0, 0, 0);
+        QVBoxLayout *  vbox1_1 = new QVBoxLayout(fr1);
+        QVBoxLayout *  vbox1_2 = new QVBoxLayout(fr2);
+        QVBoxLayout *  vbox1_3 = new QVBoxLayout(fr3);
+        vbox1_1->setContentsMargins(0, 0, 0, 0);
+        vbox1_2->setContentsMargins(0, 0, 0, 0);
+        vbox1_3->setContentsMargins(0, 0, 0, 0);
 
         QLabel *  label1 = new QLabel(tr("ragular sort"));
         QLabel *  label2 = new QLabel(tr("Id sort"));
         QLabel *  label3 = new QLabel(tr("toString sort"));
-        vbox1->addWidget(label1);
-        vbox1->addWidget(m_fieldIdRegularView);
-        vbox2->addWidget(label2);
-        vbox2->addWidget(m_fieldIdView);
-        vbox3->addWidget(label3);
-        vbox3->addWidget(m_fieldIdIsToString);
-        vbox3->addWidget(m_fieldIdToStringView);
+        vbox1_1->addWidget(label1);
+        vbox1_1->addWidget(m_fieldIdRegularView);
+        vbox1_2->addWidget(label2);
+        vbox1_2->addWidget(m_fieldIdView);
+        vbox1_3->addWidget(label3);
+        vbox1_3->addWidget(m_fieldIdIsToString);
+        vbox1_3->addWidget(m_fieldIdToStringView);
+
+        hbox2->setAlignment(Qt::AlignLeft);
+        hbox2->addWidget(m_hasLessFunction);
+        hbox2->addSpacing(15);
+        hbox2->addWidget(m_hasEqFunction);
+        hbox2->addSpacing(15);
+        hbox2->addWidget(m_hasSwapFunction);
+        hbox2->addSpacing(15);
+        hbox2->addWidget(m_hasToStringFunction);
     }
     {
         QSplitter *  sptr1 = new QSplitter;
@@ -1642,8 +1967,8 @@ WtMyClass::display_obj()
 
         hbox6->addWidget(m_mulInhClassView);
         hbox6->addWidget(m_friendClassView);
-        hbox6->setStretch(0, 75);
-        hbox6->setStretch(1, 25);
+        hbox6->setStretch(0, 70);
+        hbox6->setStretch(1, 30);
 
         hbox7->setAlignment(Qt::AlignLeft);
         hbox7->addWidget(m_hasDefCtor);
@@ -1672,12 +1997,66 @@ WtMyClass::fillData()
     m_docmentClass->setText(QString::fromStdString(m_objPtr->getDocment()));
     m_fieldIdIsToString->setChecked(m_objPtr->isUpdateToString());
 
+    m_hasLessFunction->setChecked(m_objPtr->hasLessFunction());
+    m_hasEqFunction->setChecked(m_objPtr->hasEqFunction());
+    m_hasSwapFunction->setChecked(m_objPtr->hasSwapFunction());
+    m_hasToStringFunction->setChecked(m_objPtr->hasToStringFunction());
+
+    m_hasDefCtor->setChecked(m_objPtr->hasDefCtor());
+    m_hasCopyCtor->setChecked(m_objPtr->hasCopyCtor());
+    m_hasMoveCtor->setChecked(m_objPtr->hasMoveCtor());
+    m_hasDtor->setChecked(m_objPtr->hasDtor());
+    m_hasCopyOpEq->setChecked(m_objPtr->hasCopyOpEq());
+    m_hasMoveOpEq->setChecked(m_objPtr->hasMoveOpEq());
+
+    m_replaceClassName->setText(QString::fromStdString(m_objPtr->getReplaceClassName()));
+    m_isInternal->setChecked(m_objPtr->isInternal());
+    m_isIndPublicLabel->setChecked(m_objPtr->isIndPublicLabel());
+    m_isFinalClass->setChecked(m_objPtr->isFinalClass());
+    m_isTemplate->setChecked(m_objPtr->isTemplate());
+    m_isSetterReturnThis->setChecked(m_objPtr->isSetterReturnThis());
+    m_isImpl->setChecked(m_objPtr->isImpl());
+
+    std::pair<std::string, bool> const  baseClassFirst = m_objPtr->getBaseClassFirst();
+    m_classNameInherit->setText(QString::fromStdString(baseClassFirst.first));
+    m_inheritIsVirtual->setChecked(baseClassFirst.second);
+
+    m_baseClassPrarm->setText(QString::fromStdString(m_objPtr->getBaseClassPrarm()));
+
+    ClassType const  cType = m_objPtr->getClasstype();
+    if (cType == ClassType::cppFinal) {
+        m_finalClass->setChecked(true);
+        m_isFinalClass->hide();
+    } else if (cType == ClassType::cppBase) {
+        m_baseClass->setChecked(true);
+        m_isFinalClass->hide();
+    } else {
+        m_inheritClass->setChecked(true);
+        m_isFinalClass->show();
+    }
+
+    InheritID const  inhId = m_objPtr->getInheritID();
+    if (inhId == InheritID::baseId) {
+        m_baseId->setChecked(true);
+    } else if (inhId == InheritID::inheritId) {
+        m_inheritId->setChecked(true);
+    } else {
+        m_borthId->setChecked(true);
+    }
+
     repField();
     field_selectChanged();
 
     repFieldIdRegular();
     repFieldId();
     repFieldIdToString();
+
+    repFieldAction();
+    fieldAction_selectChanged();
+
+    repMulInhClass();
+    repTemplateClass();
+    repFriendClass();
 }
 
 void
@@ -1767,6 +2146,21 @@ WtMyClass::repFieldIdToString()
 
 void
 WtMyClass::repFieldAction()
+{
+}
+
+void
+WtMyClass::repMulInhClass()
+{
+}
+
+void
+WtMyClass::repTemplateClass()
+{
+}
+
+void
+WtMyClass::repFriendClass()
 {
 }
 
