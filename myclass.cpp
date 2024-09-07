@@ -2733,6 +2733,9 @@ void
 MyClass::setUpdateFilename(const bool  value)
 {
     m_updateFilename = value;
+    if (m_updateFilename && m_parentModulePtr) {
+        m_parentModulePtr->setFilename(m_className);
+    }
 }
 
 bool
@@ -2745,6 +2748,10 @@ void
 MyClass::setSetterReturnThis(const bool  value)
 {
     m_setterReturnThis = value;
+    for (Field &  fd: m_field) {
+        auto  fns = fd.getActionFn();
+        fd.setActionFn(fns);
+    }
 }
 
 bool

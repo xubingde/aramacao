@@ -1370,10 +1370,13 @@ EObject::equal(const EObject &  value) const
 {
     bool  result = false;
 
-    result = ( m_baseType == value.m_baseType );
+    result = ( m_id == value.m_id );
     if (!result) return result;
 
     result = ( m_treeLabel == value.m_treeLabel );
+    if (!result) return result;
+
+    result = ( m_baseType == value.m_baseType );
     if (!result) return result;
 
     return result;
@@ -1397,11 +1400,14 @@ operator<=(const EObject &  lhs,
 bool
 EObject::less(const EObject &  value) const
 {
-    if (m_baseType < value.m_baseType) return true;
-    if (value.m_baseType < m_baseType) return false;
+    if (m_id < value.m_id) return true;
+    if (value.m_id < m_id) return false;
 
     if (m_treeLabel < value.m_treeLabel) return true;
     if (value.m_treeLabel < m_treeLabel) return false;
+
+    if (m_baseType < value.m_baseType) return true;
+    if (value.m_baseType < m_baseType) return false;
 
     return false;
 }

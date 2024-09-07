@@ -320,6 +320,96 @@ MainWindow::insertValue(QModelIndex const &  index,
     newData.first = newEtp;
     newData.second = newMePtr;
 
+    {
+        void *  ptrTmp = vecItemStack[1].getVecPtr();
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
+                parentVec = static_cast<std::vector<std::pair<Etype,
+                std::shared_ptr<EObject>>> *>(ptrTmp);
+
+        switch (newEtp) {
+        case Etype::eDefaultConstructorFn :
+            {
+                auto  itF = std::find_if(parentVec->begin(), parentVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eDefaultConstructorFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != parentVec->end())  return;
+            }
+            break;
+        case Etype::eCopyConstructorFn :
+            {
+                auto  itF = std::find_if(parentVec->begin(), parentVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eCopyConstructorFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != parentVec->end())  return;
+            }
+            break;
+        case Etype::eMoveConstructorFn :
+            {
+                auto  itF = std::find_if(parentVec->begin(), parentVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eMoveConstructorFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != parentVec->end())  return;
+            }
+            break;
+        case Etype::eDestructorFn :
+            {
+                auto  itF = std::find_if(parentVec->begin(), parentVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eDestructorFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != parentVec->end())  return;
+            }
+            break;
+        case Etype::eCopyOperatorEqFn :
+            {
+                auto  itF = std::find_if(parentVec->begin(), parentVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eCopyOperatorEqFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != parentVec->end())  return;
+            }
+            break;
+        case Etype::eMoveOperatorEqFn :
+            {
+                auto  itF = std::find_if(parentVec->begin(), parentVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eMoveOperatorEqFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != parentVec->end())  return;
+            }
+            break;
+        default :
+            break;
+        }
+    }
+
     switch (newEtp) {
     case Etype::eClass :
         nameCheckClass(*std::dynamic_pointer_cast<MyClass>(newMePtr), parentItem);

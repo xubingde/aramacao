@@ -19,6 +19,7 @@
 #include "mystructdec.h"
 #include "myclassdec.h"
 #include "wtmyclass.h"
+#include "module.h"
 
 namespace xu {
 
@@ -124,6 +125,26 @@ WtMyClass::className_editingFinished()
     QVariant  treeLabel(QString::fromStdString(m_objPtr->getTreeLabel()));
     itemPtr->setData(treeLabel, Qt::EditRole);
 
+    if (m_objPtr->isUpdateFilename()) {
+        std::vector<QStandardItem *>  itemVec;
+        QStandardItem *  itemTmp = itemPtr->parent();
+        while (true) {
+            if (!itemTmp)  break;
+            itemVec.push_back(itemTmp);
+            itemTmp = itemTmp->parent();
+        }
+        for (QStandardItem *  item: itemVec) {
+            Etype const  etp = static_cast<Etype>(item->data(Qt::UserRole + 1).toInt());
+            void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+            if (etp == Etype::eModule) {
+                Module *  mdPtr = static_cast<Module *>(ptr);
+                QVariant  treeLabelMd(QString::fromStdString(mdPtr->getTreeLabel()));
+                item->setData(treeLabelMd, Qt::EditRole);
+                break;
+            }
+        }
+    }
+
     QStandardItem *  parentItem = itemPtr->parent();
     int const  count = parentItem->rowCount();
     for (int  i = 0; i < count; ++i) {
@@ -208,86 +229,193 @@ WtMyClass::docmentEdit_textChanged()
 void
 WtMyClass::replaceClassName_editingFinished()
 {
+    if (!m_objPtr)  return;
+
+    m_objPtr->setReplaceClassName(m_replaceClassName->text().toUtf8().toStdString());
 }
 
 void
 WtMyClass::isFinalClass_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    bool const  oldVal = m_objPtr->isFinalClass();
+    m_objPtr->setFinalClass(currVal);
+    bool const  newVal = m_objPtr->isFinalClass();
+    if (newVal != currVal) {
+        m_isFinalClass->setChecked(newVal);
+    }
 }
 
 void
 WtMyClass::isTemplate_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    m_objPtr->setTemplate(currVal);
 }
 
 void
 WtMyClass::isSetterReturnThis_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    const bool  oldVal = m_objPtr->isSetterReturnThis();
+    if (currVal != oldVal) {
+        m_objPtr->setSetterReturnThis(currVal);
+        repFieldAction();
+    }
 }
 
 void
 WtMyClass::isUpdateFilename_stateChanged(int const  status)
 {
+    QStandardItem *  itemPtr = getItemPtr();
+    if (!m_objPtr || !itemPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    m_objPtr->setUpdateFilename(currVal);
+    if (currVal) {
+        std::vector<QStandardItem *>  itemVec;
+        QStandardItem *  itemTmp = itemPtr->parent();
+        while (true) {
+            if (!itemTmp)  break;
+            itemVec.push_back(itemTmp);
+            itemTmp = itemTmp->parent();
+        }
+        for (QStandardItem *  item: itemVec) {
+            Etype const  etp = static_cast<Etype>(item->data(Qt::UserRole + 1).toInt());
+            void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+            if (etp == Etype::eModule) {
+                Module *  mdPtr = static_cast<Module *>(ptr);
+                QVariant  treeLabelMd(QString::fromStdString(mdPtr->getTreeLabel()));
+                item->setData(treeLabelMd, Qt::EditRole);
+                break;
+            }
+        }
+    }
 }
 
 void
 WtMyClass::isImpl_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    m_objPtr->setImpl(currVal);
 }
 
 void
 WtMyClass::isInternal_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    m_objPtr->setInternal(currVal);
 }
 
 void
 WtMyClass::isIndPublicLabel_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    m_objPtr->setIndPublicLabel(currVal);
 }
 
 void
 WtMyClass::hasDefCtor_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    bool const  oldVal = m_objPtr->hasDefCtor();
+    if (currVal != oldVal) {
+        m_objPtr->setDefCtor(currVal);
+    }
 }
 
 void
 WtMyClass::hasCopyCtor_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasMoveCtor_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasDtor_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasCopyOpEq_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasMoveOpEq_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::finalClass_toggled(bool const  isChecked)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::baseClass_toggled(bool const  isChecked)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::inheritClass_toggled(bool const  isChecked)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
@@ -308,56 +436,78 @@ WtMyClass::friendClassConnect()
 void
 WtMyClass::baseClassPrarm_editingFinished()
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::classNameInherit_editingFinished()
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::inheritIsVirtual_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::baseId_toggled(bool const  isChecked)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::borthId_toggled(bool const  isChecked)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::inheritId_toggled(bool const  isChecked)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasLessFunction_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasEqFunction_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasSwapFunction_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::hasToStringFunction_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fieldIdIsToString_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
@@ -1313,36 +1463,50 @@ WtMyClass::fieldActionInsertIdxConnect()
 void
 WtMyClass::fdActAttribute_editingFinished()
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fdActInline_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fdActNoexcept_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fdActVirtual_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fdActOverride_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fdActFinal_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
 WtMyClass::fdActInsertCode_textChanged()
 {
+    if (!m_objPtr)  return;
+
 }
 
 void
