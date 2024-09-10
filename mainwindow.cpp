@@ -4207,62 +4207,6 @@ MainWindow::fillFunctions(Functions &  functions,
 }
 
 void
-MainWindow::setItemProperty(QStandardItem *  item,
-                            Etype const  etp,
-                            std::shared_ptr<EObject>  objPtr)
-{
-    QVariant  valType = static_cast<int>(etp);
-    item->setData(valType, Qt::UserRole + 1);
-
-    QVariant  valPtr = QVariant::fromValue(static_cast<void *>(objPtr.get()));
-    item->setData(valPtr, Qt::UserRole + 2);
-
-    item->setFlags(Qt::NoItemFlags);
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
-                   Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable |
-                   Qt::ItemIsEnabled );
-}
-
-void
-MainWindow::getItemStack(std::vector<ItemStack> &  res,
-                         QModelIndex const &  index)
-{
-    if (!index.isValid())  return;
-
-    ItemStack  iStack;
-    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
-    QStandardItem *  parentItem = selfItem->parent();
-    int const  selfRow = index.row();
-    QModelIndex const  parentIndex = m_mainTreeModel->indexFromItem(parentItem);
-    int const  parentRow = parentIndex.row();
-
-    Etype const  selfEtp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
-    if (selfEtp == Etype::eProject) {
-        return;
-    }
-    void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
-    if (selfEtp == Etype::eModule) {
-        iStack.setVecPtr(static_cast<Module *>(selfPtr)->getEObjectListPtr());
-    } else if (selfEtp == Etype::eClass) {
-        iStack.setVecPtr(static_cast<MyClass *>(selfPtr)->getEObjectPtr());
-    } else if (selfEtp == Etype::eFunctions || selfEtp == Etype::eStaticFunctions ||
-            selfEtp == Etype::eConstexprFunctions || selfEtp == Etype::eTplFunctions ||
-            selfEtp == Etype::eTplStaticFunctions || selfEtp == Etype::eTplConstexprFunctions ||
-            selfEtp == Etype::eConstructors || selfEtp == Etype::eTplConstructors ) {
-        iStack.setVecPtr(static_cast<Functions *>(selfPtr)->getFunctionPtr());
-    }
-    iStack.setSelfItem(selfItem);
-    iStack.setSelfIndex(index);
-    iStack.setSelfRow(selfRow);
-    iStack.setParentItem(parentItem);
-    iStack.setParentIndex(parentIndex);
-    iStack.setParentRow(parentRow);
-
-    res.push_back(iStack);
-    getItemStack(res, parentIndex);
-}
-
-void
 MainWindow::insertProject(QModelIndex const &  index,
                           bool const  isFromMould,
                           Project const &  mouldVal /* = Project() */)
@@ -4389,7 +4333,67 @@ MainWindow::deleteRowValue(QModelIndex const &  index)
     int const  selfRow = vecItemStack[0].getSelfRow();
     parentVec->erase(parentVec->begin() + selfRow);
 
+    QStandardItem *  selfItem = vecItemStack[0].getSelfItem();
+    Etype const  selfEtp = static_cast<Etype>(selfItem->data(
+            Qt::UserRole + 1).toInt());
     QStandardItem *  parentItem = vecItemStack[0].getParentItem();
+    Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+            Qt::UserRole + 1).toInt());
+    void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
+
+    switch (selfEtp) {
+    case Etype::eDefaultConstructorFn :
+        if (parentEtp == Etype::eClass) {
+            static_cast<MyClass *>(parentPtr)->setDefCtor(false);
+        }
+        if (m_spvMain->widget(1) == m_wtMyClass) {
+            m_wtMyClass->repDefCtor();
+        }
+        break;
+    case Etype::eCopyConstructorFn :
+        if (parentEtp == Etype::eClass) {
+            static_cast<MyClass *>(parentPtr)->setCopyCtor(false);
+        }
+        if (m_spvMain->widget(1) == m_wtMyClass) {
+            m_wtMyClass->repCopyCtor();
+        }
+        break;
+    case Etype::eMoveConstructorFn :
+        if (parentEtp == Etype::eClass) {
+            static_cast<MyClass *>(parentPtr)->setMoveCtor(false);
+        }
+        if (m_spvMain->widget(1) == m_wtMyClass) {
+            m_wtMyClass->repMoveCtor();
+        }
+        break;
+    case Etype::eDestructorFn :
+        if (parentEtp == Etype::eClass) {
+            static_cast<MyClass *>(parentPtr)->setDtor(false);
+        }
+        if (m_spvMain->widget(1) == m_wtMyClass) {
+            m_wtMyClass->repDtor();
+        }
+        break;
+    case Etype::eCopyOperatorEqFn :
+        if (parentEtp == Etype::eClass) {
+            static_cast<MyClass *>(parentPtr)->setCopyOpEq(false);
+        }
+        if (m_spvMain->widget(1) == m_wtMyClass) {
+            m_wtMyClass->repCopyOpEq();
+        }
+        break;
+    case Etype::eMoveOperatorEqFn :
+        if (parentEtp == Etype::eClass) {
+            static_cast<MyClass *>(parentPtr)->setMoveOpEq(false);
+        }
+        if (m_spvMain->widget(1) == m_wtMyClass) {
+            m_wtMyClass->repMoveOpEq();
+        }
+        break;
+    default :
+        break;
+    }
+
     parentItem->removeRow(selfRow);
 }
 
@@ -4773,6 +4777,62 @@ MainWindow::nameCheckFunction(Function &  objVal,
         }
     }
     objVal.setFunctionName(newName);
+}
+
+void
+MainWindow::getItemStack(std::vector<ItemStack> &  res,
+                         QModelIndex const &  index)
+{
+    if (!index.isValid())  return;
+
+    ItemStack  iStack;
+    QStandardItem *  selfItem = m_mainTreeModel->itemFromIndex(index);
+    QStandardItem *  parentItem = selfItem->parent();
+    int const  selfRow = index.row();
+    QModelIndex const  parentIndex = m_mainTreeModel->indexFromItem(parentItem);
+    int const  parentRow = parentIndex.row();
+
+    Etype const  selfEtp = static_cast<Etype>(selfItem->data(Qt::UserRole + 1).toInt());
+    if (selfEtp == Etype::eProject) {
+        return;
+    }
+    void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
+    if (selfEtp == Etype::eModule) {
+        iStack.setVecPtr(static_cast<Module *>(selfPtr)->getEObjectListPtr());
+    } else if (selfEtp == Etype::eClass) {
+        iStack.setVecPtr(static_cast<MyClass *>(selfPtr)->getEObjectPtr());
+    } else if (selfEtp == Etype::eFunctions || selfEtp == Etype::eStaticFunctions ||
+            selfEtp == Etype::eConstexprFunctions || selfEtp == Etype::eTplFunctions ||
+            selfEtp == Etype::eTplStaticFunctions || selfEtp == Etype::eTplConstexprFunctions ||
+            selfEtp == Etype::eConstructors || selfEtp == Etype::eTplConstructors ) {
+        iStack.setVecPtr(static_cast<Functions *>(selfPtr)->getFunctionPtr());
+    }
+    iStack.setSelfItem(selfItem);
+    iStack.setSelfIndex(index);
+    iStack.setSelfRow(selfRow);
+    iStack.setParentItem(parentItem);
+    iStack.setParentIndex(parentIndex);
+    iStack.setParentRow(parentRow);
+
+    res.push_back(iStack);
+    getItemStack(res, parentIndex);
+}
+
+void
+MainWindow::setItemProperty(QStandardItem *  item,
+                            Etype const  etp,
+                            std::shared_ptr<EObject>  objPtr)
+{
+    QVariant  valType = static_cast<int>(etp);
+    item->setData(valType, Qt::UserRole + 1);
+
+    QVariant  valPtr = QVariant::fromValue(static_cast<void *>(objPtr.get()));
+    item->setData(valPtr, Qt::UserRole + 2);
+
+    item->setFlags(Qt::NoItemFlags);
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
+                   Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable |
+                   Qt::ItemIsEnabled );
 }
 
 }

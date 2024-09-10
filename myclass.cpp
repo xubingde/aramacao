@@ -2433,11 +2433,31 @@ MyClass::getClasstype() const
 void
 MyClass::setClasstype(const ClassType  value)
 {
+    ClassType const  oldVal = m_classtype;
+    if (oldVal == value)  return;
+
     m_classtype = value;
     if (m_classtype == ClassType::cppFinal) {
         m_finalClass = true;
     } else if (m_classtype == ClassType::cppBase) {
         m_finalClass = false;
+    }
+
+    if (m_eqFunction) {
+        setEqFunction(false);
+        setEqFunction(true);
+    }
+    if (m_lessFunction) {
+        setLessFunction(false);
+        setLessFunction(true);
+    }
+    if (m_swapFunction) {
+        setSwapFunction(false);
+        setSwapFunction(true);
+    }
+    if (m_toStringFunction) {
+        setToStringFunction(false);
+        setToStringFunction(true);
     }
 }
 
@@ -2775,167 +2795,7 @@ MyClass::hasLessFunction() const
 void
 MyClass::setLessFunction(const bool  value)
 {
-    if (m_lessFunction == value)  return;
     m_lessFunction = value;
-
-    if (m_lessFunction) {
-        MyClass::setEqFunction(true);
-
-        if (m_classtype == ClassType::cppBase ||
-                m_classtype == ClassType::cppInherit) {
-            int  index = -1;
-            for (int  i = 0; i < m_eobjList.size(); ++i) {
-                if (m_eobjList[i].first == Etype::eProtectedLabel) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1) {
-                std::shared_ptr<ProtectedLabel>  objPtr =
-                        std::make_shared<ProtectedLabel>();
-                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-                newObj.first = Etype::eProtectedLabel;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-                appendEobjList(newObj);
-                index = static_cast<int>(m_eobjList.size());
-            }
-            index++;
-            std::shared_ptr<VirtualLessFn>  objPtr =
-                    std::make_shared<VirtualLessFn>(this);
-            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-            newObj.first = Etype::eVirtualLessFn;
-            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-            insertEobjList(newObj, index);
-        }
-
-        if (m_parentModulePtr) {
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
-                    vecMobj = m_parentModulePtr->getEobjList();
-            int  index = -1;
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eClass) {
-                    MyClass *  classPtr = static_cast<MyClass *>(
-                            vecMobj[i].second.get());
-                    if (classPtr == this) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                std::shared_ptr<LessFn>  objPtr1 =
-                        std::make_shared<LessFn>(m_className, this);
-                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-                newObj.first = Etype::eLessFn;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr1);
-                insertEobjList(newObj, index);
-                index++;
-
-                std::shared_ptr<LessEqFn>  objPtr2 =
-                        std::make_shared<LessEqFn>(m_className, this);
-                newObj.first = Etype::eLessEqFn;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr2);
-                insertEobjList(newObj, index);
-                index++;
-
-                std::shared_ptr<GreaterFn>  objPtr3 =
-                        std::make_shared<GreaterFn>(m_className, this);
-                newObj.first = Etype::eGreaterFn;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr3);
-                insertEobjList(newObj, index);
-                index++;
-
-                std::shared_ptr<GreaterEqFn>  objPtr4 =
-                        std::make_shared<GreaterEqFn>(m_className, this);
-                newObj.first = Etype::eGreaterEqFn;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr4);
-                insertEobjList(newObj, index);
-            }
-        }
-    } else {
-        auto  item = std::find_if(m_eobjList.begin(), m_eobjList.end(),
-                [](std::pair<Etype, std::shared_ptr<EObject>> const &  val)
-                ->bool {
-                    if (val.first == Etype::eVirtualLessFn) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
-        if (item != m_eobjList.end()) {
-            m_eobjList.erase(item);
-        }
-
-        if (m_parentModulePtr) {
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
-                    vecMobj = m_parentModulePtr->getEobjList();
-            int  index = -1;
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eLessFn) {
-                    std::shared_ptr<LessFn>  objPtr =
-                            std::dynamic_pointer_cast<LessFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-
-            index = -1;
-            vecMobj.clear();
-            vecMobj = m_parentModulePtr->getEobjList();
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eLessEqFn) {
-                    std::shared_ptr<LessEqFn>  objPtr =
-                            std::dynamic_pointer_cast<LessEqFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-
-            index = -1;
-            vecMobj.clear();
-            vecMobj = m_parentModulePtr->getEobjList();
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eGreaterFn) {
-                    std::shared_ptr<GreaterFn>  objPtr =
-                            std::dynamic_pointer_cast<GreaterFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-
-            index = -1;
-            vecMobj.clear();
-            vecMobj = m_parentModulePtr->getEobjList();
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eGreaterEqFn) {
-                    std::shared_ptr<GreaterEqFn>  objPtr =
-                            std::dynamic_pointer_cast<GreaterEqFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-        }
-    }
 }
 
 bool
@@ -2947,118 +2807,7 @@ MyClass::hasEqFunction() const
 void
 MyClass::setEqFunction(const bool  value)
 {
-    if (m_eqFunction == value)  return;
-    if (m_lessFunction && !value)  return;
     m_eqFunction = value;
-
-    if (m_eqFunction) {
-        if (m_classtype == ClassType::cppBase ||
-                m_classtype == ClassType::cppInherit) {
-            int  index = -1;
-            for (int  i = 0; i < m_eobjList.size(); ++i) {
-                if (m_eobjList[i].first == Etype::eProtectedLabel) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1) {
-                std::shared_ptr<ProtectedLabel>  objPtr =
-                        std::make_shared<ProtectedLabel>();
-                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-                newObj.first = Etype::eProtectedLabel;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-                appendEobjList(newObj);
-                index = static_cast<int>(m_eobjList.size());
-            }
-            index++;
-            std::shared_ptr<VirtualEqFn>  objPtr =
-                    std::make_shared<VirtualEqFn>(this);
-            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-            newObj.first = Etype::eVirtualEqFn;
-            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-            insertEobjList(newObj, index);
-        }
-
-        if (m_parentModulePtr) {
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
-                    vecMobj = m_parentModulePtr->getEobjList();
-            int  index = -1;
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eClass) {
-                    MyClass *  classPtr = static_cast<MyClass *>(
-                            vecMobj[i].second.get());
-                    if (classPtr == this) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                std::shared_ptr<EqFn>  objPtr1 =
-                        std::make_shared<EqFn>(m_className, this);
-                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-                newObj.first = Etype::eEqFn;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr1);
-                insertEobjList(newObj, index);
-                index++;
-
-                std::shared_ptr<NotEqFn>  objPtr2 =
-                        std::make_shared<NotEqFn>(m_className, this);
-                newObj.first = Etype::eNotEqFn;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr2);
-                insertEobjList(newObj, index);
-            }
-        }
-    } else {
-        auto  item = std::find_if(m_eobjList.begin(), m_eobjList.end(),
-                [](std::pair<Etype, std::shared_ptr<EObject>> const &  val)
-                ->bool {
-                    if (val.first == Etype::eVirtualEqFn) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
-        if (item != m_eobjList.end()) {
-            m_eobjList.erase(item);
-        }
-
-        if (m_parentModulePtr) {
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
-                    vecMobj = m_parentModulePtr->getEobjList();
-            int  index = -1;
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eEqFn) {
-                    std::shared_ptr<EqFn>  objPtr =
-                            std::dynamic_pointer_cast<EqFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-
-            index = -1;
-            vecMobj.clear();
-            vecMobj = m_parentModulePtr->getEobjList();
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eNotEqFn) {
-                    std::shared_ptr<NotEqFn>  objPtr =
-                            std::dynamic_pointer_cast<NotEqFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-        }
-    }
 }
 
 bool
@@ -3070,133 +2819,7 @@ MyClass::hasSwapFunction() const
 void
 MyClass::setSwapFunction(const bool  value)
 {
-    if (m_swapFunction == value)  return;
     m_swapFunction = value;
-
-    if (m_swapFunction) {
-        if (m_classtype == ClassType::cppBase ||
-                m_classtype == ClassType::cppFinal) {
-            int  index = -1;
-            for (int  i = 0; i < m_eobjList.size(); ++i) {
-                if (m_eobjList[i].first == Etype::ePublicLabel) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1) {
-                std::shared_ptr<PublicLabel>  objPtr =
-                        std::make_shared<PublicLabel>();
-                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-                newObj.first = Etype::ePublicLabel;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-                appendEobjList(newObj);
-                index = static_cast<int>(m_eobjList.size());
-            }
-            index++;
-            std::shared_ptr<InSwapFn>  objPtr =
-                    std::make_shared<InSwapFn>(this);
-            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-            newObj.first = Etype::eInSwapFn;
-            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-            insertEobjList(newObj, index);
-
-            if (m_parentModulePtr) {
-                std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
-                        vecMobj = m_parentModulePtr->getEobjList();
-                int  index = -1;
-                for (int  i = 0; i < vecMobj.size(); ++i) {
-                    if (vecMobj[i].first == Etype::eClass) {
-                        MyClass *  classPtr = static_cast<MyClass *>(
-                                vecMobj[i].second.get());
-                        if (classPtr == this) {
-                            index = i;
-                            break;
-                        }
-                    }
-                }
-                if (index != -1) {
-                    std::shared_ptr<ExtSwapFn>  objPtrExt =
-                            std::make_shared<ExtSwapFn>(m_className, this);
-                    std::pair<Etype, std::shared_ptr<EObject>>  extObj;
-                    extObj.first = Etype::eExtSwapFn;
-                    extObj.second = std::dynamic_pointer_cast<EObject>(objPtrExt);
-                    insertEobjList(extObj, index);
-                }
-            }
-        }
-
-        if (m_classtype == ClassType::cppBase ||
-                m_classtype == ClassType::cppInherit) {
-            int  index = -1;
-            for (int  i = 0; i < m_eobjList.size(); ++i) {
-                if (m_eobjList[i].first == Etype::eProtectedLabel) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index == -1) {
-                std::shared_ptr<ProtectedLabel>  objPtr =
-                        std::make_shared<ProtectedLabel>();
-                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-                newObj.first = Etype::eProtectedLabel;
-                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-                appendEobjList(newObj);
-                index = static_cast<int>(m_eobjList.size());
-            }
-            index++;
-            std::shared_ptr<VirtualExchangeFn>  objPtr =
-                    std::make_shared<VirtualExchangeFn>(this);
-            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
-            newObj.first = Etype::eVirtualExchangeFn;
-            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
-            insertEobjList(newObj, index);
-        }
-    } else {
-        auto  itemVir = std::find_if(m_eobjList.begin(), m_eobjList.end(),
-                [](std::pair<Etype, std::shared_ptr<EObject>> const &  val)
-                ->bool {
-                    if (val.first == Etype::eVirtualExchangeFn) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
-        if (itemVir != m_eobjList.end()) {
-            m_eobjList.erase(itemVir);
-        }
-
-        auto  itemIn = std::find_if(m_eobjList.begin(), m_eobjList.end(),
-                [](std::pair<Etype, std::shared_ptr<EObject>> const &  val)
-                ->bool {
-                    if (val.first == Etype::eInSwapFn) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
-        if (itemIn != m_eobjList.end()) {
-            m_eobjList.erase(itemIn);
-        }
-
-        if (m_parentModulePtr) {
-            std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
-                    vecMobj = m_parentModulePtr->getEobjList();
-            int  index = -1;
-            for (int  i = 0; i < vecMobj.size(); ++i) {
-                if (vecMobj[i].first == Etype::eExtSwapFn) {
-                    std::shared_ptr<ExtSwapFn>  objPtr =
-                            std::dynamic_pointer_cast<ExtSwapFn>(vecMobj[i].second);
-                    if (objPtr->getClassName() == m_className) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if (index != -1) {
-                m_parentModulePtr->deleteEobjList(index);
-            }
-        }
-    }
 }
 
 bool

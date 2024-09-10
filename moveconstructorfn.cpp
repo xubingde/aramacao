@@ -30,6 +30,7 @@ MoveConstructorFn::MoveConstructorFn(MoveConstructorFn &&  other) noexcept:
 MoveConstructorFn::MoveConstructorFn(MyClass *  parent):
         Function(parent)
 {
+    init();
 }
 
 MoveConstructorFn::~MoveConstructorFn() noexcept

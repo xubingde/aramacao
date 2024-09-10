@@ -66,8 +66,8 @@ public:
     void  baseId_toggled(bool const  isChecked);
     void  borthId_toggled(bool const  isChecked);
     void  inheritId_toggled(bool const  isChecked);
-    void  hasLessFunction_stateChanged(int const  status);
     void  hasEqFunction_stateChanged(int const  status);
+    void  hasLessFunction_stateChanged(int const  status);
     void  hasSwapFunction_stateChanged(int const  status);
     void  hasToStringFunction_stateChanged(int const  status);
     void  fieldIdIsToString_stateChanged(int const  status);
@@ -118,6 +118,13 @@ public:
     void  fdActOverride_stateChanged(int const  status);
     void  fdActFinal_stateChanged(int const  status);
     void  fdActInsertCode_textChanged();
+    void  repDefCtor();
+    void  repCopyCtor();
+    void  repMoveCtor();
+    void  repDtor();
+    void  repCopyOpEq();
+    void  repMoveOpEq();
+    void  repInheritIsVirtual();
 
     MyClass *  getObjPtr() const;
     void  setObjPtr(MyClass *  value);
@@ -139,6 +146,11 @@ private:
     void  repTemplateClass();
     void  repFriendClass();
     bool  nameCheckDuplication(std::string const &  fnName);
+    void  setItemProperty(QStandardItem *  item, Etype const  etp, std::shared_ptr<EObject>  objPtr);
+    void  setEqFn(bool const  status);
+    void  setLessFn(bool const  status);
+    void  setSwapFn(bool const  status);
+    void  setToStringFn(bool const  status);
 
     MyClass *       m_objPtr;
     QLineEdit *     m_className;
