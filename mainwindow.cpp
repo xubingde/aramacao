@@ -4818,21 +4818,4 @@ MainWindow::getItemStack(std::vector<ItemStack> &  res,
     getItemStack(res, parentIndex);
 }
 
-void
-MainWindow::setItemProperty(QStandardItem *  item,
-                            Etype const  etp,
-                            std::shared_ptr<EObject>  objPtr)
-{
-    QVariant  valType = static_cast<int>(etp);
-    item->setData(valType, Qt::UserRole + 1);
-
-    QVariant  valPtr = QVariant::fromValue(static_cast<void *>(objPtr.get()));
-    item->setData(valPtr, Qt::UserRole + 2);
-
-    item->setFlags(Qt::NoItemFlags);
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
-                   Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable |
-                   Qt::ItemIsEnabled );
-}
-
 }

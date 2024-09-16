@@ -11,7 +11,7 @@ PrivateLabel::PrivateLabel():
         m_before(),
         m_behind()
 {
-    setTreeLabel("L   private:");
+    setTreeLabel("L   private :");
     setBaseType(Etype::ePrivateLabel);
 }
 
@@ -64,7 +64,7 @@ PrivateLabel::toHBlock(std::string const &  tabStr /* = std::string() */) const
 {
     std::string  res = "\n" + m_before;
 
-    res += tabStr + "private:\n" + m_behind;
+    res += tabStr + "private :\n" + m_behind;
     return res;
 }
 

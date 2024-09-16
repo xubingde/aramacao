@@ -33,7 +33,7 @@ WtPublicLabel::WtPublicLabel(QWidget *  parent /* = nullptr */):
     vH->setHandleWidth(1);
     vbox->addWidget(vH);
 
-    QLabel *  Llabel = new QLabel(tr(" public: "));
+    QLabel *  Llabel = new QLabel(tr(" public : "));
 
     vH->addWidget(m_beforeCode);
     vH->addWidget(Llabel);

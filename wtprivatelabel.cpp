@@ -33,7 +33,7 @@ WtPrivateLabel::WtPrivateLabel(QWidget *  parent /* = nullptr */):
     vH->setHandleWidth(1);
     vbox->addWidget(vH);
 
-    QLabel *  Llabel = new QLabel(tr(" private: "));
+    QLabel *  Llabel = new QLabel(tr(" private : "));
 
     vH->addWidget(m_beforeCode);
     vH->addWidget(Llabel);

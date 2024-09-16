@@ -11,7 +11,7 @@ PublicLabel::PublicLabel():
         m_before(),
         m_behind()
 {
-    setTreeLabel("L   public:");
+    setTreeLabel("L   public :");
     setBaseType(Etype::ePublicLabel);
 }
 
@@ -64,7 +64,7 @@ PublicLabel::toHBlock(std::string const &  tabStr /* = std::string() */) const
 {
     std::string  res = "\n" + m_before;
 
-    res += tabStr + "public:\n" + m_behind;
+    res += tabStr + "public :\n" + m_behind;
     return res;
 }
 

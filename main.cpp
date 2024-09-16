@@ -29,10 +29,12 @@ main(int  argc,
         break;
     }
 
-    qss.open(QFile::ReadOnly);
-    QString  styleSheet = QString::fromUtf8(qss.readAll());
-    app.setStyleSheet(styleSheet);
-    qss.close();
+    if (stype != xu::StyleType::defaultStyle) {
+        qss.open(QFile::ReadOnly);
+        QString  styleSheet = QString::fromUtf8(qss.readAll());
+        app.setStyleSheet(styleSheet);
+        qss.close();
+    }
 
     QTranslator  translator;
     QStringList const  uiLanguages = QLocale::system().uiLanguages();
@@ -45,6 +47,7 @@ main(int  argc,
     }
 
     xu::MainWindow  w;
+    w.setWindowFlags(w.windowFlags() | Qt::MaximizeUsingFullscreenGeometryHint);
     w.show();
     return app.exec();
 }

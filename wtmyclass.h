@@ -25,6 +25,25 @@ namespace xu {
 
 class WtMyClass;
 
+class EqFn;
+class NotEqFn;
+class VirtualEqFn;
+class LessFn;
+class LessEqFn;
+class VirtualLessFn;
+class GreaterFn;
+class GreaterEqFn;
+class ExtSwapFn;
+class InSwapFn;
+class VirtualExchangeFn;
+class ToStringFn;
+class VirtualSerializeFn;
+class ExtFromStringFn;
+class InFromStringFn;
+class DeserializeFn;
+
+void  setItemProperty(QStandardItem *  item, Etype const  etp, std::shared_ptr<EObject>  objPtr);
+
 class WtMyClass : public WtBase
 {
 
@@ -125,6 +144,7 @@ public:
     void  repCopyOpEq();
     void  repMoveOpEq();
     void  repInheritIsVirtual();
+    void  repIsFinalClass();
 
     MyClass *  getObjPtr() const;
     void  setObjPtr(MyClass *  value);
@@ -146,11 +166,14 @@ private:
     void  repTemplateClass();
     void  repFriendClass();
     bool  nameCheckDuplication(std::string const &  fnName);
-    void  setItemProperty(QStandardItem *  item, Etype const  etp, std::shared_ptr<EObject>  objPtr);
     void  setEqFn(bool const  status);
+    void  setEqFnAdd(EqFn &&  fnEq, NotEqFn &&  fnNotEq, VirtualEqFn &&  fnVirtualEq);
     void  setLessFn(bool const  status);
+    void  setLessFnAdd(LessFn &&  fnLess, LessEqFn &&  fnLessEq, GreaterFn &&  fnGreater, GreaterEqFn &&  fnGreaterEq, VirtualLessFn &&  fnVirtualLess);
     void  setSwapFn(bool const  status);
+    void  setSwapFnAdd(ExtSwapFn &&  fnExtSwap, InSwapFn &&  fnInSwap, VirtualExchangeFn &&  fnVirtualExchange);
     void  setToStringFn(bool const  status);
+    void  setToStringFnAdd(ToStringFn &&  fnToString, VirtualSerializeFn &&  fnVirtualSerialize, ExtFromStringFn &&  fnExtFromString, InFromStringFn &&  fnInFromString, DeserializeFn &&  fnDeserialize);
 
     MyClass *       m_objPtr;
     QLineEdit *     m_className;

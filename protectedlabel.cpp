@@ -11,7 +11,7 @@ ProtectedLabel::ProtectedLabel():
         m_before(),
         m_behind()
 {
-    setTreeLabel("L   protected:");
+    setTreeLabel("L   protected :");
     setBaseType(Etype::eProtectedLabel);
 }
 
@@ -64,7 +64,7 @@ ProtectedLabel::toHBlock(std::string const &  tabStr /* = std::string() */) cons
 {
     std::string  res = "\n" + m_before;
 
-    res += tabStr + "protected:\n" + m_behind;
+    res += tabStr + "protected :\n" + m_behind;
     return res;
 }
 

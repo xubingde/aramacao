@@ -6,7 +6,6 @@
 #include "virtuallessfn.h"
 #include "eobject.h"
 #include "myclass.h"
-#include "parameter.h"
 
 namespace xu {
 
@@ -93,7 +92,7 @@ VirtualLessFn::setParentClassPtr(MyClass *  value)
 {
     Function::setParentClassPtr(value);
 
-    VirtualLessFn::setParam({});
+    setParam({});
     if (value) {
         ClassType  ct = value->getClasstype();
         if (ct == ClassType::cppInherit) {
@@ -118,7 +117,7 @@ VirtualLessFn::autoCode() const
 void
 VirtualLessFn::init()
 {
-    setBaseType(Etype::eVirtualEqFn);
+    setBaseType(Etype::eVirtualLessFn);
 
     setClassFunction(true);
     setAutoSource(true);

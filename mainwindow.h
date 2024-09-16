@@ -255,7 +255,6 @@ private:
     void  nameCheckEnum(MyEnum &  objVal, QStandardItem *  parentItem);
     void  nameCheckFunction(Function &  objVal, QStandardItem *  parentItem);
     void  getItemStack(std::vector<ItemStack> &  res, QModelIndex const &  index);
-    void  setItemProperty(QStandardItem *  item, Etype const  etp, std::shared_ptr<EObject>  objPtr);
 
     Manager         m_obj;
     QPushButton *   m_open;

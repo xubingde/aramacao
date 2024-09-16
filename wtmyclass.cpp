@@ -57,6 +57,50 @@
 
 namespace xu {
 
+void
+setItemProperty(QStandardItem *  item,
+                Etype const  etp,
+                std::shared_ptr<EObject>  objPtr)
+{
+    QVariant  valType = static_cast<int>(etp);
+    item->setData(valType, Qt::UserRole + 1);
+
+    QVariant  valPtr = QVariant::fromValue(static_cast<void *>(objPtr.get()));
+    item->setData(valPtr, Qt::UserRole + 2);
+
+    item->setFlags(Qt::NoItemFlags);
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
+                   Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable |
+                   Qt::ItemIsEnabled );
+
+    switch (etp) {
+    case Etype::eClass :
+        item->setForeground(QBrush(QColor(0xe6, 0x91, 0x6f)));
+        break;
+    case Etype::eClassDeclaration :
+        item->setForeground(QBrush(QColor(0xd3, 0x85, 0x66)));
+        break;
+    case Etype::eLabel :
+    case Etype::ePublicLabel :
+    case Etype::eProtectedLabel :
+    case Etype::ePrivateLabel :
+        item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+        break;
+    case Etype::eFunctions :
+    case Etype::eStaticFunctions :
+    case Etype::eConstexprFunctions :
+    case Etype::eTplFunctions :
+    case Etype::eTplStaticFunctions :
+    case Etype::eTplConstexprFunctions :
+    case Etype::eConstructors :
+    case Etype::eTplConstructors :
+        item->setForeground(QBrush(QColor(0xaf, 0xbe, 0xf3)));
+        break;
+    default :
+        break;
+    }
+}
+
 WtMyClass::WtMyClass(QWidget *  parent /* = nullptr */):
         WtBase(parent),
         m_objPtr(nullptr),
@@ -410,18 +454,43 @@ WtMyClass::hasDefCtor_stateChanged(int const  status)
     bool const  oldVal = m_objPtr->hasDefCtor();
     if (currVal != oldVal) {
         if (currVal) {
+            int  index = -1;
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                    m_objPtr->getEObjectRef();
+            for (int  i = 0; i < vecClass.size(); ++i) {
+                if (vecClass[i].first == Etype::ePublicLabel) {
+                    index = i;
+                    break;
+                }
+            }
+            QStandardItem *  itemClass = getItemPtr();
+            if (index == -1) {
+                std::shared_ptr<PublicLabel>  objPtr =
+                        std::make_shared<PublicLabel>();
+                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+                newObj.first = Etype::ePublicLabel;
+                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+                m_objPtr->appendEobjList(newObj);
+                index = static_cast<int>(vecClass.size() - 1);
+
+                QStandardItem *  item = new QStandardItem(
+                        QString::fromStdString(newObj.second->getTreeLabel()));
+                setItemProperty(item, newObj.first, newObj.second);
+                item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+                itemClass->appendRow(item);
+            }
+            index++;
             std::pair<Etype, std::shared_ptr<EObject>>  fn =
                     std::make_pair<Etype, std::shared_ptr<EObject>>(
                     Etype::eDefaultConstructorFn,
                     std::make_shared<DefaultConstructorFn>(
                     DefaultConstructorFn(m_objPtr)));
-            m_objPtr->appendEobjList(fn);
+            m_objPtr->insertEobjList(fn, index);
 
-            QStandardItem *  itemClass = getItemPtr();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(fn.second->getTreeLabel()));
             setItemProperty(item, fn.first, fn.second);
-            itemClass->appendRow(item);
+            itemClass->insertRow(index, item);
         } else {
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  vecP =
                     m_objPtr->getEObjectPtr();
@@ -465,18 +534,43 @@ WtMyClass::hasCopyCtor_stateChanged(int const  status)
     bool const  oldVal = m_objPtr->hasCopyCtor();
     if (currVal != oldVal) {
         if (currVal) {
+            int  index = -1;
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                    m_objPtr->getEObjectRef();
+            for (int  i = 0; i < vecClass.size(); ++i) {
+                if (vecClass[i].first == Etype::ePublicLabel) {
+                    index = i;
+                    break;
+                }
+            }
+            QStandardItem *  itemClass = getItemPtr();
+            if (index == -1) {
+                std::shared_ptr<PublicLabel>  objPtr =
+                        std::make_shared<PublicLabel>();
+                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+                newObj.first = Etype::ePublicLabel;
+                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+                m_objPtr->appendEobjList(newObj);
+                index = static_cast<int>(vecClass.size() - 1);
+
+                QStandardItem *  item = new QStandardItem(
+                        QString::fromStdString(newObj.second->getTreeLabel()));
+                setItemProperty(item, newObj.first, newObj.second);
+                item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+                itemClass->appendRow(item);
+            }
+            index++;
             std::pair<Etype, std::shared_ptr<EObject>>  fn =
                     std::make_pair<Etype, std::shared_ptr<EObject>>(
                     Etype::eCopyConstructorFn,
                     std::make_shared<CopyConstructorFn>(
                     CopyConstructorFn(m_objPtr)));
-            m_objPtr->appendEobjList(fn);
+            m_objPtr->insertEobjList(fn, index);
 
-            QStandardItem *  itemClass = getItemPtr();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(fn.second->getTreeLabel()));
             setItemProperty(item, fn.first, fn.second);
-            itemClass->appendRow(item);
+            itemClass->insertRow(index, item);
         } else {
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  vecP =
                     m_objPtr->getEObjectPtr();
@@ -520,18 +614,43 @@ WtMyClass::hasMoveCtor_stateChanged(int const  status)
     bool const  oldVal = m_objPtr->hasMoveCtor();
     if (currVal != oldVal) {
         if (currVal) {
+            int  index = -1;
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                    m_objPtr->getEObjectRef();
+            for (int  i = 0; i < vecClass.size(); ++i) {
+                if (vecClass[i].first == Etype::ePublicLabel) {
+                    index = i;
+                    break;
+                }
+            }
+            QStandardItem *  itemClass = getItemPtr();
+            if (index == -1) {
+                std::shared_ptr<PublicLabel>  objPtr =
+                        std::make_shared<PublicLabel>();
+                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+                newObj.first = Etype::ePublicLabel;
+                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+                m_objPtr->appendEobjList(newObj);
+                index = static_cast<int>(vecClass.size() - 1);
+
+                QStandardItem *  item = new QStandardItem(
+                        QString::fromStdString(newObj.second->getTreeLabel()));
+                setItemProperty(item, newObj.first, newObj.second);
+                item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+                itemClass->appendRow(item);
+            }
+            index++;
             std::pair<Etype, std::shared_ptr<EObject>>  fn =
                     std::make_pair<Etype, std::shared_ptr<EObject>>(
                     Etype::eMoveConstructorFn,
                     std::make_shared<MoveConstructorFn>(
                     MoveConstructorFn(m_objPtr)));
-            m_objPtr->appendEobjList(fn);
+            m_objPtr->insertEobjList(fn, index);
 
-            QStandardItem *  itemClass = getItemPtr();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(fn.second->getTreeLabel()));
             setItemProperty(item, fn.first, fn.second);
-            itemClass->appendRow(item);
+            itemClass->insertRow(index, item);
         } else {
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  vecP =
                     m_objPtr->getEObjectPtr();
@@ -575,18 +694,43 @@ WtMyClass::hasDtor_stateChanged(int const  status)
     bool const  oldVal = m_objPtr->hasDtor();
     if (currVal != oldVal) {
         if (currVal) {
+            int  index = -1;
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                    m_objPtr->getEObjectRef();
+            for (int  i = 0; i < vecClass.size(); ++i) {
+                if (vecClass[i].first == Etype::ePublicLabel) {
+                    index = i;
+                    break;
+                }
+            }
+            QStandardItem *  itemClass = getItemPtr();
+            if (index == -1) {
+                std::shared_ptr<PublicLabel>  objPtr =
+                        std::make_shared<PublicLabel>();
+                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+                newObj.first = Etype::ePublicLabel;
+                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+                m_objPtr->appendEobjList(newObj);
+                index = static_cast<int>(vecClass.size() - 1);
+
+                QStandardItem *  item = new QStandardItem(
+                        QString::fromStdString(newObj.second->getTreeLabel()));
+                setItemProperty(item, newObj.first, newObj.second);
+                item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+                itemClass->appendRow(item);
+            }
+            index++;
             std::pair<Etype, std::shared_ptr<EObject>>  fn =
                     std::make_pair<Etype, std::shared_ptr<EObject>>(
                     Etype::eDestructorFn,
                     std::make_shared<DestructorFn>(
                     DestructorFn(m_objPtr)));
-            m_objPtr->appendEobjList(fn);
+            m_objPtr->insertEobjList(fn, index);
 
-            QStandardItem *  itemClass = getItemPtr();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(fn.second->getTreeLabel()));
             setItemProperty(item, fn.first, fn.second);
-            itemClass->appendRow(item);
+            itemClass->insertRow(index, item);
         } else {
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  vecP =
                     m_objPtr->getEObjectPtr();
@@ -630,18 +774,43 @@ WtMyClass::hasCopyOpEq_stateChanged(int const  status)
     bool const  oldVal = m_objPtr->hasCopyOpEq();
     if (currVal != oldVal) {
         if (currVal) {
+            int  index = -1;
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                    m_objPtr->getEObjectRef();
+            for (int  i = 0; i < vecClass.size(); ++i) {
+                if (vecClass[i].first == Etype::ePublicLabel) {
+                    index = i;
+                    break;
+                }
+            }
+            QStandardItem *  itemClass = getItemPtr();
+            if (index == -1) {
+                std::shared_ptr<PublicLabel>  objPtr =
+                        std::make_shared<PublicLabel>();
+                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+                newObj.first = Etype::ePublicLabel;
+                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+                m_objPtr->appendEobjList(newObj);
+                index = static_cast<int>(vecClass.size() - 1);
+
+                QStandardItem *  item = new QStandardItem(
+                        QString::fromStdString(newObj.second->getTreeLabel()));
+                setItemProperty(item, newObj.first, newObj.second);
+                item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+                itemClass->appendRow(item);
+            }
+            index++;
             std::pair<Etype, std::shared_ptr<EObject>>  fn =
                     std::make_pair<Etype, std::shared_ptr<EObject>>(
                     Etype::eCopyOperatorEqFn,
                     std::make_shared<CopyOperatorEqFn>(
                     CopyOperatorEqFn(m_objPtr)));
-            m_objPtr->appendEobjList(fn);
+            m_objPtr->insertEobjList(fn, index);
 
-            QStandardItem *  itemClass = getItemPtr();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(fn.second->getTreeLabel()));
             setItemProperty(item, fn.first, fn.second);
-            itemClass->appendRow(item);
+            itemClass->insertRow(index, item);
         } else {
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  vecP =
                     m_objPtr->getEObjectPtr();
@@ -685,18 +854,43 @@ WtMyClass::hasMoveOpEq_stateChanged(int const  status)
     bool const  oldVal = m_objPtr->hasMoveOpEq();
     if (currVal != oldVal) {
         if (currVal) {
+            int  index = -1;
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                    m_objPtr->getEObjectRef();
+            for (int  i = 0; i < vecClass.size(); ++i) {
+                if (vecClass[i].first == Etype::ePublicLabel) {
+                    index = i;
+                    break;
+                }
+            }
+            QStandardItem *  itemClass = getItemPtr();
+            if (index == -1) {
+                std::shared_ptr<PublicLabel>  objPtr =
+                        std::make_shared<PublicLabel>();
+                std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+                newObj.first = Etype::ePublicLabel;
+                newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+                m_objPtr->appendEobjList(newObj);
+                index = static_cast<int>(vecClass.size() - 1);
+
+                QStandardItem *  item = new QStandardItem(
+                        QString::fromStdString(newObj.second->getTreeLabel()));
+                setItemProperty(item, newObj.first, newObj.second);
+                item->setForeground(QBrush(QColor(0x7b, 0xc1, 0x3d)));
+                itemClass->appendRow(item);
+            }
+            index++;
             std::pair<Etype, std::shared_ptr<EObject>>  fn =
                     std::make_pair<Etype, std::shared_ptr<EObject>>(
                     Etype::eMoveOperatorEqFn,
                     std::make_shared<MoveOperatorEqFn>(
                     MoveOperatorEqFn(m_objPtr)));
-            m_objPtr->appendEobjList(fn);
+            m_objPtr->insertEobjList(fn, index);
 
-            QStandardItem *  itemClass = getItemPtr();
             QStandardItem *  item = new QStandardItem(
                     QString::fromStdString(fn.second->getTreeLabel()));
             setItemProperty(item, fn.first, fn.second);
-            itemClass->appendRow(item);
+            itemClass->insertRow(index, item);
         } else {
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  vecP =
                     m_objPtr->getEObjectPtr();
@@ -734,10 +928,573 @@ WtMyClass::finalClass_toggled(bool const  isChecked)
     if (!m_objPtr)  return;
 
     if (isChecked) {
-        ClassType const  ct = ClassType::cppFinal;
-        m_objPtr->setClasstype(ct);
-        m_objPtr->setFinalClass(true);
+        ClassType const  currVal = ClassType::cppFinal;
+        ClassType const  oldVal = m_objPtr->getClasstype();
+        if (currVal == oldVal)  return;
 
+        m_objPtr->setClasstype(currVal);
+        repIsFinalClass();
+        m_isFinalClass->hide();
+
+        if (oldVal == ClassType::cppBase) {
+            if (m_objPtr->hasEqFunction()) {
+                EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+                NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualEqFn  fnVirtualEq(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualEqFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualEq = std::move(*std::dynamic_pointer_cast<VirtualEqFn>(
+                            itF->second));
+                }
+
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eEqFn) {
+                                if (std::dynamic_pointer_cast<EqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itEqFn != objVec->end()) {
+                    fnEq = std::move(*std::dynamic_pointer_cast<EqFn>(
+                            itEqFn->second));
+                }
+                auto  itNotEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eNotEqFn) {
+                                if (std::dynamic_pointer_cast<NotEqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itNotEqFn != objVec->end()) {
+                    fnNotEq = std::move(*std::dynamic_pointer_cast<NotEqFn>(
+                            itNotEqFn->second));
+                }
+
+                fnEq.setStrike(fnVirtualEq.getStrike());
+                fnEq.setNewCode(fnVirtualEq.getNewCode());
+                fnEq.setAttribute(fnVirtualEq.getAttribute());
+                fnEq.setHBefore(fnVirtualEq.getHBefore());
+                fnEq.setHBehind(fnVirtualEq.getHBehind());
+                fnEq.setCppBefore(fnVirtualEq.getCppBefore());
+                fnEq.setCppBehind(fnVirtualEq.getCppBehind());
+                fnVirtualEq.setStrike({});
+                fnVirtualEq.setNewCode({});
+                fnVirtualEq.setAttribute("");
+                fnVirtualEq.setHBefore("");
+                fnVirtualEq.setHBehind("");
+                fnVirtualEq.setCppBefore("");
+                fnVirtualEq.setCppBehind("");
+                setEqFn(false);
+                setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+            }
+
+            if (m_objPtr->hasLessFunction()) {
+                LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+                LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+                GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+                GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualLessFn  fnVirtualLess(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualLessFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualLess = std::move(*std::dynamic_pointer_cast<VirtualLessFn>(
+                            itF->second));
+                }
+
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itLessFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eLessFn) {
+                                if (std::dynamic_pointer_cast<LessFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itLessFn != objVec->end()) {
+                    fnLess = std::move(*std::dynamic_pointer_cast<LessFn>(
+                            itLessFn->second));
+                }
+                auto  itLessEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eLessEqFn) {
+                                if (std::dynamic_pointer_cast<LessEqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itLessEqFn != objVec->end()) {
+                    fnLessEq = std::move(*std::dynamic_pointer_cast<LessEqFn>(
+                            itLessEqFn->second));
+                }
+                auto  itGreaterFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eGreaterFn) {
+                                if (std::dynamic_pointer_cast<GreaterFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itGreaterFn != objVec->end()) {
+                    fnGreater = std::move(*std::dynamic_pointer_cast<GreaterFn>(
+                            itGreaterFn->second));
+                }
+                auto  itGreaterEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eGreaterEqFn) {
+                                if (std::dynamic_pointer_cast<GreaterEqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itGreaterEqFn != objVec->end()) {
+                    fnGreaterEq = std::move(*std::dynamic_pointer_cast<GreaterEqFn>(
+                            itGreaterEqFn->second));
+                }
+
+                fnLess.setStrike(fnVirtualLess.getStrike());
+                fnLess.setNewCode(fnVirtualLess.getNewCode());
+                fnLess.setAttribute(fnVirtualLess.getAttribute());
+                fnLess.setHBefore(fnVirtualLess.getHBefore());
+                fnLess.setHBehind(fnVirtualLess.getHBehind());
+                fnLess.setCppBefore(fnVirtualLess.getCppBefore());
+                fnLess.setCppBehind(fnVirtualLess.getCppBehind());
+                fnVirtualLess.setStrike({});
+                fnVirtualLess.setNewCode({});
+                fnVirtualLess.setAttribute("");
+                fnVirtualLess.setHBefore("");
+                fnVirtualLess.setHBehind("");
+                fnVirtualLess.setCppBefore("");
+                fnVirtualLess.setCppBehind("");
+                setLessFn(false);
+                setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+                        std::move(fnGreaterEq), std::move(fnVirtualLess));
+            }
+
+            if (m_objPtr->hasSwapFunction()) {
+                ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+                InSwapFn  fnInSwap(m_objPtr);
+                VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eInSwapFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnInSwap = std::move(*std::dynamic_pointer_cast<InSwapFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualExchangeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualExchange = std::move(
+                            *std::dynamic_pointer_cast<VirtualExchangeFn>(itF->second));
+                }
+
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itExtSwapFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eExtSwapFn) {
+                                if (std::dynamic_pointer_cast<ExtSwapFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itExtSwapFn != objVec->end()) {
+                    fnExtSwap = std::move(*std::dynamic_pointer_cast<ExtSwapFn>(
+                            itExtSwapFn->second));
+                }
+
+                fnInSwap.setStrike(fnVirtualExchange.getStrike());
+                fnInSwap.setNewCode(fnVirtualExchange.getNewCode());
+                fnInSwap.setAttribute(fnVirtualExchange.getAttribute());
+                fnInSwap.setHBefore(fnVirtualExchange.getHBefore());
+                fnInSwap.setHBehind(fnVirtualExchange.getHBehind());
+                fnInSwap.setCppBefore(fnVirtualExchange.getCppBefore());
+                fnInSwap.setCppBehind(fnVirtualExchange.getCppBehind());
+                fnVirtualExchange.setStrike({});
+                fnVirtualExchange.setNewCode({});
+                fnVirtualExchange.setAttribute("");
+                fnVirtualExchange.setHBefore("");
+                fnVirtualExchange.setHBehind("");
+                fnVirtualExchange.setCppBefore("");
+                fnVirtualExchange.setCppBehind("");
+                setSwapFn(false);
+                setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap),
+                        std::move(fnVirtualExchange));
+            }
+
+            if (m_objPtr->hasToStringFunction()) {
+                ToStringFn  fnToString(m_objPtr);
+                InFromStringFn  fnInFromString(m_objPtr);
+                ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+                DeserializeFn  fnDeserialize(m_objPtr);
+                VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eToStringFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnToString = std::move(*std::dynamic_pointer_cast<ToStringFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualSerializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualSerialize = std::move(
+                            *std::dynamic_pointer_cast<VirtualSerializeFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eInFromStringFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnInFromString = std::move(*std::dynamic_pointer_cast<InFromStringFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eDeserializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnDeserialize = std::move(*std::dynamic_pointer_cast<DeserializeFn>(
+                            itF->second));
+                }
+
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itExt = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eExtFromStringFn) {
+                                if (std::dynamic_pointer_cast<ExtFromStringFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itExt != objVec->end()) {
+                    fnExtFromString = std::move(*std::dynamic_pointer_cast<ExtFromStringFn>(
+                            itExt->second));
+                }
+
+                fnToString.setStrike(fnVirtualSerialize.getStrike());
+                fnToString.setNewCode(fnVirtualSerialize.getNewCode());
+                fnToString.setAttribute(fnVirtualSerialize.getAttribute());
+                fnToString.setHBefore(fnVirtualSerialize.getHBefore());
+                fnToString.setHBehind(fnVirtualSerialize.getHBehind());
+                fnToString.setCppBefore(fnVirtualSerialize.getCppBefore());
+                fnToString.setCppBehind(fnVirtualSerialize.getCppBehind());
+                fnVirtualSerialize.setStrike({});
+                fnVirtualSerialize.setNewCode({});
+                fnVirtualSerialize.setAttribute("");
+                fnVirtualSerialize.setHBefore("");
+                fnVirtualSerialize.setHBehind("");
+                fnVirtualSerialize.setCppBefore("");
+                fnVirtualSerialize.setCppBehind("");
+                fnInFromString.setStrike(fnDeserialize.getStrike());
+                fnInFromString.setNewCode(fnDeserialize.getNewCode());
+                fnInFromString.setAttribute(fnDeserialize.getAttribute());
+                fnInFromString.setHBefore(fnDeserialize.getHBefore());
+                fnInFromString.setHBehind(fnDeserialize.getHBehind());
+                fnInFromString.setCppBefore(fnDeserialize.getCppBefore());
+                fnInFromString.setCppBehind(fnDeserialize.getCppBehind());
+                fnDeserialize.setStrike({});
+                fnDeserialize.setNewCode({});
+                fnDeserialize.setAttribute("");
+                fnDeserialize.setHBefore("");
+                fnDeserialize.setHBehind("");
+                fnDeserialize.setCppBefore("");
+                fnDeserialize.setCppBehind("");
+                setToStringFn(false);
+                setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+                        std::move(fnExtFromString), std::move(fnInFromString),
+                        std::move(fnDeserialize));
+            }
+        } else {
+            if (m_objPtr->hasEqFunction()) {
+                EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+                NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualEqFn  fnVirtualEq(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualEqFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualEq = std::move(*std::dynamic_pointer_cast<VirtualEqFn>(
+                            itF->second));
+                }
+
+                fnEq.setStrike(fnVirtualEq.getStrike());
+                fnEq.setNewCode(fnVirtualEq.getNewCode());
+                fnEq.setAttribute(fnVirtualEq.getAttribute());
+                fnEq.setHBefore(fnVirtualEq.getHBefore());
+                fnEq.setHBehind(fnVirtualEq.getHBehind());
+                fnEq.setCppBefore(fnVirtualEq.getCppBefore());
+                fnEq.setCppBehind(fnVirtualEq.getCppBehind());
+                fnVirtualEq.setStrike({});
+                fnVirtualEq.setNewCode({});
+                fnVirtualEq.setAttribute("");
+                fnVirtualEq.setHBefore("");
+                fnVirtualEq.setHBehind("");
+                fnVirtualEq.setCppBefore("");
+                fnVirtualEq.setCppBehind("");
+                setEqFn(false);
+                setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+            }
+
+            if (m_objPtr->hasLessFunction()) {
+                LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+                LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+                GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+                GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualLessFn  fnVirtualLess(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualLessFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualLess = std::move(*std::dynamic_pointer_cast<VirtualLessFn>(
+                            itF->second));
+                }
+
+                fnLess.setStrike(fnVirtualLess.getStrike());
+                fnLess.setNewCode(fnVirtualLess.getNewCode());
+                fnLess.setAttribute(fnVirtualLess.getAttribute());
+                fnLess.setHBefore(fnVirtualLess.getHBefore());
+                fnLess.setHBehind(fnVirtualLess.getHBehind());
+                fnLess.setCppBefore(fnVirtualLess.getCppBefore());
+                fnLess.setCppBehind(fnVirtualLess.getCppBehind());
+                fnVirtualLess.setStrike({});
+                fnVirtualLess.setNewCode({});
+                fnVirtualLess.setAttribute("");
+                fnVirtualLess.setHBefore("");
+                fnVirtualLess.setHBehind("");
+                fnVirtualLess.setCppBefore("");
+                fnVirtualLess.setCppBehind("");
+                setLessFn(false);
+                setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+                        std::move(fnGreaterEq), std::move(fnVirtualLess));
+            }
+
+            if (m_objPtr->hasSwapFunction()) {
+                ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+                InSwapFn  fnInSwap(m_objPtr);
+                VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualExchangeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualExchange = std::move(
+                            *std::dynamic_pointer_cast<VirtualExchangeFn>(itF->second));
+                }
+
+                fnInSwap.setStrike(fnVirtualExchange.getStrike());
+                fnInSwap.setNewCode(fnVirtualExchange.getNewCode());
+                fnInSwap.setAttribute(fnVirtualExchange.getAttribute());
+                fnInSwap.setHBefore(fnVirtualExchange.getHBefore());
+                fnInSwap.setHBehind(fnVirtualExchange.getHBehind());
+                fnInSwap.setCppBefore(fnVirtualExchange.getCppBefore());
+                fnInSwap.setCppBehind(fnVirtualExchange.getCppBehind());
+                fnVirtualExchange.setStrike({});
+                fnVirtualExchange.setNewCode({});
+                fnVirtualExchange.setAttribute("");
+                fnVirtualExchange.setHBefore("");
+                fnVirtualExchange.setHBehind("");
+                fnVirtualExchange.setCppBefore("");
+                fnVirtualExchange.setCppBehind("");
+                setSwapFn(false);
+                setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap),
+                        std::move(fnVirtualExchange));
+            }
+
+            if (m_objPtr->hasToStringFunction()) {
+                ToStringFn  fnToString(m_objPtr);
+                InFromStringFn  fnInFromString(m_objPtr);
+                ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+                DeserializeFn  fnDeserialize(m_objPtr);
+                VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualSerializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualSerialize = std::move(
+                            *std::dynamic_pointer_cast<VirtualSerializeFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eDeserializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnDeserialize = std::move(*std::dynamic_pointer_cast<DeserializeFn>(
+                            itF->second));
+                }
+
+                fnToString.setStrike(fnVirtualSerialize.getStrike());
+                fnToString.setNewCode(fnVirtualSerialize.getNewCode());
+                fnToString.setAttribute(fnVirtualSerialize.getAttribute());
+                fnToString.setHBefore(fnVirtualSerialize.getHBefore());
+                fnToString.setHBehind(fnVirtualSerialize.getHBehind());
+                fnToString.setCppBefore(fnVirtualSerialize.getCppBefore());
+                fnToString.setCppBehind(fnVirtualSerialize.getCppBehind());
+                fnVirtualSerialize.setStrike({});
+                fnVirtualSerialize.setNewCode({});
+                fnVirtualSerialize.setAttribute("");
+                fnVirtualSerialize.setHBefore("");
+                fnVirtualSerialize.setHBehind("");
+                fnVirtualSerialize.setCppBefore("");
+                fnVirtualSerialize.setCppBehind("");
+                fnInFromString.setStrike(fnDeserialize.getStrike());
+                fnInFromString.setNewCode(fnDeserialize.getNewCode());
+                fnInFromString.setAttribute(fnDeserialize.getAttribute());
+                fnInFromString.setHBefore(fnDeserialize.getHBefore());
+                fnInFromString.setHBehind(fnDeserialize.getHBehind());
+                fnInFromString.setCppBefore(fnDeserialize.getCppBefore());
+                fnInFromString.setCppBehind(fnDeserialize.getCppBehind());
+                fnDeserialize.setStrike({});
+                fnDeserialize.setNewCode({});
+                fnDeserialize.setAttribute("");
+                fnDeserialize.setHBefore("");
+                fnDeserialize.setHBehind("");
+                fnDeserialize.setCppBefore("");
+                fnDeserialize.setCppBehind("");
+                setToStringFn(false);
+                setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+                        std::move(fnExtFromString), std::move(fnInFromString),
+                        std::move(fnDeserialize));
+            }
+        }
     }
 }
 
@@ -746,6 +1503,440 @@ WtMyClass::baseClass_toggled(bool const  isChecked)
 {
     if (!m_objPtr)  return;
 
+    if (isChecked) {
+        ClassType const  currVal = ClassType::cppBase;
+        ClassType const  oldVal = m_objPtr->getClasstype();
+        if (currVal == oldVal)  return;
+
+        m_objPtr->setClasstype(currVal);
+        repIsFinalClass();
+        m_isFinalClass->hide();
+
+        if (oldVal == ClassType::cppFinal) {
+            if (m_objPtr->hasEqFunction()) {
+                EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+                NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualEqFn  fnVirtualEq(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec;
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eEqFn) {
+                                if (std::dynamic_pointer_cast<EqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itEqFn != objVec->end()) {
+                    fnEq = std::move(*std::dynamic_pointer_cast<EqFn>(
+                            itEqFn->second));
+                }
+                auto  itNotEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eNotEqFn) {
+                                if (std::dynamic_pointer_cast<NotEqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itNotEqFn != objVec->end()) {
+                    fnNotEq = std::move(*std::dynamic_pointer_cast<NotEqFn>(
+                            itNotEqFn->second));
+                }
+
+                fnVirtualEq.setStrike(fnEq.getStrike());
+                fnVirtualEq.setNewCode(fnEq.getNewCode());
+                fnVirtualEq.setAttribute(fnEq.getAttribute());
+                fnVirtualEq.setHBefore(fnEq.getHBefore());
+                fnVirtualEq.setHBehind(fnEq.getHBehind());
+                fnVirtualEq.setCppBefore(fnEq.getCppBefore());
+                fnVirtualEq.setCppBehind(fnEq.getCppBehind());
+                fnEq.setStrike({});
+                fnEq.setNewCode({});
+                fnEq.setAttribute("");
+                fnEq.setHBefore("");
+                fnEq.setHBehind("");
+                fnEq.setCppBefore("");
+                fnEq.setCppBehind("");
+                setEqFn(false);
+                setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+            }
+
+            if (m_objPtr->hasLessFunction()) {
+                LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+                LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+                GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+                GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualLessFn  fnVirtualLess(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec;
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itLessFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eLessFn) {
+                                if (std::dynamic_pointer_cast<LessFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itLessFn != objVec->end()) {
+                    fnLess = std::move(*std::dynamic_pointer_cast<LessFn>(
+                            itLessFn->second));
+                }
+                auto  itLessEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eLessEqFn) {
+                                if (std::dynamic_pointer_cast<LessEqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itLessEqFn != objVec->end()) {
+                    fnLessEq = std::move(*std::dynamic_pointer_cast<LessEqFn>(
+                            itLessEqFn->second));
+                }
+                auto  itGreaterFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eGreaterFn) {
+                                if (std::dynamic_pointer_cast<GreaterFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itGreaterFn != objVec->end()) {
+                    fnGreater = std::move(*std::dynamic_pointer_cast<GreaterFn>(
+                            itGreaterFn->second));
+                }
+                auto  itGreaterEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eGreaterEqFn) {
+                                if (std::dynamic_pointer_cast<GreaterEqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itGreaterEqFn != objVec->end()) {
+                    fnGreaterEq = std::move(*std::dynamic_pointer_cast<GreaterEqFn>(
+                            itGreaterEqFn->second));
+                }
+
+                fnVirtualLess.setStrike(fnLess.getStrike());
+                fnVirtualLess.setNewCode(fnLess.getNewCode());
+                fnVirtualLess.setAttribute(fnLess.getAttribute());
+                fnVirtualLess.setHBefore(fnLess.getHBefore());
+                fnVirtualLess.setHBehind(fnLess.getHBehind());
+                fnVirtualLess.setCppBefore(fnLess.getCppBefore());
+                fnVirtualLess.setCppBehind(fnLess.getCppBehind());
+                fnLess.setStrike({});
+                fnLess.setNewCode({});
+                fnLess.setAttribute("");
+                fnLess.setHBefore("");
+                fnLess.setHBehind("");
+                fnLess.setCppBefore("");
+                fnLess.setCppBehind("");
+                setLessFn(false);
+                setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+                        std::move(fnGreaterEq), std::move(fnVirtualLess));
+            }
+
+            if (m_objPtr->hasSwapFunction()) {
+                ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+                InSwapFn  fnInSwap(m_objPtr);
+                VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eInSwapFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnInSwap = std::move(*std::dynamic_pointer_cast<InSwapFn>(
+                            itF->second));
+                }
+
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itExtSwapFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eExtSwapFn) {
+                                if (std::dynamic_pointer_cast<ExtSwapFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itExtSwapFn != objVec->end()) {
+                    fnExtSwap = std::move(*std::dynamic_pointer_cast<ExtSwapFn>(
+                            itExtSwapFn->second));
+                }
+
+                fnVirtualExchange.setStrike(fnInSwap.getStrike());
+                fnVirtualExchange.setNewCode(fnInSwap.getNewCode());
+                fnVirtualExchange.setAttribute(fnInSwap.getAttribute());
+                fnVirtualExchange.setHBefore(fnInSwap.getHBefore());
+                fnVirtualExchange.setHBehind(fnInSwap.getHBehind());
+                fnVirtualExchange.setCppBefore(fnInSwap.getCppBefore());
+                fnVirtualExchange.setCppBehind(fnInSwap.getCppBehind());
+                fnInSwap.setStrike({});
+                fnInSwap.setNewCode({});
+                fnInSwap.setAttribute("");
+                fnInSwap.setHBefore("");
+                fnInSwap.setHBehind("");
+                fnInSwap.setCppBefore("");
+                fnInSwap.setCppBehind("");
+                setSwapFn(false);
+                setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap),
+                        std::move(fnVirtualExchange));
+            }
+
+            if (m_objPtr->hasToStringFunction()) {
+                ToStringFn  fnToString(m_objPtr);
+                InFromStringFn  fnInFromString(m_objPtr);
+                ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+                DeserializeFn  fnDeserialize(m_objPtr);
+                VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eToStringFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnToString = std::move(*std::dynamic_pointer_cast<ToStringFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eInFromStringFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnInFromString = std::move(*std::dynamic_pointer_cast<InFromStringFn>(
+                            itF->second));
+                }
+
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itExt = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eExtFromStringFn) {
+                                if (std::dynamic_pointer_cast<ExtFromStringFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itExt != objVec->end()) {
+                    fnExtFromString = std::move(*std::dynamic_pointer_cast<ExtFromStringFn>(
+                            itExt->second));
+                }
+
+                fnVirtualSerialize.setStrike(fnToString.getStrike());
+                fnVirtualSerialize.setNewCode(fnToString.getNewCode());
+                fnVirtualSerialize.setAttribute(fnToString.getAttribute());
+                fnVirtualSerialize.setHBefore(fnToString.getHBefore());
+                fnVirtualSerialize.setHBehind(fnToString.getHBehind());
+                fnVirtualSerialize.setCppBefore(fnToString.getCppBefore());
+                fnVirtualSerialize.setCppBehind(fnToString.getCppBehind());
+                fnToString.setStrike({});
+                fnToString.setNewCode({});
+                fnToString.setAttribute("");
+                fnToString.setHBefore("");
+                fnToString.setHBehind("");
+                fnToString.setCppBefore("");
+                fnToString.setCppBehind("");
+                fnDeserialize.setStrike(fnInFromString.getStrike());
+                fnDeserialize.setNewCode(fnInFromString.getNewCode());
+                fnDeserialize.setAttribute(fnInFromString.getAttribute());
+                fnDeserialize.setHBefore(fnInFromString.getHBefore());
+                fnDeserialize.setHBehind(fnInFromString.getHBehind());
+                fnDeserialize.setCppBefore(fnInFromString.getCppBefore());
+                fnDeserialize.setCppBehind(fnInFromString.getCppBehind());
+                fnInFromString.setStrike({});
+                fnInFromString.setNewCode({});
+                fnInFromString.setAttribute("");
+                fnInFromString.setHBefore("");
+                fnInFromString.setHBehind("");
+                fnInFromString.setCppBefore("");
+                fnInFromString.setCppBehind("");
+                setToStringFn(false);
+                setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+                        std::move(fnExtFromString), std::move(fnInFromString),
+                        std::move(fnDeserialize));
+            }
+        } else {
+            if (m_objPtr->hasEqFunction()) {
+                EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+                NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualEqFn  fnVirtualEq(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualEqFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualEq = std::move(*std::dynamic_pointer_cast<VirtualEqFn>(
+                            itF->second));
+                }
+
+                setEqFn(false);
+                setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+            }
+
+            if (m_objPtr->hasLessFunction()) {
+                LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+                LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+                GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+                GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualLessFn  fnVirtualLess(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualLessFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualLess = std::move(*std::dynamic_pointer_cast<VirtualLessFn>(
+                            itF->second));
+                }
+
+                setLessFn(false);
+                setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+                        std::move(fnGreaterEq), std::move(fnVirtualLess));
+            }
+
+            if (m_objPtr->hasSwapFunction()) {
+                ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+                InSwapFn  fnInSwap(m_objPtr);
+                VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualExchangeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualExchange = std::move(
+                            *std::dynamic_pointer_cast<VirtualExchangeFn>(itF->second));
+                }
+
+                setSwapFn(false);
+                setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap),
+                        std::move(fnVirtualExchange));
+            }
+
+            if (m_objPtr->hasToStringFunction()) {
+                ToStringFn  fnToString(m_objPtr);
+                InFromStringFn  fnInFromString(m_objPtr);
+                ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+                DeserializeFn  fnDeserialize(m_objPtr);
+                VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualSerializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualSerialize = std::move(
+                            *std::dynamic_pointer_cast<VirtualSerializeFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eDeserializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnDeserialize = std::move(*std::dynamic_pointer_cast<DeserializeFn>(
+                            itF->second));
+                }
+
+                setToStringFn(false);
+                setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+                        std::move(fnExtFromString), std::move(fnInFromString),
+                        std::move(fnDeserialize));
+            }
+        }
+    }
 }
 
 void
@@ -753,6 +1944,333 @@ WtMyClass::inheritClass_toggled(bool const  isChecked)
 {
     if (!m_objPtr)  return;
 
+    if (isChecked) {
+        ClassType const  currVal = ClassType::cppInherit;
+        ClassType const  oldVal = m_objPtr->getClasstype();
+        if (currVal == oldVal)  return;
+
+        m_objPtr->setClasstype(currVal);
+        repIsFinalClass();
+        m_isFinalClass->show();
+
+        if (oldVal == ClassType::cppBase) {
+            if (m_objPtr->hasEqFunction()) {
+                EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+                NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualEqFn  fnVirtualEq(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualEqFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualEq = std::move(*std::dynamic_pointer_cast<VirtualEqFn>(
+                            itF->second));
+                }
+
+                setEqFn(false);
+                setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+            }
+
+            if (m_objPtr->hasLessFunction()) {
+                LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+                LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+                GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+                GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualLessFn  fnVirtualLess(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualLessFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualLess = std::move(*std::dynamic_pointer_cast<VirtualLessFn>(
+                            itF->second));
+                }
+
+                setLessFn(false);
+                setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+                        std::move(fnGreaterEq), std::move(fnVirtualLess));
+            }
+
+            if (m_objPtr->hasSwapFunction()) {
+                ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+                InSwapFn  fnInSwap(m_objPtr);
+                VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualExchangeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualExchange = std::move(
+                            *std::dynamic_pointer_cast<VirtualExchangeFn>(itF->second));
+                }
+
+                setSwapFn(false);
+                setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap),
+                        std::move(fnVirtualExchange));
+            }
+
+            if (m_objPtr->hasToStringFunction()) {
+                ToStringFn  fnToString(m_objPtr);
+                InFromStringFn  fnInFromString(m_objPtr);
+                ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+                DeserializeFn  fnDeserialize(m_objPtr);
+                VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eVirtualSerializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnVirtualSerialize = std::move(
+                            *std::dynamic_pointer_cast<VirtualSerializeFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eDeserializeFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnDeserialize = std::move(*std::dynamic_pointer_cast<DeserializeFn>(
+                            itF->second));
+                }
+
+                setToStringFn(false);
+                setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+                        std::move(fnExtFromString), std::move(fnInFromString),
+                        std::move(fnDeserialize));
+            }
+        } else {
+            if (m_objPtr->hasEqFunction()) {
+                EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+                NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualEqFn  fnVirtualEq(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec;
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itEqFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eEqFn) {
+                                if (std::dynamic_pointer_cast<EqFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itEqFn != objVec->end()) {
+                    fnEq = std::move(*std::dynamic_pointer_cast<EqFn>(
+                            itEqFn->second));
+                }
+
+                fnVirtualEq.setStrike(fnEq.getStrike());
+                fnVirtualEq.setNewCode(fnEq.getNewCode());
+                fnVirtualEq.setAttribute(fnEq.getAttribute());
+                fnVirtualEq.setHBefore(fnEq.getHBefore());
+                fnVirtualEq.setHBehind(fnEq.getHBehind());
+                fnVirtualEq.setCppBefore(fnEq.getCppBefore());
+                fnVirtualEq.setCppBehind(fnEq.getCppBehind());
+                fnEq.setStrike({});
+                fnEq.setNewCode({});
+                fnEq.setAttribute("");
+                fnEq.setHBefore("");
+                fnEq.setHBehind("");
+                fnEq.setCppBefore("");
+                fnEq.setCppBehind("");
+                setEqFn(false);
+                setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+            }
+
+            if (m_objPtr->hasLessFunction()) {
+                LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+                LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+                GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+                GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+                VirtualLessFn  fnVirtualLess(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec;
+                Module *  mdPtr = m_objPtr->getParentModulePtr();
+                objVec = mdPtr->getEObjectListPtr();
+                auto  itLessFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eLessFn) {
+                                if (std::dynamic_pointer_cast<LessFn>(val.second)->
+                                        getParentClassPtr() == m_objPtr) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itLessFn != objVec->end()) {
+                    fnLess = std::move(*std::dynamic_pointer_cast<LessFn>(
+                            itLessFn->second));
+                }
+
+                fnVirtualLess.setStrike(fnLess.getStrike());
+                fnVirtualLess.setNewCode(fnLess.getNewCode());
+                fnVirtualLess.setAttribute(fnLess.getAttribute());
+                fnVirtualLess.setHBefore(fnLess.getHBefore());
+                fnVirtualLess.setHBehind(fnLess.getHBehind());
+                fnVirtualLess.setCppBefore(fnLess.getCppBefore());
+                fnVirtualLess.setCppBehind(fnLess.getCppBehind());
+                fnLess.setStrike({});
+                fnLess.setNewCode({});
+                fnLess.setAttribute("");
+                fnLess.setHBefore("");
+                fnLess.setHBehind("");
+                fnLess.setCppBefore("");
+                fnLess.setCppBehind("");
+                setLessFn(false);
+                setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+                        std::move(fnGreaterEq), std::move(fnVirtualLess));
+            }
+
+            if (m_objPtr->hasSwapFunction()) {
+                ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+                InSwapFn  fnInSwap(m_objPtr);
+                VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eInSwapFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnInSwap = std::move(*std::dynamic_pointer_cast<InSwapFn>(
+                            itF->second));
+                }
+
+                fnVirtualExchange.setStrike(fnInSwap.getStrike());
+                fnVirtualExchange.setNewCode(fnInSwap.getNewCode());
+                fnVirtualExchange.setAttribute(fnInSwap.getAttribute());
+                fnVirtualExchange.setHBefore(fnInSwap.getHBefore());
+                fnVirtualExchange.setHBehind(fnInSwap.getHBehind());
+                fnVirtualExchange.setCppBefore(fnInSwap.getCppBefore());
+                fnVirtualExchange.setCppBehind(fnInSwap.getCppBehind());
+                fnInSwap.setStrike({});
+                fnInSwap.setNewCode({});
+                fnInSwap.setAttribute("");
+                fnInSwap.setHBefore("");
+                fnInSwap.setHBehind("");
+                fnInSwap.setCppBefore("");
+                fnInSwap.setCppBehind("");
+                setSwapFn(false);
+                setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap),
+                        std::move(fnVirtualExchange));
+            }
+
+            if (m_objPtr->hasToStringFunction()) {
+                ToStringFn  fnToString(m_objPtr);
+                InFromStringFn  fnInFromString(m_objPtr);
+                ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+                DeserializeFn  fnDeserialize(m_objPtr);
+                VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+
+                std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                        m_objPtr->getEObjectPtr();
+                auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eToStringFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnToString = std::move(*std::dynamic_pointer_cast<ToStringFn>(
+                            itF->second));
+                }
+                itF = std::find_if(objVec->begin(), objVec->end(), [](
+                        std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                            if (val.first == Etype::eInFromStringFn) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                if (itF != objVec->end()) {
+                    fnInFromString = std::move(*std::dynamic_pointer_cast<InFromStringFn>(
+                            itF->second));
+                }
+
+                fnVirtualSerialize.setStrike(fnToString.getStrike());
+                fnVirtualSerialize.setNewCode(fnToString.getNewCode());
+                fnVirtualSerialize.setAttribute(fnToString.getAttribute());
+                fnVirtualSerialize.setHBefore(fnToString.getHBefore());
+                fnVirtualSerialize.setHBehind(fnToString.getHBehind());
+                fnVirtualSerialize.setCppBefore(fnToString.getCppBefore());
+                fnVirtualSerialize.setCppBehind(fnToString.getCppBehind());
+                fnToString.setStrike({});
+                fnToString.setNewCode({});
+                fnToString.setAttribute("");
+                fnToString.setHBefore("");
+                fnToString.setHBehind("");
+                fnToString.setCppBefore("");
+                fnToString.setCppBehind("");
+                fnDeserialize.setStrike(fnInFromString.getStrike());
+                fnDeserialize.setNewCode(fnInFromString.getNewCode());
+                fnDeserialize.setAttribute(fnInFromString.getAttribute());
+                fnDeserialize.setHBefore(fnInFromString.getHBefore());
+                fnDeserialize.setHBehind(fnInFromString.getHBehind());
+                fnDeserialize.setCppBefore(fnInFromString.getCppBefore());
+                fnDeserialize.setCppBehind(fnInFromString.getCppBehind());
+                fnInFromString.setStrike({});
+                fnInFromString.setNewCode({});
+                fnInFromString.setAttribute("");
+                fnInFromString.setHBefore("");
+                fnInFromString.setHBehind("");
+                fnInFromString.setCppBefore("");
+                fnInFromString.setCppBehind("");
+                setToStringFn(false);
+                setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+                        std::move(fnExtFromString), std::move(fnInFromString),
+                        std::move(fnDeserialize));
+            }
+
+        }
+    }
 }
 
 void
@@ -1985,6 +3503,14 @@ WtMyClass::repInheritIsVirtual()
 }
 
 void
+WtMyClass::repIsFinalClass()
+{
+    if (!m_objPtr)  return;
+
+    m_isFinalClass->setChecked(m_objPtr->isFinalClass());
+}
+
+void
 WtMyClass::init_obj()
 {
     m_className = new QLineEdit;
@@ -2818,23 +4344,6 @@ WtMyClass::nameCheckDuplication(std::string const &  fnName)
 }
 
 void
-WtMyClass::setItemProperty(QStandardItem *  item,
-                           Etype const  etp,
-                           std::shared_ptr<EObject>  objPtr)
-{
-    QVariant  valType = static_cast<int>(etp);
-    item->setData(valType, Qt::UserRole + 1);
-
-    QVariant  valPtr = QVariant::fromValue(static_cast<void *>(objPtr.get()));
-    item->setData(valPtr, Qt::UserRole + 2);
-
-    item->setFlags(Qt::NoItemFlags);
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
-                   Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable |
-                   Qt::ItemIsEnabled );
-}
-
-void
 WtMyClass::setEqFn(bool const  status)
 {
     if (!status) {
@@ -2935,6 +4444,17 @@ WtMyClass::setEqFn(bool const  status)
         return;
     }
 
+    EqFn  fnEq(m_objPtr->getClassName(), m_objPtr);
+    NotEqFn  fnNotEq(m_objPtr->getClassName(), m_objPtr);
+    VirtualEqFn  fnVirtualEq(m_objPtr);
+    setEqFnAdd(std::move(fnEq), std::move(fnNotEq), std::move(fnVirtualEq));
+}
+
+void
+WtMyClass::setEqFnAdd(EqFn &&  fnEq,
+                      NotEqFn &&  fnNotEq,
+                      VirtualEqFn &&  fnVirtualEq)
+{
     m_objPtr->setEqFunction(true);
     ClassType const  ct = m_objPtr->getClasstype();
     if (ct == ClassType::cppBase || ct == ClassType::cppInherit) {
@@ -2964,7 +4484,7 @@ WtMyClass::setEqFn(bool const  status)
         }
         index++;
         std::shared_ptr<VirtualEqFn>  objPtr =
-                std::make_shared<VirtualEqFn>(m_objPtr);
+                std::make_shared<VirtualEqFn>(std::move(fnVirtualEq));
         std::pair<Etype, std::shared_ptr<EObject>>  newObj;
         newObj.first = Etype::eVirtualEqFn;
         newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
@@ -2976,6 +4496,7 @@ WtMyClass::setEqFn(bool const  status)
         itemClass->insertRow(index, item);
     }
 
+    if (!(ct == ClassType::cppBase || ct == ClassType::cppFinal))  return;
     Module *  modulePtr = m_objPtr->getParentModulePtr();
     if (modulePtr) {
         std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
@@ -2996,7 +4517,7 @@ WtMyClass::setEqFn(bool const  status)
                     moduleObjVec = modulePtr->getEObjectListPtr();
 
             std::shared_ptr<EqFn>  objPtr1 =
-                    std::make_shared<EqFn>(m_objPtr->getClassName(), m_objPtr);
+                    std::make_shared<EqFn>(std::move(fnEq));
             std::pair<Etype, std::shared_ptr<EObject>>  newObj;
             newObj.first = Etype::eEqFn;
             newObj.second = std::dynamic_pointer_cast<EObject>(objPtr1);
@@ -3012,7 +4533,7 @@ WtMyClass::setEqFn(bool const  status)
             index++;
 
             std::shared_ptr<NotEqFn>  objPtr2 =
-                    std::make_shared<NotEqFn>(m_objPtr->getClassName(), m_objPtr);
+                    std::make_shared<NotEqFn>(std::move(fnNotEq));
             newObj.first = Etype::eNotEqFn;
             newObj.second = std::dynamic_pointer_cast<EObject>(objPtr2);
             moduleObjVec->insert(moduleObjVec->begin() + index, newObj);
@@ -3186,6 +4707,22 @@ WtMyClass::setLessFn(bool const  status)
         return;
     }
 
+    LessFn  fnLess(m_objPtr->getClassName(), m_objPtr);
+    LessEqFn  fnLessEq(m_objPtr->getClassName(), m_objPtr);
+    GreaterFn  fnGreater(m_objPtr->getClassName(), m_objPtr);
+    GreaterEqFn  fnGreaterEq(m_objPtr->getClassName(), m_objPtr);
+    VirtualLessFn  fnVirtualLess(m_objPtr);
+    setLessFnAdd(std::move(fnLess), std::move(fnLessEq), std::move(fnGreater),
+            std::move(fnGreaterEq), std::move(fnVirtualLess));
+}
+
+void
+WtMyClass::setLessFnAdd(LessFn &&  fnLess,
+                        LessEqFn &&  fnLessEq,
+                        GreaterFn &&  fnGreater,
+                        GreaterEqFn &&  fnGreaterEq,
+                        VirtualLessFn &&  fnVirtualLess)
+{
     m_objPtr->setLessFunction(true);
     ClassType const  ct = m_objPtr->getClasstype();
     if (ct == ClassType::cppBase || ct == ClassType::cppInherit) {
@@ -3215,7 +4752,7 @@ WtMyClass::setLessFn(bool const  status)
         }
         index++;
         std::shared_ptr<VirtualLessFn>  objPtr =
-                std::make_shared<VirtualLessFn>(m_objPtr);
+                std::make_shared<VirtualLessFn>(std::move(fnVirtualLess));
         std::pair<Etype, std::shared_ptr<EObject>>  newObj;
         newObj.first = Etype::eVirtualLessFn;
         newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
@@ -3227,6 +4764,7 @@ WtMyClass::setLessFn(bool const  status)
         itemClass->insertRow(index, item);
     }
 
+    if (!(ct == ClassType::cppBase || ct == ClassType::cppFinal))  return;
     Module *  modulePtr = m_objPtr->getParentModulePtr();
     if (modulePtr) {
         std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
@@ -3247,7 +4785,7 @@ WtMyClass::setLessFn(bool const  status)
                     moduleObjVec = modulePtr->getEObjectListPtr();
 
             std::shared_ptr<LessFn>  objPtr1 =
-                    std::make_shared<LessFn>(m_objPtr->getClassName(), m_objPtr);
+                    std::make_shared<LessFn>(std::move(fnLess));
             std::pair<Etype, std::shared_ptr<EObject>>  newObj;
             newObj.first = Etype::eLessFn;
             newObj.second = std::dynamic_pointer_cast<EObject>(objPtr1);
@@ -3263,7 +4801,7 @@ WtMyClass::setLessFn(bool const  status)
             index++;
 
             std::shared_ptr<LessEqFn>  objPtr2 =
-                    std::make_shared<LessEqFn>(m_objPtr->getClassName(), m_objPtr);
+                    std::make_shared<LessEqFn>(std::move(fnLessEq));
             newObj.first = Etype::eLessEqFn;
             newObj.second = std::dynamic_pointer_cast<EObject>(objPtr2);
             moduleObjVec->insert(moduleObjVec->begin() + index, newObj);
@@ -3276,7 +4814,7 @@ WtMyClass::setLessFn(bool const  status)
             index++;
 
             std::shared_ptr<GreaterFn>  objPtr3 =
-                    std::make_shared<GreaterFn>(m_objPtr->getClassName(), m_objPtr);
+                    std::make_shared<GreaterFn>(std::move(fnGreater));
             newObj.first = Etype::eGreaterFn;
             newObj.second = std::dynamic_pointer_cast<EObject>(objPtr3);
             moduleObjVec->insert(moduleObjVec->begin() + index, newObj);
@@ -3289,7 +4827,7 @@ WtMyClass::setLessFn(bool const  status)
             index++;
 
             std::shared_ptr<GreaterEqFn>  objPtr4 =
-                    std::make_shared<GreaterEqFn>(m_objPtr->getClassName(), m_objPtr);
+                    std::make_shared<GreaterEqFn>(std::move(fnGreaterEq));
             newObj.first = Etype::eGreaterEqFn;
             newObj.second = std::dynamic_pointer_cast<EObject>(objPtr4);
             moduleObjVec->insert(moduleObjVec->begin() + index, newObj);
@@ -3306,20 +4844,512 @@ void
 WtMyClass::setSwapFn(bool const  status)
 {
     if (!status) {
+        QStandardItem *  itemClass = getItemPtr();
+        int  count = itemClass->rowCount();
+        for (int  i = 0; i < count; ++i) {
+            QStandardItem *  chit = itemClass->child(i);
+            Etype const  etp = static_cast<Etype>(chit->data(
+                    Qt::UserRole + 1).toInt());
+            if (etp == Etype::eInSwapFn) {
+                itemClass->removeRow(i);
+                break;
+            }
+        }
+        count = itemClass->rowCount();
+        for (int  i = 0; i < count; ++i) {
+            QStandardItem *  chit = itemClass->child(i);
+            Etype const  etp = static_cast<Etype>(chit->data(
+                    Qt::UserRole + 1).toInt());
+            if (etp == Etype::eVirtualExchangeFn) {
+                itemClass->removeRow(i);
+                break;
+            }
+        }
 
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                m_objPtr->getEObjectPtr();
+        auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                    if (val.first == Etype::eInSwapFn) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+        if (itF != objVec->end()) {
+            objVec->erase(itF);
+        }
+        itF = std::find_if(objVec->begin(), objVec->end(), [](
+                std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                    if (val.first == Etype::eVirtualExchangeFn) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+        if (itF != objVec->end()) {
+            objVec->erase(itF);
+        }
+
+        Module *  mdPtr = m_objPtr->getParentModulePtr();
+        if (mdPtr) {
+            QStandardItem *  itemModule = itemClass->parent();
+            count = itemModule->rowCount();
+            for (int  i = 0; i < count; ++i) {
+                QStandardItem *  chit = itemModule->child(i);
+                Etype const  etp = static_cast<Etype>(chit->data(
+                        Qt::UserRole + 1).toInt());
+                if (etp == Etype::eExtSwapFn) {
+                    ExtSwapFn *  ptr = static_cast<ExtSwapFn *>(chit->data(
+                            Qt::UserRole + 2).value<void *>());
+                    if (ptr->getParentClassPtr() == m_objPtr) {
+                        itemModule->removeRow(i);
+                        break;
+                    }
+                }
+            }
+
+            objVec = mdPtr->getEObjectListPtr();
+            auto  itExtSwapFn = std::find_if(objVec->begin(), objVec->end(), [this](
+                    std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                        if (val.first == Etype::eExtSwapFn) {
+                            if (std::dynamic_pointer_cast<ExtSwapFn>(val.second)->
+                                    getParentClassPtr() == m_objPtr) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    });
+            if (itExtSwapFn != objVec->end()) {
+                objVec->erase(itExtSwapFn);
+            }
+        }
+
+        m_objPtr->setSwapFunction(false);
         return;
     }
 
+    ExtSwapFn  fnExtSwap(m_objPtr->getClassName(), m_objPtr);
+    InSwapFn  fnInSwap(m_objPtr);
+    VirtualExchangeFn  fnVirtualExchange(m_objPtr);
+    setSwapFnAdd(std::move(fnExtSwap), std::move(fnInSwap), std::move(fnVirtualExchange));
+}
+
+void
+WtMyClass::setSwapFnAdd(ExtSwapFn &&  fnExtSwap,
+                        InSwapFn &&  fnInSwap,
+                        VirtualExchangeFn &&  fnVirtualExchange)
+{
+    m_objPtr->setSwapFunction(true);
+    ClassType const  ct = m_objPtr->getClasstype();
+    if (ct == ClassType::cppBase || ct == ClassType::cppFinal) {
+        int  index = -1;
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                m_objPtr->getEObjectRef();
+        for (int  i = 0; i < vecClass.size(); ++i) {
+            if (vecClass[i].first == Etype::ePublicLabel) {
+                index = i;
+                break;
+            }
+        }
+        QStandardItem *  itemClass = getItemPtr();
+        if (index == -1) {
+            std::shared_ptr<PublicLabel>  objPtr =
+                    std::make_shared<PublicLabel>();
+            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+            newObj.first = Etype::ePublicLabel;
+            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+            m_objPtr->appendEobjList(newObj);
+            index = static_cast<int>(vecClass.size() - 1);
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newObj.second->getTreeLabel()));
+            setItemProperty(item, newObj.first, newObj.second);
+            itemClass->appendRow(item);
+        }
+        index++;
+        std::shared_ptr<InSwapFn>  objPtr =
+                std::make_shared<InSwapFn>(std::move(fnInSwap));
+        std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+        newObj.first = Etype::eInSwapFn;
+        newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+        m_objPtr->insertEobjList(newObj, index);
+
+        QStandardItem *  item = new QStandardItem(
+                QString::fromStdString(newObj.second->getTreeLabel()));
+        setItemProperty(item, newObj.first, newObj.second);
+        itemClass->insertRow(index, item);
+    }
+
+    if (ct == ClassType::cppBase || ct == ClassType::cppInherit) {
+        int  index = -1;
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                m_objPtr->getEObjectRef();
+        for (int  i = 0; i < vecClass.size(); ++i) {
+            if (vecClass[i].first == Etype::eProtectedLabel) {
+                index = i;
+                break;
+            }
+        }
+        QStandardItem *  itemClass = getItemPtr();
+        if (index == -1) {
+            std::shared_ptr<ProtectedLabel>  objPtr =
+                    std::make_shared<ProtectedLabel>();
+            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+            newObj.first = Etype::eProtectedLabel;
+            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+            m_objPtr->appendEobjList(newObj);
+            index = static_cast<int>(vecClass.size() - 1);
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newObj.second->getTreeLabel()));
+            setItemProperty(item, newObj.first, newObj.second);
+            itemClass->appendRow(item);
+        }
+        index++;
+        std::shared_ptr<VirtualExchangeFn>  objPtr =
+                std::make_shared<VirtualExchangeFn>(std::move(fnVirtualExchange));
+        std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+        newObj.first = Etype::eVirtualExchangeFn;
+        newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+        m_objPtr->insertEobjList(newObj, index);
+
+        QStandardItem *  item = new QStandardItem(
+                QString::fromStdString(newObj.second->getTreeLabel()));
+        setItemProperty(item, newObj.first, newObj.second);
+        itemClass->insertRow(index, item);
+    }
+
+    if (!(ct == ClassType::cppBase || ct == ClassType::cppFinal))  return;
+    Module *  modulePtr = m_objPtr->getParentModulePtr();
+    if (modulePtr) {
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
+                vecMobj = modulePtr->getEobjList();
+        int  index = -1;
+        for (int  i = 0; i < vecMobj.size(); ++i) {
+            if (vecMobj[i].first == Etype::eClass) {
+                MyClass *  classPtr = static_cast<MyClass *>(
+                        vecMobj[i].second.get());
+                if (classPtr == m_objPtr) {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        if (index != -1) {
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
+                    moduleObjVec = modulePtr->getEObjectListPtr();
+
+            std::shared_ptr<ExtSwapFn>  objPtr1 =
+                    std::make_shared<ExtSwapFn>(std::move(fnExtSwap));
+            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+            newObj.first = Etype::eExtSwapFn;
+            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr1);
+            moduleObjVec->insert(moduleObjVec->begin() + index, newObj);
+
+            QStandardItem *  itemClass = getItemPtr();
+            QStandardItem *  itemModule = itemClass->parent();
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newObj.second->getTreeLabel()));
+            setItemProperty(item, newObj.first, newObj.second);
+            itemModule->insertRow(index, item);
+        }
+    }
 }
 
 void
 WtMyClass::setToStringFn(bool const  status)
 {
     if (!status) {
+        QStandardItem *  itemClass = getItemPtr();
+        int  count = itemClass->rowCount();
+        for (int  i = 0; i < count; ++i) {
+            QStandardItem *  chit = itemClass->child(i);
+            Etype const  etp = static_cast<Etype>(chit->data(
+                    Qt::UserRole + 1).toInt());
+            if (etp == Etype::eToStringFn) {
+                itemClass->removeRow(i);
+                break;
+            }
+        }
+        count = itemClass->rowCount();
+        for (int  i = 0; i < count; ++i) {
+            QStandardItem *  chit = itemClass->child(i);
+            Etype const  etp = static_cast<Etype>(chit->data(
+                    Qt::UserRole + 1).toInt());
+            if (etp == Etype::eVirtualSerializeFn) {
+                itemClass->removeRow(i);
+                break;
+            }
+        }
+        count = itemClass->rowCount();
+        for (int  i = 0; i < count; ++i) {
+            QStandardItem *  chit = itemClass->child(i);
+            Etype const  etp = static_cast<Etype>(chit->data(
+                    Qt::UserRole + 1).toInt());
+            if (etp == Etype::eInFromStringFn) {
+                itemClass->removeRow(i);
+                break;
+            }
+        }
+        count = itemClass->rowCount();
+        for (int  i = 0; i < count; ++i) {
+            QStandardItem *  chit = itemClass->child(i);
+            Etype const  etp = static_cast<Etype>(chit->data(
+                    Qt::UserRole + 1).toInt());
+            if (etp == Etype::eDeserializeFn) {
+                itemClass->removeRow(i);
+                break;
+            }
+        }
 
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  objVec =
+                m_objPtr->getEObjectPtr();
+        auto  itF = std::find_if(objVec->begin(), objVec->end(), [](
+                std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                    if (val.first == Etype::eToStringFn) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+        if (itF != objVec->end()) {
+            objVec->erase(itF);
+        }
+        itF = std::find_if(objVec->begin(), objVec->end(), [](
+                std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                    if (val.first == Etype::eVirtualSerializeFn) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+        if (itF != objVec->end()) {
+            objVec->erase(itF);
+        }
+        itF = std::find_if(objVec->begin(), objVec->end(), [](
+                std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                    if (val.first == Etype::eInFromStringFn) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+        if (itF != objVec->end()) {
+            objVec->erase(itF);
+        }
+        itF = std::find_if(objVec->begin(), objVec->end(), [](
+                std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                    if (val.first == Etype::eDeserializeFn) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+        if (itF != objVec->end()) {
+            objVec->erase(itF);
+        }
+
+        Module *  mdPtr = m_objPtr->getParentModulePtr();
+        if (mdPtr) {
+            QStandardItem *  itemModule = itemClass->parent();
+            count = itemModule->rowCount();
+            for (int  i = 0; i < count; ++i) {
+                QStandardItem *  chit = itemModule->child(i);
+                Etype const  etp = static_cast<Etype>(chit->data(
+                        Qt::UserRole + 1).toInt());
+                if (etp == Etype::eExtFromStringFn) {
+                    ExtFromStringFn *  ptr = static_cast<ExtFromStringFn *>(chit->data(
+                            Qt::UserRole + 2).value<void *>());
+                    if (ptr->getParentClassPtr() == m_objPtr) {
+                        itemModule->removeRow(i);
+                        break;
+                    }
+                }
+            }
+
+            objVec = mdPtr->getEObjectListPtr();
+            auto  itExt = std::find_if(objVec->begin(), objVec->end(), [this](
+                    std::pair<Etype, std::shared_ptr<EObject>> const &  val) ->bool {
+                        if (val.first == Etype::eExtFromStringFn) {
+                            if (std::dynamic_pointer_cast<ExtFromStringFn>(val.second)->
+                                    getParentClassPtr() == m_objPtr) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    });
+            if (itExt != objVec->end()) {
+                objVec->erase(itExt);
+            }
+        }
+
+        m_objPtr->setToStringFunction(false);
         return;
     }
 
+    ToStringFn  fnToString(m_objPtr);
+    VirtualSerializeFn  fnVirtualSerialize(m_objPtr);
+    ExtFromStringFn  fnExtFromString(m_objPtr->getClassName(), m_objPtr);
+    InFromStringFn  fnInFromString(m_objPtr);
+    DeserializeFn  fnDeserialize(m_objPtr);
+    setToStringFnAdd(std::move(fnToString), std::move(fnVirtualSerialize),
+            std::move(fnExtFromString), std::move(fnInFromString),
+            std::move(fnDeserialize));
+}
+
+void
+WtMyClass::setToStringFnAdd(ToStringFn &&  fnToString,
+                            VirtualSerializeFn &&  fnVirtualSerialize,
+                            ExtFromStringFn &&  fnExtFromString,
+                            InFromStringFn &&  fnInFromString,
+                            DeserializeFn &&  fnDeserialize)
+{
+    m_objPtr->setToStringFunction(true);
+    ClassType const  ct = m_objPtr->getClasstype();
+    if (ct == ClassType::cppBase || ct == ClassType::cppFinal) {
+        int  index = -1;
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                m_objPtr->getEObjectRef();
+        for (int  i = 0; i < vecClass.size(); ++i) {
+            if (vecClass[i].first == Etype::ePublicLabel) {
+                index = i;
+                break;
+            }
+        }
+        QStandardItem *  itemClass = getItemPtr();
+        if (index == -1) {
+            std::shared_ptr<PublicLabel>  objPtr =
+                    std::make_shared<PublicLabel>();
+            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+            newObj.first = Etype::ePublicLabel;
+            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+            m_objPtr->appendEobjList(newObj);
+            index = static_cast<int>(vecClass.size() - 1);
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newObj.second->getTreeLabel()));
+            setItemProperty(item, newObj.first, newObj.second);
+            itemClass->appendRow(item);
+        }
+        index++;
+        std::shared_ptr<ToStringFn>  objPtr =
+                std::make_shared<ToStringFn>(std::move(fnToString));
+        std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+        newObj.first = Etype::eToStringFn;
+        newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+        m_objPtr->insertEobjList(newObj, index);
+
+        QStandardItem *  item = new QStandardItem(
+                QString::fromStdString(newObj.second->getTreeLabel()));
+        setItemProperty(item, newObj.first, newObj.second);
+        itemClass->insertRow(index, item);
+
+        index++;
+        std::shared_ptr<InFromStringFn>  objPtrIF =
+                std::make_shared<InFromStringFn>(std::move(fnInFromString));
+        newObj.first = Etype::eInFromStringFn;
+        newObj.second = std::dynamic_pointer_cast<EObject>(objPtrIF);
+        m_objPtr->insertEobjList(newObj, index);
+
+        item = new QStandardItem(
+                QString::fromStdString(newObj.second->getTreeLabel()));
+        setItemProperty(item, newObj.first, newObj.second);
+        itemClass->insertRow(index, item);
+    }
+
+    if (ct == ClassType::cppBase || ct == ClassType::cppInherit) {
+        int  index = -1;
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  vecClass =
+                m_objPtr->getEObjectRef();
+        for (int  i = 0; i < vecClass.size(); ++i) {
+            if (vecClass[i].first == Etype::eProtectedLabel) {
+                index = i;
+                break;
+            }
+        }
+        QStandardItem *  itemClass = getItemPtr();
+        if (index == -1) {
+            std::shared_ptr<ProtectedLabel>  objPtr =
+                    std::make_shared<ProtectedLabel>();
+            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+            newObj.first = Etype::eProtectedLabel;
+            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+            m_objPtr->appendEobjList(newObj);
+            index = static_cast<int>(vecClass.size() - 1);
+
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newObj.second->getTreeLabel()));
+            setItemProperty(item, newObj.first, newObj.second);
+            itemClass->appendRow(item);
+        }
+        index++;
+        std::shared_ptr<VirtualSerializeFn>  objPtr =
+                std::make_shared<VirtualSerializeFn>(std::move(fnVirtualSerialize));
+        std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+        newObj.first = Etype::eVirtualSerializeFn;
+        newObj.second = std::dynamic_pointer_cast<EObject>(objPtr);
+        m_objPtr->insertEobjList(newObj, index);
+
+        QStandardItem *  item = new QStandardItem(
+                QString::fromStdString(newObj.second->getTreeLabel()));
+        setItemProperty(item, newObj.first, newObj.second);
+        itemClass->insertRow(index, item);
+
+        index++;
+        std::shared_ptr<DeserializeFn>  objPtrDF =
+                std::make_shared<DeserializeFn>(std::move(fnDeserialize));
+        newObj.first = Etype::eDeserializeFn;
+        newObj.second = std::dynamic_pointer_cast<EObject>(objPtrDF);
+        m_objPtr->insertEobjList(newObj, index);
+
+        item = new QStandardItem(
+                QString::fromStdString(newObj.second->getTreeLabel()));
+        setItemProperty(item, newObj.first, newObj.second);
+        itemClass->insertRow(index, item);
+    }
+
+    if (!(ct == ClassType::cppBase || ct == ClassType::cppFinal))  return;
+    Module *  modulePtr = m_objPtr->getParentModulePtr();
+    if (modulePtr) {
+        std::vector<std::pair<Etype, std::shared_ptr<EObject>>>
+                vecMobj = modulePtr->getEobjList();
+        int  index = -1;
+        for (int  i = 0; i < vecMobj.size(); ++i) {
+            if (vecMobj[i].first == Etype::eClass) {
+                MyClass *  classPtr = static_cast<MyClass *>(
+                        vecMobj[i].second.get());
+                if (classPtr == m_objPtr) {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        if (index != -1) {
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
+                    moduleObjVec = modulePtr->getEObjectListPtr();
+
+            std::shared_ptr<ExtFromStringFn>  objPtr1 =
+                    std::make_shared<ExtFromStringFn>(std::move(fnExtFromString));
+            std::pair<Etype, std::shared_ptr<EObject>>  newObj;
+            newObj.first = Etype::eExtFromStringFn;
+            newObj.second = std::dynamic_pointer_cast<EObject>(objPtr1);
+            moduleObjVec->insert(moduleObjVec->begin() + index, newObj);
+
+            QStandardItem *  itemClass = getItemPtr();
+            QStandardItem *  itemModule = itemClass->parent();
+            QStandardItem *  item = new QStandardItem(
+                    QString::fromStdString(newObj.second->getTreeLabel()));
+            setItemProperty(item, newObj.first, newObj.second);
+            itemModule->insertRow(index, item);
+        }
+    }
 }
 
 MyClass *

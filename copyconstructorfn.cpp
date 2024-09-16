@@ -96,7 +96,7 @@ CopyConstructorFn::setParam(std::vector<Parameter> const &)
         std::vector<Parameter>  params;
         Parameter  par1;
         par1.setParameterName("other");
-        par1.setType(className + "const &");
+        par1.setType(className + " const &");
         params.push_back(std::move(par1));
         Function::setParam(std::move(params));
     }

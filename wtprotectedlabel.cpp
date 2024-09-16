@@ -33,7 +33,7 @@ WtProtectedLabel::WtProtectedLabel(QWidget *  parent /* = nullptr */):
     vH->setHandleWidth(1);
     vbox->addWidget(vH);
 
-    QLabel *  Llabel = new QLabel(tr(" protected: "));
+    QLabel *  Llabel = new QLabel(tr(" protected : "));
 
     vH->addWidget(m_beforeCode);
     vH->addWidget(Llabel);

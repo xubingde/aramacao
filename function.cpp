@@ -1505,6 +1505,7 @@ Function::setConstructor(const bool  value)
 {
     m_constructor = value;
     if (!m_classFunction)  m_constructor = false;
+
     if (m_constructor) {
         m_functionName = "";
         m_returnType = "";
