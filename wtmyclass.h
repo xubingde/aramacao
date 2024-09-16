@@ -20,6 +20,7 @@
 #include "wtbase.h"
 #include "codeeditor.h"
 #include "myclass.h"
+#include "comboboxdelegate.h"
 
 namespace xu {
 
@@ -77,6 +78,13 @@ public:
     void  baseClass_toggled(bool const  isChecked);
     void  inheritClass_toggled(bool const  isChecked);
     void  mulInhClassConnect();
+    void  mulInhClass_Add_triggered();
+    void  mulInhClass_Delete_triggered();
+    void  mulInhClass_Up_triggered();
+    void  mulInhClass_Down_triggered();
+    void  mulInhClass_MoveTo_triggered();
+    void  mulInhClass_itemDelegate_closeEditor();
+    void  mulInhClass_itemDgtForCol_closeEditor();
     void  templateConnect();
     void  friendClassConnect();
     void  baseClassPrarm_editingFinished();

@@ -2276,6 +2276,194 @@ WtMyClass::inheritClass_toggled(bool const  isChecked)
 void
 WtMyClass::mulInhClassConnect()
 {
+    QAction *  actAdd = new QAction(tr("Add New"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    QAction *  actSpt = new QAction;
+    actSpt->setSeparator(true);
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveTo = new QAction(tr("Move To Row"));
+    actSpt->setParent(this);
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveTo->setParent(this);
+    m_mulInhClassView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_mulInhClassView->addAction(actAdd);
+    m_mulInhClassView->addAction(actDelete);
+    m_mulInhClassView->addAction(actSpt);
+    m_mulInhClassView->addAction(actUp);
+    m_mulInhClassView->addAction(actDown);
+    m_mulInhClassView->addAction(actMoveTo);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::mulInhClass_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::mulInhClass_Delete_triggered);
+    connect(actUp, &QAction::triggered,
+            this, &WtMyClass::mulInhClass_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtMyClass::mulInhClass_Down_triggered);
+    connect(actMoveTo, &QAction::triggered,
+            this, &WtMyClass::mulInhClass_MoveTo_triggered);
+
+    connect(m_mulInhClassView->itemDelegate(),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtMyClass::mulInhClass_itemDelegate_closeEditor);
+
+    m_mulInhClassView->setItemDelegateForColumn(1, new ComboBoxDelegate);
+    connect(m_mulInhClassView->itemDelegateForColumn(1),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtMyClass::mulInhClass_itemDgtForCol_closeEditor);
+}
+
+void
+WtMyClass::mulInhClass_Add_triggered()
+{
+    if (!m_objPtr)  return;
+
+    std::string const  initBase("NewBase__cls");
+    m_objPtr->appendMulInhClass({ initBase, Purview::purPublic, false });
+
+    QStandardItem *  item1 = new QStandardItem(QString::fromStdString(initBase));
+    QStandardItem *  item2 = new QStandardItem;
+    QStandardItem *  item3 = new QStandardItem;
+    item2->setData(QVariant("public"), Qt::EditRole | Qt::DisplayRole);
+    item3->setData(QVariant(false), Qt::EditRole | Qt::DisplayRole);
+    QList<QStandardItem *>  items;
+    items << item1 << item2 << item3;
+    m_mulInhClassModel->appendRow(items);
+
+    if (m_mulInhClassModel->rowCount() == 1) {
+        m_mulInhClassView->setCurrentIndex(m_mulInhClassModel->index(0, 0));
+    }
+}
+
+void
+WtMyClass::mulInhClass_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_mulInhClassView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        m_mulInhClassModel->removeRows(row, 1);
+        m_objPtr->deleteMulInhClass(row);
+    }
+}
+
+void
+WtMyClass::mulInhClass_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_mulInhClassView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && row != 0) {
+        m_objPtr->swapMulInhClass(row, row - 1);
+
+        auto const  item = m_mulInhClassModel->takeRow(row);
+        m_mulInhClassModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_mulInhClassView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::mulInhClass_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_mulInhClassView->currentIndex();
+    int const  row = index.row();
+    int const  count = m_mulInhClassModel->rowCount();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        m_objPtr->swapMulInhClass(row, row + 1);
+
+        auto const  item = m_mulInhClassModel->takeRow(row + 1);
+        m_mulInhClassModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_mulInhClassView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::mulInhClass_MoveTo_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_mulInhClassView->currentIndex();
+    int const  count = m_mulInhClassModel->rowCount();
+    size_t  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        size_t  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            if (movetoRow > 0)  movetoRow--;
+            if (movetoRow >= count)  movetoRow = count - 1;
+            if (currRow != movetoRow) {
+                m_objPtr->moveMulInhClass(currRow, movetoRow);
+
+                repMulInhClass();
+                QModelIndex const  idx = index.sibling(movetoRow, index.column());
+                m_mulInhClassView->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
+void
+WtMyClass::mulInhClass_itemDelegate_closeEditor()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_mulInhClassView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  currMul = m_objPtr->getMulInhClass()[row];
+        std::string const  currVal =
+                m_mulInhClassModel->data(index).toString().toUtf8().toStdString();
+
+        if (index.column() == 0) {
+            std::string const  oldVal = std::get<0>(currMul);
+            std::get<0>(currMul) = currVal;
+            m_objPtr->updateMulInhClass(currMul, row);
+            auto const  newMul = m_objPtr->getMulInhClass()[row];
+            std::string const  newVal = std::get<0>(newMul);
+
+            if (newVal != currVal) {
+                m_mulInhClassModel->setData(index, QVariant(QString::fromStdString(newVal)));
+            }
+        } else if (index.column() == 2) {
+            bool const  bValue = m_mulInhClassModel->data(index).toBool();
+            std::get<2>(currMul) = bValue;
+            m_objPtr->updateMulInhClass(currMul, row);
+        }
+    }
+}
+
+void
+WtMyClass::mulInhClass_itemDgtForCol_closeEditor()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_mulInhClassView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  currMul = m_objPtr->getMulInhClass()[row];
+        std::string const  newVal = m_mulInhClassModel->data(index)
+                .toString().toUtf8().toStdString();
+        if (newVal == "public") {
+            std::get<1>(currMul) = Purview::purPublic;
+        } else if (newVal == "protected") {
+            std::get<1>(currMul) = Purview::purProtected;
+        } else {
+            std::get<1>(currMul) = Purview::purPrivate;
+        }
+        m_objPtr->updateMulInhClass(currMul, row);
+    }
 }
 
 void
@@ -3625,7 +3813,7 @@ WtMyClass::init_obj()
                         new QStandardItem(tr("isVirtual")));
     m_mulInhClassView->setModel(m_mulInhClassModel);
 
-    m_mulInhClassView->setColumnWidth(0, 160);
+    m_mulInhClassView->setColumnWidth(0, 260);
     m_mulInhClassView->setColumnWidth(1, 125);
     m_mulInhClassView->setColumnWidth(2, 85);
 
@@ -4317,6 +4505,27 @@ WtMyClass::repFieldAction()
 void
 WtMyClass::repMulInhClass()
 {
+    if (!m_objPtr)  return;
+
+    m_mulInhClassModel->removeRows(0, m_mulInhClassModel->rowCount());
+    auto const  currMul = m_objPtr->getMulInhClass();
+    for (auto const & [baseClass, pur, isVirtual]: currMul) {
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(baseClass));
+        QStandardItem *  item2 = new QStandardItem;
+        QStandardItem *  item3 = new QStandardItem;
+
+        if (pur == Purview::purPublic) {
+            item2->setData(QVariant("public"), Qt::EditRole | Qt::DisplayRole);
+        } else if (pur == Purview::purProtected) {
+            item2->setData(QVariant("protected"), Qt::EditRole | Qt::DisplayRole);
+        } else {
+            item2->setData(QVariant("private"), Qt::EditRole | Qt::DisplayRole);
+        }
+        item3->setData(QVariant(isVirtual), Qt::EditRole | Qt::DisplayRole);
+        QList<QStandardItem *>  items;
+        items << item1 << item2 << item3;
+        m_mulInhClassModel->appendRow(items);
+    }
 }
 
 void
