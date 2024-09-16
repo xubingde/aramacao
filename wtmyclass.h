@@ -93,6 +93,12 @@ public:
     void  template_MoveTo_triggered();
     void  template_itemDelegate_closeEditor();
     void  friendClassConnect();
+    void  friendClass_Add_triggered();
+    void  friendClass_Delete_triggered();
+    void  friendClass_Up_triggered();
+    void  friendClass_Down_triggered();
+    void  friendClass_MoveTo_triggered();
+    void  friendClass_itemDelegate_closeEditor();
     void  baseClassPrarm_editingFinished();
     void  classNameInherit_editingFinished();
     void  inheritIsVirtual_stateChanged(int const  status);

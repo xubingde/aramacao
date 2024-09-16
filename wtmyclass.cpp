@@ -54,6 +54,7 @@
 #include "infromstringfn.h"
 #include "deserializefn.h"
 #include "module.h"
+#include "project.h"
 
 namespace xu {
 
@@ -237,6 +238,29 @@ WtMyClass::className_editingFinished()
                 ptr->setParentClassPtr(m_objPtr);
             } else {
                 ptr->setParentClassPtr(nullptr);
+            }
+        }
+    }
+
+    QStandardItem *  prjItem = parentItem->parent();
+    Etype const  prjEtp = static_cast<Etype>(prjItem->data(
+            Qt::UserRole + 1).toInt());
+    if (prjEtp == Etype::eProject) {
+        Project *  prjPtr = static_cast<Project *>(prjItem->data(
+                Qt::UserRole + 2).value<void *>());
+        std::vector<std::shared_ptr<Module>> &  vec = prjPtr->getModuleListRef();
+        for (auto &  it: vec) {
+            std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  mdVec =
+                    it->getEObjectListRef();
+            for (auto &  mdIt:  mdVec) {
+                if (mdIt.first == Etype::eClass) {
+                    std::vector<std::string>  friendVec = static_cast<MyClass *>(
+                            mdIt.second.get())->getFriendClassName();
+                    for (auto &  fname:  friendVec) {
+                        if (fname == oldVal)  fname = newVal;
+                    }
+                    static_cast<MyClass *>(mdIt.second.get())->setFriendClassName(friendVec);
+                }
             }
         }
     }
@@ -2407,7 +2431,8 @@ WtMyClass::mulInhClass_MoveTo_triggered()
                 m_objPtr->moveMulInhClass(currRow, movetoRow);
 
                 repMulInhClass();
-                QModelIndex const  idx = index.sibling(movetoRow, index.column());
+                QModelIndex const  idx = index.sibling(static_cast<int>(movetoRow),
+                        index.column());
                 m_mulInhClassView->setCurrentIndex(idx);
             }
         }
@@ -2672,6 +2697,172 @@ WtMyClass::template_itemDelegate_closeEditor()
 void
 WtMyClass::friendClassConnect()
 {
+    QAction *  actAdd = new QAction(tr("Add New"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    QAction *  actSpt = new QAction;
+    actSpt->setSeparator(true);
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveTo = new QAction(tr("Move To Row"));
+    actSpt->setParent(this);
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveTo->setParent(this);
+    m_friendClassView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_friendClassView->addAction(actAdd);
+    m_friendClassView->addAction(actDelete);
+    m_friendClassView->addAction(actSpt);
+    m_friendClassView->addAction(actUp);
+    m_friendClassView->addAction(actDown);
+    m_friendClassView->addAction(actMoveTo);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::friendClass_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::friendClass_Delete_triggered);
+    connect(actUp, &QAction::triggered,
+            this, &WtMyClass::friendClass_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtMyClass::friendClass_Down_triggered);
+    connect(actMoveTo, &QAction::triggered,
+            this, &WtMyClass::friendClass_MoveTo_triggered);
+
+    connect(m_friendClassView->itemDelegate(),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtMyClass::friendClass_itemDelegate_closeEditor);
+}
+
+void
+WtMyClass::friendClass_Add_triggered()
+{
+    if (!m_objPtr)  return;
+
+    auto  currVal = m_objPtr->getFriendClassName();
+    std::string const  fName("MyClass1_1");
+    currVal.push_back(fName);
+    m_objPtr->setFriendClassName(currVal);
+
+    QStandardItem *  item = new QStandardItem(QString::fromStdString(fName));
+    m_friendClassModel->appendRow(item);
+    if (m_friendClassModel->rowCount() == 1) {
+        m_friendClassView->setCurrentIndex(m_friendClassModel->index(0, 0));
+    }
+}
+
+void
+WtMyClass::friendClass_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_friendClassView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  currVal = m_objPtr->getFriendClassName();
+        currVal.erase(currVal.begin() + row);
+        m_objPtr->setFriendClassName(currVal);
+
+        m_friendClassModel->removeRows(row, 1);
+    }
+}
+
+void
+WtMyClass::friendClass_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_friendClassView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && row != 0) {
+        auto  currVal = m_objPtr->getFriendClassName();
+        std::swap(currVal[row], currVal[row - 1]);
+        m_objPtr->setFriendClassName(currVal);
+
+        auto const  item = m_friendClassModel->takeRow(row);
+        m_friendClassModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_friendClassView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::friendClass_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_friendClassView->currentIndex();
+    int const  count = m_friendClassModel->rowCount();
+    int const  row = index.row();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        auto  currVal = m_objPtr->getFriendClassName();
+        std::swap(currVal[row], currVal[row + 1]);
+        m_objPtr->setFriendClassName(currVal);
+
+        auto const  item = m_friendClassModel->takeRow(row + 1);
+        m_friendClassModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_friendClassView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::friendClass_MoveTo_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_friendClassView->currentIndex();
+    int const  count = m_friendClassModel->rowCount();
+    int const  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        int  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            if (movetoRow > 0)  movetoRow--;
+            if (movetoRow >= count)  movetoRow = count - 1;
+            if (currRow != movetoRow) {
+                auto  currVal = m_objPtr->getFriendClassName();
+                auto const  dVal = currVal[currRow];
+                currVal.erase(currVal.begin() + currRow);
+                currVal.insert(currVal.begin() + movetoRow, dVal);
+                m_objPtr->setFriendClassName(currVal);
+
+                repFriendClass();
+                const QModelIndex  idx = index.sibling(movetoRow, index.column());
+                m_friendClassView->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
+void
+WtMyClass::friendClass_itemDelegate_closeEditor()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_friendClassView->currentIndex();
+    if (index.isValid()) {
+        auto  currVec = m_objPtr->getFriendClassName();
+        int const  idx = index.row();
+        std::string const  currVal =
+                m_friendClassModel->data(index).toString().toUtf8().toStdString();
+
+        switch (index.column()) {
+        case 0:
+            {
+                currVec[idx] = currVal;
+                m_objPtr->setFriendClassName(currVec);
+                const auto  newVal = m_objPtr->getFriendClassName()[idx];
+
+                if (currVal != newVal) {
+                    m_friendClassModel->setData(index,
+                            QVariant(QString::fromStdString(newVal)));
+                }
+            }
+            break;
+        }
+    }
 }
 
 void
@@ -4751,6 +4942,15 @@ WtMyClass::repTemplateClass()
 void
 WtMyClass::repFriendClass()
 {
+    if (!m_objPtr)  return;
+
+    auto const  vec = m_objPtr->getFriendClassName();
+    m_friendClassModel->removeRows(0, m_friendClassModel->rowCount());
+    for (size_t  i = 0; i < vec.size(); ++i) {
+        QStandardItem *  item = new QStandardItem(
+                QString::fromStdString(vec[i]));
+        m_friendClassModel->appendRow(item);
+    }
 }
 
 bool

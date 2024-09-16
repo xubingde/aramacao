@@ -2386,6 +2386,18 @@ MyClass::setClassName(const std::string &  value)
                 m_parentModulePtr->getEObjectListRef();
         for (auto &  it: fns) {
             switch (it.first) {
+            case Etype::eClass :
+                {
+                    MyClass *  clsPtr = static_cast<MyClass *>(it.second.get());
+                    auto  currFriend = clsPtr->getFriendClassName();
+                    for (auto &  it: currFriend) {
+                        if (it == oldName) {
+                            it = m_className;
+                        }
+                    }
+                    clsPtr->setFriendClassName(currFriend);
+                }
+                break;
             case Etype::eFunctions :
             case Etype::eStaticFunctions :
                 {
