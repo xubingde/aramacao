@@ -2469,6 +2469,204 @@ WtMyClass::mulInhClass_itemDgtForCol_closeEditor()
 void
 WtMyClass::templateConnect()
 {
+    QAction *  actAdd = new QAction(tr("Add New"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    QAction *  actSpt = new QAction;
+    actSpt->setSeparator(true);
+    QAction *  actUp = new QAction(tr("Up"));
+    QAction *  actDown = new QAction(tr("Down"));
+    QAction *  actMoveTo = new QAction(tr("Move To Row"));
+    actSpt->setParent(this);
+    actUp->setParent(this);
+    actDown->setParent(this);
+    actMoveTo->setParent(this);
+    m_templateView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_templateView->addAction(actAdd);
+    m_templateView->addAction(actDelete);
+    m_templateView->addAction(actSpt);
+    m_templateView->addAction(actUp);
+    m_templateView->addAction(actDown);
+    m_templateView->addAction(actMoveTo);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::template_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::template_Delete_triggered);
+    connect(actUp, &QAction::triggered,
+            this, &WtMyClass::template_Up_triggered);
+    connect(actDown, &QAction::triggered,
+            this, &WtMyClass::template_Down_triggered);
+    connect(actMoveTo, &QAction::triggered,
+            this, &WtMyClass::template_MoveTo_triggered);
+
+    connect(m_templateView->itemDelegate(),
+            &QAbstractItemDelegate::closeEditor,
+            this, &WtMyClass::template_itemDelegate_closeEditor);
+}
+
+void
+WtMyClass::template_Add_triggered()
+{
+    if (!m_objPtr)  return;
+
+    auto  currVal = m_objPtr->getClassTparam();
+    Tpl  tpl;
+    currVal.push_back(tpl);
+    m_objPtr->setClassTparam(currVal);
+
+    QList<QStandardItem *>  items;
+    QStandardItem *  item1 = new QStandardItem(QString::fromStdString(tpl.getTypename()));
+    QStandardItem *  item2 = new QStandardItem(QString::fromStdString(tpl.getTName()));
+    items << item1 << item2;
+    m_templateModel->appendRow(items);
+    if (m_templateModel->rowCount() == 1) {
+        m_templateView->setCurrentIndex(m_templateModel->index(0, 0));
+    }
+}
+
+void
+WtMyClass::template_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_templateView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid()) {
+        auto  currVal = m_objPtr->getClassTparam();
+        currVal.erase(currVal.begin() + row);
+        m_objPtr->setClassTparam(currVal);
+
+        m_templateModel->removeRows(row, 1);
+    }
+}
+
+void
+WtMyClass::template_Up_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_templateView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && row != 0) {
+        auto  currVal = m_objPtr->getClassTparam();
+        std::swap(currVal[row], currVal[row - 1]);
+        m_objPtr->setClassTparam(currVal);
+
+        auto const  item = m_templateModel->takeRow(row);
+        m_templateModel->insertRow(row - 1, item);
+        QModelIndex const  idx = index.sibling(row - 1, index.column());
+        m_templateView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::template_Down_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_templateView->currentIndex();
+    int const  count = m_templateModel->rowCount();
+    int const  row = index.row();
+    if (index.isValid() && count > 1 && row != count - 1) {
+        auto  currVal = m_objPtr->getClassTparam();
+        std::swap(currVal[row], currVal[row + 1]);
+        m_objPtr->setClassTparam(currVal);
+
+        auto const  item = m_templateModel->takeRow(row + 1);
+        m_templateModel->insertRow(row, item);
+        QModelIndex const  idx = index.sibling(row + 1, index.column());
+        m_templateView->setCurrentIndex(idx);
+    }
+}
+
+void
+WtMyClass::template_MoveTo_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_templateView->currentIndex();
+    int const  count = m_templateModel->rowCount();
+    int const  currRow = index.row();
+    if (index.isValid() && count > 1) {
+        bool  ok = false;
+        int  movetoRow = QInputDialog::getInt(this, "Move To Row",
+                    "Move To Row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            if (movetoRow > 0)  movetoRow--;
+            if (movetoRow >= count)  movetoRow = count - 1;
+            if (currRow != movetoRow) {
+                auto  currVal = m_objPtr->getClassTparam();
+                auto const  dVal = currVal[currRow];
+                currVal.erase(currVal.begin() + currRow);
+                currVal.insert(currVal.begin() + movetoRow, dVal);
+                m_objPtr->setClassTparam(currVal);
+
+                repTemplateClass();
+                const QModelIndex  idx = index.sibling(movetoRow, index.column());
+                m_templateView->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
+void
+WtMyClass::template_itemDelegate_closeEditor()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_templateView->currentIndex();
+    if (index.isValid()) {
+        auto  paraTpl = m_objPtr->getClassTparam();
+        int const  idx = index.row();
+        std::string const  currVal =
+                m_templateModel->data(index).toString().toUtf8().toStdString();
+
+        switch (index.column()) {
+        case 0:
+            {
+                paraTpl[idx].setTypename(currVal);
+                m_objPtr->setClassTparam(paraTpl);
+                const auto  newVal = m_objPtr->getClassTparam()[idx].getTypename();
+
+                if (currVal != newVal) {
+                    m_templateModel->setData(index,
+                            QVariant(QString::fromStdString(newVal)));
+                }
+            }
+            break;
+        case 1:
+            {
+                auto const  oldVal = paraTpl[idx].getTName();
+                paraTpl[idx].setTName(currVal);
+                m_objPtr->setClassTparam(paraTpl);
+                auto const  newVal = m_objPtr->getClassTparam()[idx].getTName();
+
+                if (currVal != newVal) {
+                    m_templateModel->setData(index,
+                            QVariant(QString::fromStdString(newVal)));
+                }
+            }
+            break;
+        case 2:
+            paraTpl[idx].setDocment(currVal);
+            m_objPtr->setClassTparam(paraTpl);
+            break;
+        case 3:
+            {
+                paraTpl[idx].setDefalutValue(currVal);
+                m_objPtr->setClassTparam(paraTpl);
+                auto const  newVal = m_objPtr->getClassTparam()[idx].getDefalutValue();
+
+                if (currVal != newVal) {
+                    m_templateModel->setData(index,
+                            QVariant(QString::fromStdString(newVal)));
+                }
+            }
+            break;
+        }
+    }
 }
 
 void
@@ -4531,6 +4729,23 @@ WtMyClass::repMulInhClass()
 void
 WtMyClass::repTemplateClass()
 {
+    if (!m_objPtr)  return;
+
+    auto const  tpl = m_objPtr->getClassTparam();
+    m_templateModel->removeRows(0, m_templateModel->rowCount());
+    for (size_t  i = 0; i < tpl.size(); ++i) {
+        QList<QStandardItem *>  items;
+        QStandardItem *  item0 = new QStandardItem(
+                QString::fromStdString(tpl[i].getTypename()));
+        QStandardItem *  item1 = new QStandardItem(
+                QString::fromStdString(tpl[i].getTName()));
+        QStandardItem *  item2 = new QStandardItem(
+                QString::fromStdString(tpl[i].getDocment()));
+        QStandardItem *  item3 = new QStandardItem(
+                QString::fromStdString(tpl[i].getDefalutValue()));
+        items << item0 << item1 << item2 << item3;
+        m_templateModel->appendRow(items);
+    }
 }
 
 void

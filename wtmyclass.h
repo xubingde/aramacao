@@ -86,6 +86,12 @@ public:
     void  mulInhClass_itemDelegate_closeEditor();
     void  mulInhClass_itemDgtForCol_closeEditor();
     void  templateConnect();
+    void  template_Add_triggered();
+    void  template_Delete_triggered();
+    void  template_Up_triggered();
+    void  template_Down_triggered();
+    void  template_MoveTo_triggered();
+    void  template_itemDelegate_closeEditor();
     void  friendClassConnect();
     void  baseClassPrarm_editingFinished();
     void  classNameInherit_editingFinished();
