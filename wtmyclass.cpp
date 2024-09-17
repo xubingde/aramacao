@@ -1,4 +1,5 @@
 #include <typeinfo>
+#include <utility>
 #include <functional>
 #include <algorithm>
 #include <QInputDialog>
@@ -242,14 +243,27 @@ WtMyClass::className_editingFinished()
         }
     }
 
+    std::vector<NamespaceItem>  selfNamespace;
+    Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+            Qt::UserRole + 1).toInt());
+    if (parentEtp == Etype::eModule) {
+        Module *  mdPtr = static_cast<Module *>(parentItem->data(
+                Qt::UserRole + 2).value<void *>());
+        selfNamespace = mdPtr->getNamespace();
+    }
+
     QStandardItem *  prjItem = parentItem->parent();
     Etype const  prjEtp = static_cast<Etype>(prjItem->data(
             Qt::UserRole + 1).toInt());
     if (prjEtp == Etype::eProject) {
         Project *  prjPtr = static_cast<Project *>(prjItem->data(
                 Qt::UserRole + 2).value<void *>());
+
         std::vector<std::shared_ptr<Module>> &  vec = prjPtr->getModuleListRef();
         for (auto &  it: vec) {
+            std::vector<NamespaceItem> const  nsp = it->getNamespace();
+            if (selfNamespace != nsp)  continue;
+
             std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  mdVec =
                     it->getEObjectListRef();
             for (auto &  mdIt:  mdVec) {
@@ -346,6 +360,8 @@ WtMyClass::isFinalClass_stateChanged(int const  status)
         currVal = true;
     }
     bool const  oldVal = m_objPtr->isFinalClass();
+    if (currVal == oldVal)  return;
+
     m_objPtr->setFinalClass(currVal);
     bool const  newVal = m_objPtr->isFinalClass();
     if (newVal != currVal) {
@@ -2870,6 +2886,15 @@ WtMyClass::baseClassPrarm_editingFinished()
 {
     if (!m_objPtr)  return;
 
+    std::string const  currVal = m_baseClassPrarm->text().toUtf8().toStdString();
+    std::string const  oldVal = m_objPtr->getBaseClassPrarm();
+    if (currVal == oldVal)  return;
+
+    m_objPtr->setBaseClassPrarm(currVal);
+    std::string const  newVal = m_objPtr->getBaseClassPrarm();
+    if (newVal != currVal) {
+        m_baseClassPrarm->setText(QString::fromStdString(newVal));
+    }
 }
 
 void
@@ -2877,6 +2902,16 @@ WtMyClass::classNameInherit_editingFinished()
 {
     if (!m_objPtr)  return;
 
+    std::string const  currVal = m_classNameInherit->text().toUtf8().toStdString();
+    std::pair<std::string, bool>  oldVal = m_objPtr->getBaseClassFirst();
+    if (currVal == oldVal.first)  return;
+
+    oldVal.first = currVal;
+    m_objPtr->setBaseClassFirst(oldVal);
+    std::pair<std::string, bool> const  newVal = m_objPtr->getBaseClassFirst();
+    if (newVal.first != currVal) {
+        m_classNameInherit->setText(QString::fromStdString(newVal.first));
+    }
 }
 
 void
@@ -2888,13 +2923,14 @@ WtMyClass::inheritIsVirtual_stateChanged(int const  status)
     if (status == Qt::Checked) {
         currVal = true;
     }
-    bool const  oldVal = m_objPtr->isFinalClass();
-    if (currVal != oldVal) {
-        m_objPtr->setFinalClass(currVal);
-        bool const  newVal = m_objPtr->isFinalClass();
-        if (newVal != currVal) {
-            m_isFinalClass->setChecked(newVal);
-        }
+    std::pair<std::string, bool>  oldVal = m_objPtr->getBaseClassFirst();
+    if (currVal == oldVal.second)  return;
+
+    oldVal.second = currVal;
+    m_objPtr->setBaseClassFirst(oldVal);
+    std::pair<std::string, bool> const  newVal = m_objPtr->getBaseClassFirst();
+    if (newVal.second != currVal) {
+        m_inheritIsVirtual->setChecked(newVal.second);
     }
 }
 
@@ -2903,6 +2939,10 @@ WtMyClass::baseId_toggled(bool const  isChecked)
 {
     if (!m_objPtr)  return;
 
+    if (isChecked) {
+        InheritID const  currVal = InheritID::baseId;
+        m_objPtr->setInheritID(currVal);
+    }
 }
 
 void
@@ -2910,6 +2950,10 @@ WtMyClass::borthId_toggled(bool const  isChecked)
 {
     if (!m_objPtr)  return;
 
+    if (isChecked) {
+        InheritID const  currVal = InheritID::borthId;
+        m_objPtr->setInheritID(currVal);
+    }
 }
 
 void
@@ -2917,6 +2961,10 @@ WtMyClass::inheritId_toggled(bool const  isChecked)
 {
     if (!m_objPtr)  return;
 
+    if (isChecked) {
+        InheritID const  currVal = InheritID::inheritId;
+        m_objPtr->setInheritID(currVal);
+    }
 }
 
 void
@@ -3022,6 +3070,13 @@ WtMyClass::hasToStringFunction_stateChanged(int const  status)
 void
 WtMyClass::fieldIdIsToString_stateChanged(int const  status)
 {
+    if (!m_objPtr)  return;
+
+    bool  currVal = false;
+    if (status == Qt::Checked) {
+        currVal = true;
+    }
+    m_objPtr->setUpdateToString(currVal);
 }
 
 void

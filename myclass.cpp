@@ -84,6 +84,8 @@ MyClass::MyClass():
     setBaseType(Etype::eClass);
     setClassName("MyClass1");
     setIndPublicLabel(true);
+    setClasstype(ClassType::cppFinal);
+    setFinalClass(true);
 }
 
 MyClass::MyClass(const MyClass &  other):
