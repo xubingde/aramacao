@@ -145,6 +145,7 @@ public:
     void  fieldActionConnect();
     void  fieldAction_selectChanged();
     void  fieldAction_AddActionFalse_triggered();
+    void  fieldAction_AddAction(bool const  isInline);
     void  fieldAction_DeleteAction_triggered();
     void  fieldAction_InsBeforBehind_triggered();
     void  fieldActionAutoCodeConnect();
@@ -182,6 +183,11 @@ private:
     void  repFieldId();
     void  repFieldIdToString();
     void  repFieldAction();
+    void  updateActionTitle(size_t const  fieldIdx);
+    void  updateActionChildren(size_t const  fieldIdx);
+    void  repFieldActionDelIdx();
+    void  repFieldActionInsertIdx();
+    void  currFieldActionInsertIdx(int const  idx = INT_MAX);
     void  repMulInhClass();
     void  repTemplateClass();
     void  repFriendClass();

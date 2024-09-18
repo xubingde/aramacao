@@ -1235,6 +1235,63 @@ fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  r
     return true;
 }
 
+std::string
+toActionString(Action const  act)
+{
+    std::string  res;
+    switch (act) {
+    case Action::get :
+        res = "get";
+        break;
+    case Action::setCopy :
+        res = "setCopy";
+        break;
+    case Action::setMove :
+        res = "setMove";
+        break;
+    case Action::setConstValue :
+        res = "setConstValue";
+        break;
+    case Action::setMutValue :
+        res = "setMutValue";
+        break;
+    case Action::is :
+        res = "is";
+        break;
+    case Action::has :
+        res = "has";
+        break;
+    case Action::none :
+        res = "none";
+        break;
+    }
+    return res;
+}
+
+Action
+fromActionString(std::string const &  val)
+{
+    Action  act = Action::none;
+    if (val == "get") {
+        act = Action::get;
+    } else if (val == "setCopy") {
+        act = Action::setCopy;
+    } else if (val == "setMove") {
+        act = Action::setMove;
+    } else if (val == "setConstValue") {
+        act = Action::setConstValue;
+    } else if (val == "setMutValue") {
+        act = Action::setMutValue;
+    } else if (val == "is") {
+        act = Action::is;
+    } else if (val == "has") {
+        act = Action::has;
+    } else {
+        act = Action::none;
+    }
+    return act;
+}
+
 EObject::EObject():
         m_treeLabel(),
         m_baseType(Etype::eObject),

@@ -123,6 +123,14 @@ Field::getActionFnRef()
     return m_actionFn;
 }
 
+void
+Field::updateActionPtr()
+{
+    for (auto &  fn:  m_actionFn) {
+        fn.second->setParentFieldPtr(this);
+    }
+}
+
 std::string
 Field::toHBlock(std::string const &  tabStr /* = std::string() */) const
 {
@@ -725,6 +733,7 @@ Field::fromString(const char *  data,
         result = true;
     }
     m_stringErr = std::move(err);
+    updateActionPtr();
 
     return result;
 }

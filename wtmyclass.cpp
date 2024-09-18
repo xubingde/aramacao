@@ -2,6 +2,7 @@
 #include <utility>
 #include <functional>
 #include <algorithm>
+#include <QMessageBox>
 #include <QInputDialog>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -450,6 +451,18 @@ WtMyClass::isInternal_stateChanged(int const  status)
     if (status == Qt::Checked) {
         currVal = true;
     }
+
+    if (currVal) {
+        QMessageBox::StandardButton  message = QMessageBox::question(this,
+                "Internal Class", "Is Internal Class?",
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No);
+        if (message == QMessageBox::No) {
+            m_isInternal->setChecked(false);
+            return;
+        }
+    }
+
     m_objPtr->setInternal(currVal);
 
     if (currVal) {
@@ -3991,6 +4004,77 @@ WtMyClass::fieldAction_selectChanged()
 {
     if (!m_objPtr)  return;
 
+    QModelIndex const  index = m_fieldActionView->currentIndex();
+    int const  row = index.row();
+    if (index.isValid() && index.parent().isValid()) {
+        m_fieldActionInline->setCheckable(true);
+        m_fieldActionNoexcept->setCheckable(true);
+        m_fieldActionVirtual->setCheckable(true);
+        m_fieldActionOverride->setCheckable(true);
+        m_fieldActionFinal->setCheckable(true);
+
+        m_fieldActionDoc->setReadOnly(false);
+        m_fieldActionAttribute->setReadOnly(false);
+
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                m_objPtr->getField()[index.parent().row()].getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[row].second;
+        m_fieldActionInline->setChecked(fn->isInline());
+        m_fieldActionNoexcept->setChecked(fn->isNoexcept());
+        m_fieldActionVirtual->setChecked(fn->isVirtual());
+        m_fieldActionOverride->setChecked(fn->isOverride());
+        m_fieldActionFinal->setChecked(fn->isFinal());
+
+        m_fieldActionAutoCode->setPlainText(QString::fromStdString(fn->updateAutoCode()));
+        m_fieldActionDoc->setHtml(QString::fromStdString(fn->getDocment()));
+        m_fieldActionAttribute->setText(QString::fromStdString(fn->getAttribute()));
+
+        repFieldActionDelIdx();
+        repFieldActionInsertIdx();
+
+        if (m_fieldActionInsertIdxModel->rowCount() == 0) {
+            m_fieldActionInsertCode->setReadOnly(true);
+            m_fieldActionInsertCode->clear();
+        } else {
+            m_fieldActionInsertCode->setReadOnly(false);
+            m_fieldActionInsertIdxView->setCurrentIndex(
+                    m_fieldActionInsertIdxModel->index(0, 0));
+            currFieldActionInsertIdx();
+        }
+    } else {
+        m_fieldActionInline->setChecked(false);
+        m_fieldActionNoexcept->setChecked(false);
+        m_fieldActionVirtual->setChecked(false);
+        m_fieldActionOverride->setChecked(false);
+        m_fieldActionFinal->setChecked(false);
+
+        if (index.isValid() && !index.parent().isValid()) {
+            m_fieldActionDoc->setReadOnly(false);
+            m_fieldActionAttribute->setReadOnly(false);
+
+            const std::string  doc = m_objPtr->getField()[row].getDocment();
+            const std::string  attrVal = m_objPtr->getField()[row].getAttribute();
+            m_fieldActionDoc->setHtml(QString::fromStdString(doc));
+            m_fieldActionAttribute->setText(QString::fromStdString(attrVal));
+        } else {
+            m_fieldActionDoc->setReadOnly(true);
+            m_fieldActionDoc->clear();
+            m_fieldActionAttribute->setReadOnly(true);
+            m_fieldActionAttribute->clear();
+        }
+        m_fieldActionDelIdxModel->removeRows(0, m_fieldActionDelIdxModel->rowCount());
+        m_fieldActionInsertIdxModel->removeRows(0, m_fieldActionInsertIdxModel->rowCount());
+
+        m_fieldActionInsertCode->setReadOnly(true);
+        m_fieldActionInline->setCheckable(false);
+        m_fieldActionNoexcept->setCheckable(false);
+        m_fieldActionVirtual->setCheckable(false);
+        m_fieldActionOverride->setCheckable(false);
+        m_fieldActionFinal->setCheckable(false);
+
+        m_fieldActionAutoCode->clear();
+        m_fieldActionInsertCode->clear();
+    }
 }
 
 void
@@ -3998,6 +4082,136 @@ WtMyClass::fieldAction_AddActionFalse_triggered()
 {
     if (!m_objPtr)  return;
 
+    fieldAction_AddAction(false);
+}
+
+void
+WtMyClass::fieldAction_AddAction(bool const  isInline)
+{
+    if (!m_objPtr)  return;
+
+    QStandardItem *  itemRoot = m_fieldActionModel->invisibleRootItem();
+    QModelIndex const  idxRoot = m_fieldActionModel->indexFromItem(itemRoot);
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    QModelIndex  idxOperator = index.parent();
+    if (index.isValid()) {
+        if (index.column() != 0) {
+            index = index.sibling(index.row(), 0);
+        }
+        if (idxOperator == idxRoot) {
+            idxOperator = index;
+        }
+        int const  idx = idxOperator.row();
+
+        QString const  g0("get           () const");
+        QString const  g1("setCopy         (const T &)");
+        QString const  g2("setMove         (T &&)");
+        QString const  g3("setConstValue   (const T)");
+        QString const  g4("setMutValue     (T)");
+        QString const  g5("is            () const");
+        QString const  g6("has           () const");
+        bool  ok = false;
+        QStringList  actions;
+
+        std::string const  currFieldType = m_objPtr->getField()[idx].getTypeName();
+        if (currFieldType == "bool") {
+            actions << g5 << g6 << g3 << g4 << g1 << g2 << g0;
+        } else if (xu::isPrmType(currFieldType)) {
+            actions << g0 << g3 << g4 << g1 << g2 << g5 << g6;
+        } else {
+            actions << g0 << g1 << g2 << g3 << g4 << g5 << g6;
+        }
+
+        QString  myAction = QInputDialog::getItem(this,
+                    tr("QInputDialog::getItem()"),
+                    tr("Action:"), actions, 0, false, &ok);
+        if (ok && !myAction.isEmpty()) {
+            if (myAction == g0) {
+                myAction = "get";
+            } else if (myAction == g1) {
+                myAction = "setCopy";
+            } else if (myAction == g2) {
+                myAction = "setMove";
+            } else if (myAction == g3) {
+                myAction = "setConstValue";
+            } else if (myAction == g4) {
+                myAction = "setMutValue";
+            } else if (myAction == g5) {
+                myAction = "is";
+            } else if (myAction == g6) {
+                myAction = "has";
+            }
+            Action const  action = fromActionString(
+                    myAction.toUtf8().toStdString());
+            auto  fdFs = m_objPtr->getField()[idx];
+            std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                    fdFs.getActionFnRef();
+
+            auto  itF = std::find_if(fnVec.begin(), fnVec.end(), [action](
+                    std::pair<Action, std::shared_ptr<ActFn>> const &  val) -> bool {
+                if (action == val.first) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+
+            if (itF == fnVec.end()) {
+                std::pair<Action, std::shared_ptr<ActFn>>  actFn;
+                actFn.first = action;
+                switch (action) {
+                case Action::get :
+                    actFn.second = std::make_shared<ActGetFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::setCopy :
+                    actFn.second = std::make_shared<ActSetCopyFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::setMove :
+                    actFn.second = std::make_shared<ActSetMoveFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::setConstValue :
+                    actFn.second = std::make_shared<ActSetConstValueFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::setMutValue :
+                    actFn.second = std::make_shared<ActSetMutValueFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::is :
+                    actFn.second = std::make_shared<ActIsFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::has :
+                    actFn.second = std::make_shared<ActHasFn>(m_objPtr,
+                            &(m_objPtr->getFieldRef()[idx]));
+                    break;
+                case Action::none :
+                    break;
+                }
+                if (isInline) {
+                    actFn.second->setInline(true);
+                }
+                fnVec.push_back(actFn);
+                m_objPtr->updateField(fdFs, idx);
+
+                QStandardItem *  itemAct1 = new QStandardItem(
+                        QString::fromStdString("    " + toActionString(action)));
+                QStandardItem *  itemAct2 = new QStandardItem(
+                        QString::fromStdString(actFn.second->declLabel()));
+                QList<QStandardItem *>  itemActs;
+                itemActs << itemAct1 << itemAct2;
+                m_fieldActionModel->itemFromIndex(idxOperator)->appendRow(itemActs);
+                if (!m_fieldActionView->isExpanded(idxOperator)) {
+                    m_fieldActionView->expand(idxOperator);
+                }
+                fieldAction_selectChanged();
+            }
+        }
+    }
 }
 
 void
@@ -4165,6 +4379,7 @@ WtMyClass::init_obj()
 
     m_fieldActionAutoCode = new CodeEditor;
     new Highlighter(m_fieldActionAutoCode->document());
+    m_fieldActionAutoCode->setReadOnly(true);
     m_dotH = new CodeEditor;
     new Highlighter(m_dotH->document());
     m_dotH->setReadOnly(true);
@@ -4944,6 +5159,153 @@ WtMyClass::repFieldIdToString()
 void
 WtMyClass::repFieldAction()
 {
+    m_fieldActionModel->removeRows(0, m_fieldActionModel->rowCount());
+    m_fieldActionDelIdxModel->removeRows(0, m_fieldActionDelIdxModel->rowCount());
+    m_fieldActionInsertIdxModel->removeRows(0, m_fieldActionInsertIdxModel->rowCount());
+    auto  fdF = m_objPtr->getField();
+    for (size_t  i = 0; i < fdF.size(); ++i) {
+        updateActionTitle(i);
+
+        QStandardItem *  currItem = m_fieldActionModel->item(static_cast<int>(i), 0);
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actFn =
+                fdF[i].getActionFnRef();
+        for (auto &  it: actFn) {
+            QStandardItem *  itemAct1 = new QStandardItem(QString::fromStdString(
+                    "    " + toActionString(it.first)));
+            std::string  fnDcl = it.second->declLabel();
+            QStandardItem *  itemAct2 = new QStandardItem(QString::fromStdString(fnDcl));
+            QList<QStandardItem *>  itemActs;
+            itemActs << itemAct1 << itemAct2;
+            currItem->appendRow(itemActs);
+        }
+    }
+    m_fieldActionView->expandAll();
+    fieldAction_selectChanged();
+}
+
+void
+WtMyClass::updateActionTitle(size_t const  fieldIdx)
+{
+    Field  fd = m_objPtr->getField()[fieldIdx];
+    std::string const  tab(8, '-');
+    std::string const  fName = std::to_string(fieldIdx) + "  " + fd.getFieldName();
+    QStandardItem *  item0 = new QStandardItem(QString::fromStdString(fName));
+    QStandardItem *  item1 = new QStandardItem;
+    if (fd.isPointer()) {
+        item1->setData(QVariant(QString::fromStdString(tab + " " +
+                fd.getTypeName() + " * " + tab)), Qt::DisplayRole);
+    } else {
+        item1->setData(QVariant(QString::fromStdString(tab + " " +
+                fd.getTypeName() + " " + tab)), Qt::DisplayRole);
+    }
+
+    int const  width0 = m_fieldActionView->columnWidth(0);
+    int const  width1 = m_fieldActionView->columnWidth(1);
+    m_fieldActionModel->setItem(static_cast<int>(fieldIdx), 0, item0);
+    m_fieldActionModel->setItem(static_cast<int>(fieldIdx), 1, item1);
+    m_fieldActionView->setColumnWidth(0, width0);
+    m_fieldActionView->setColumnWidth(1, width1);
+}
+
+void
+WtMyClass::updateActionChildren(size_t const  fieldIdx)
+{
+    Field  fdF = m_objPtr->getField()[fieldIdx];
+    std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+            fdF.getActionFnRef();
+    for (int  i = 0; i < fnVec.size(); ++i) {
+        Action const  action = fnVec[i].first;
+        std::string const  actStr = "    " + toActionString(action);
+        std::string  fnStr = fnVec[i].second->declLabel();
+        QStandardItem *  item0 = new QStandardItem(QString::fromStdString(actStr));
+        QStandardItem *  item1 = new QStandardItem(QString::fromStdString(fnStr));
+        const int  width0 = m_fieldActionView->columnWidth(0);
+        const int  width1 = m_fieldActionView->columnWidth(1);
+        m_fieldActionModel->item(static_cast<int>(fieldIdx))->setChild(i, 0, item0);
+        m_fieldActionModel->item(static_cast<int>(fieldIdx))->setChild(i, 1, item1);
+        m_fieldActionView->setColumnWidth(0, width0);
+        m_fieldActionView->setColumnWidth(1, width1);
+    }
+}
+
+void
+WtMyClass::repFieldActionDelIdx()
+{
+    m_fieldActionDelIdxModel->removeRows(0, m_fieldActionDelIdxModel->rowCount());
+    QModelIndex const  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  row = index.parent().row();
+        Field  fdF = m_objPtr->getField()[row];
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fdF.getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+        auto  sline = fn->getStrike();
+        for (auto const &  it: sline) {
+            QStandardItem *  newItem = new QStandardItem(
+                        QString::fromStdString(std::to_string(it)));
+            newItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+            m_fieldActionDelIdxModel->appendRow(newItem);
+        }
+    }
+}
+
+void
+WtMyClass::repFieldActionInsertIdx()
+{
+    m_fieldActionInsertIdxModel->removeRows(0, m_fieldActionInsertIdxModel->rowCount());
+    QModelIndex const  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  row = index.parent().row();
+        Field  fdF = m_objPtr->getField()[row];
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fdF.getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+        auto  sline = fn->getNewCode();
+        for (auto const &  it: sline) {
+            QStandardItem *  newItem = new QStandardItem(
+                        QString::fromStdString(std::to_string(it.first)));
+            newItem->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+            m_fieldActionInsertIdxModel->appendRow(newItem);
+        }
+    }
+}
+
+void
+WtMyClass::currFieldActionInsertIdx(int const  idx /* = INT_MAX */)
+{
+    QModelIndex const  indexFd = m_fieldActionView->currentIndex();
+    if (indexFd.isValid() && indexFd.parent().isValid()) {
+        int const  row = indexFd.parent().row();
+        Field  fdF = m_objPtr->getField()[row];
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fdF.getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[indexFd.row()].second;
+        auto  sline = fn->getNewCode();
+
+        auto  itF = std::find_if(sline.begin(), sline.end(),
+                [idx](const std::pair<size_t, std::string> &  value) ->bool {
+            if (idx == value.first) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+        if (itF != sline.end()) {
+            auto const  dis = std::distance(sline.begin(), itF);
+            m_fieldActionInsertIdxView->setCurrentIndex(
+                        m_fieldActionInsertIdxModel->index(dis, 0));
+        }
+
+        QModelIndex const  indexInsert = m_fieldActionInsertIdxView->currentIndex();
+        if (!indexInsert.isValid()) {
+            m_fieldActionInsertCode->setReadOnly(true);
+            m_fieldActionInsertCode->clear();
+            return;
+        }
+        m_fieldActionInsertCode->setReadOnly(false);
+        m_fieldActionInsertCode->setPlainText(QString::fromStdString(
+                sline[indexInsert.row()].second));
+    }
 }
 
 void

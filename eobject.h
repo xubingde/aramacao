@@ -125,6 +125,8 @@ std::string  toString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObj
 bool  fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  res, std::string const &  value);
 bool  fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  res, std::string_view const &  value);
 bool  fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  res, char const *  data, size_t const  size);
+std::string  toActionString(Action const  act);
+Action  fromActionString(std::string const &  val);
 
 bool  operator==(const EObject &  lhs, const EObject &  rhs);
 bool  operator!=(const EObject &  lhs, const EObject &  rhs);

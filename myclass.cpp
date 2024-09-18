@@ -31,8 +31,51 @@
 #include "publiclabel.h"
 #include "protectedlabel.h"
 #include "privatelabel.h"
+#include "actfn.h"
 
 namespace xu {
+
+std::string
+toString(std::vector<std::shared_ptr<Field>> const &  value)
+{
+    std::string  res;
+    for (auto const &  it: value) {
+        xu::append(res, it->toString());
+    }
+    return res;
+}
+
+bool
+fromString(std::vector<std::shared_ptr<Field>> &  res,
+           std::string const &  value)
+{
+    return fromString(res, value.data(), value.size());
+}
+
+bool
+fromString(std::vector<std::shared_ptr<Field>> &  res,
+           std::string_view const &  value)
+{
+    return fromString(res, value.data(), value.size());
+}
+
+bool
+fromString(std::vector<std::shared_ptr<Field>> &  res,
+           char const *  data,
+           size_t const  size)
+{
+    std::vector<std::shared_ptr<Field>>  resTmp;
+    auto  vi = xu::viewIcode(data, size);
+    size_t const  viSize = vi.size();
+    for (size_t  i = 0; i < viSize; ++i) {
+        Field  fd;
+        if (!xu::fromString(fd, vi[i]))  return false;
+        std::shared_ptr<Field>  objPtr = std::make_shared<Field>(std::move(fd));
+        resTmp.push_back(objPtr);
+    }
+    res = std::move(resTmp);
+    return true;
+}
 
 MyClass::MyClass():
         EObject(),

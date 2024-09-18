@@ -4,6 +4,9 @@
 #define XU_MYCLASS_H_
 
 #include <string>
+#include <string_view>
+#include <utility>
+#include <memory>
 #include <tuple>
 #include <map>
 #include <set>
@@ -17,6 +20,11 @@ namespace xu {
 class MyClass;
 
 class Module;
+
+std::string  toString(std::vector<std::shared_ptr<Field>> const &  value);
+bool  fromString(std::vector<std::shared_ptr<Field>> &  res, std::string const &  value);
+bool  fromString(std::vector<std::shared_ptr<Field>> &  res, std::string_view const &  value);
+bool  fromString(std::vector<std::shared_ptr<Field>> &  res, char const *  data, size_t const  size);
 
 class MyClass : public EObject
 {

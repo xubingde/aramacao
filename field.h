@@ -49,6 +49,7 @@ public:
     void  swap(Field &  value) noexcept;
 
     std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  getActionFnRef();
+    void  updateActionPtr();
     std::string  toHBlock(std::string const &  tabStr = std::string()) const;
     std::string  toBlockStruct(std::string const &  tabStr = std::string()) const;
     std::string  cppCodeGeneral(std::string const &  tabStr = std::string()) const;
