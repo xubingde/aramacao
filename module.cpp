@@ -23,6 +23,16 @@
 #include "extswapfn.h"
 #include "extfromstringfn.h"
 #include "actfn.h"
+#include "basicblock.h"
+#include "staticfunctions.h"
+#include "tplstaticfunctions.h"
+#include "constexprfunctions.h"
+#include "tplconstexprfunctions.h"
+#include "myclassdec.h"
+#include "myenum.h"
+#include "mystruct.h"
+#include "mystructdec.h"
+#include "mytypedef.h"
 
 namespace xu {
 
@@ -62,6 +72,7 @@ Module::Module(const Module &  other):
         m_update(other.m_update),
         m_headerOnly(other.m_headerOnly)
 {
+    copyEobjList();
 }
 
 Module::Module(Module &&  other) noexcept:
@@ -104,6 +115,8 @@ Module::operator=(const Module &  other)
     m_extension = other.m_extension;
     m_update = other.m_update;
     m_headerOnly = other.m_headerOnly;
+
+    copyEobjList();
 
     return *this;
 }
@@ -354,12 +367,12 @@ Module::refreshPtr()
             clsName.push_back({myclassPtr->getClassName(), myclassPtr.get()});
             myclassPtr->setParentModulePtr(this);
 
-            std::vector<Field> &  fdVec = myclassPtr->getFieldRef();
+            std::vector<std::shared_ptr<Field>> &  fdVec = myclassPtr->getFieldRef();
             for (auto &  fd: fdVec) {
                 std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actVec
-                        = fd.getActionFnRef();
+                        = fd->getActionFnRef();
                 for (auto &  actFn: actVec) {
-                    actFn.second->setParentFieldPtr(&fd);
+                    actFn.second->setParentFieldPtr(fd.get());
                     actFn.second->setParentClassPtr(myclassPtr.get());
                 }
             }
@@ -711,6 +724,110 @@ Module::end_namespaceCpp() const
     }
 
     return res;
+}
+
+void
+Module::copyEobjList()
+{
+    for (auto &  obj: m_eobjList) {
+        std::shared_ptr<EObject>  ptr;
+        switch (obj.first) {
+        case Etype::eBasicBlock :
+            ptr = std::make_shared<BasicBlock>(
+                    *std::dynamic_pointer_cast<BasicBlock>(obj.second));
+            break;
+        case Etype::eFunctions :
+            ptr = std::make_shared<Functions>(
+                    *std::dynamic_pointer_cast<Functions>(obj.second));
+            std::dynamic_pointer_cast<Functions>(ptr)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eStaticFunctions :
+            ptr = std::make_shared<StaticFunctions>(
+                    *std::dynamic_pointer_cast<StaticFunctions>(obj.second));
+            std::dynamic_pointer_cast<StaticFunctions>(ptr)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eConstexprFunctions :
+            ptr = std::make_shared<ConstexprFunctions>(
+                    *std::dynamic_pointer_cast<ConstexprFunctions>(obj.second));
+            std::dynamic_pointer_cast<ConstexprFunctions>(ptr)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eTplFunctions :
+            ptr = std::make_shared<TplFunctions>(
+                    *std::dynamic_pointer_cast<TplFunctions>(obj.second));
+            std::dynamic_pointer_cast<TplFunctions>(ptr)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eTplStaticFunctions :
+            ptr = std::make_shared<TplStaticFunctions>(
+                    *std::dynamic_pointer_cast<TplStaticFunctions>(obj.second));
+            std::dynamic_pointer_cast<TplStaticFunctions>(ptr)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eTplConstexprFunctions :
+            ptr = std::make_shared<TplConstexprFunctions>(
+                    *std::dynamic_pointer_cast<TplConstexprFunctions>(obj.second));
+            std::dynamic_pointer_cast<TplConstexprFunctions>(ptr)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eClass :
+            ptr = std::make_shared<MyClass>(
+                    *std::dynamic_pointer_cast<MyClass>(obj.second));
+            std::dynamic_pointer_cast<MyClass>(ptr)->setParentModulePtr(this);
+            break;
+        case Etype::eClassDeclaration :
+            ptr = std::make_shared<MyClassDec>(
+                    *std::dynamic_pointer_cast<MyClassDec>(obj.second));
+            break;
+        case Etype::eEnum :
+            ptr = std::make_shared<MyEnum>(
+                    *std::dynamic_pointer_cast<MyEnum>(obj.second));
+            break;
+        case Etype::eStruct :
+            ptr = std::make_shared<MyStruct>(
+                    *std::dynamic_pointer_cast<MyStruct>(obj.second));
+            break;
+        case Etype::eStructDeclaration :
+            ptr = std::make_shared<MyStructDec>(
+                    *std::dynamic_pointer_cast<MyStructDec>(obj.second));
+            break;
+        case Etype::eTypedef :
+            ptr = std::make_shared<MyTypedef>(
+                    *std::dynamic_pointer_cast<MyTypedef>(obj.second));
+            break;
+        case Etype::eEqFn :
+            ptr = std::make_shared<EqFn>(
+                    *std::dynamic_pointer_cast<EqFn>(obj.second));
+            break;
+        case Etype::eNotEqFn :
+            ptr = std::make_shared<NotEqFn>(
+                    *std::dynamic_pointer_cast<NotEqFn>(obj.second));
+            break;
+        case Etype::eLessFn :
+            ptr = std::make_shared<LessFn>(
+                    *std::dynamic_pointer_cast<LessFn>(obj.second));
+            break;
+        case Etype::eLessEqFn :
+            ptr = std::make_shared<LessEqFn>(
+                    *std::dynamic_pointer_cast<LessEqFn>(obj.second));
+            break;
+        case Etype::eGreaterFn :
+            ptr = std::make_shared<GreaterFn>(
+                    *std::dynamic_pointer_cast<GreaterFn>(obj.second));
+            break;
+        case Etype::eGreaterEqFn :
+            ptr = std::make_shared<GreaterEqFn>(
+                    *std::dynamic_pointer_cast<GreaterEqFn>(obj.second));
+            break;
+        case Etype::eExtSwapFn :
+            ptr = std::make_shared<ExtSwapFn>(
+                    *std::dynamic_pointer_cast<ExtSwapFn>(obj.second));
+            break;
+        case Etype::eExtFromStringFn :
+            ptr = std::make_shared<ExtFromStringFn>(
+                    *std::dynamic_pointer_cast<ExtFromStringFn>(obj.second));
+            break;
+        default :
+            break;
+        }
+        obj.second = ptr;
+    }
 }
 
 std::vector<std::pair<Etype, std::shared_ptr<EObject>>>

@@ -65,11 +65,11 @@ MoveConstructorFn::autoCode() const
 
     MyClass const *  parentPtr = getParentClassPtr();
     if (parentPtr == nullptr)  return autoCode;
-    std::vector<Field> const  vecField = parentPtr->getField();
+    std::vector<std::shared_ptr<Field>> const  vecField = parentPtr->getField();
 
     for (const auto &  fd: vecField) {
-        if (fd.isPointer()) {
-            autoCode += tab1 + "other." + fd.getPrivateName() + " = nullptr;\n";
+        if (fd->isPointer()) {
+            autoCode += tab1 + "other." + fd->getPrivateName() + " = nullptr;\n";
         }
     }
 
@@ -130,14 +130,14 @@ MoveConstructorFn::init()
 void
 MoveConstructorFn::updateDefualtValue()
 {
-    std::vector<Field>  vecField;
+    std::vector<std::shared_ptr<Field>>  vecField;
     MyClass *  parentPtr = getParentClassPtr();
     if (parentPtr) {
         vecField = parentPtr->getField();
     }
     std::vector<std::string>  defVal;
     for (const auto &  fd: vecField) {
-        defVal.push_back("std::move(other." + fd.getPrivateName() + ")");
+        defVal.push_back("std::move(other." + fd->getPrivateName() + ")");
     }
     setDefValueCtor(defVal);
 

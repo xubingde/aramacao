@@ -272,24 +272,24 @@ WtMyStruct::structItem_AddItem_triggered()
 {
     if (!m_objPtr)  return;
 
-    Field  newData;
+    std::shared_ptr<Field>  newData = std::make_shared<Field>();
     QList<QStandardItem *>  items;
     QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-            newData.getFieldName()));
+            newData->getFieldName()));
     QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
-            newData.getTypeName()));
+            newData->getTypeName()));
     QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-            newData.getDefValue()));
+            newData->getDefValue()));
     QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
-            newData.getDocment()));
+            newData->getDocment()));
     QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
-            std::to_string(newData.getAlignByte())));
+            std::to_string(newData->getAlignByte())));
     QStandardItem *  item5 = new QStandardItem(QString::fromStdString(
-            newData.getAttribute()));
+            newData->getAttribute()));
     items << item0 << item1 << item2 << item3 << item4 << item5;
 
-    std::vector<Field>  rawDataVec = m_objPtr->getField();
-    rawDataVec.push_back(std::move(newData));
+    std::vector<std::shared_ptr<Field>>  rawDataVec = m_objPtr->getField();
+    rawDataVec.push_back(newData);
     m_objPtr->setField(std::move(rawDataVec));
 
     m_structItemModel->appendRow(items);
@@ -303,24 +303,24 @@ WtMyStruct::structItem_InsertNew_triggered()
     QModelIndex const  index = m_structItemView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  newData;
+        std::shared_ptr<Field>  newData = std::make_shared<Field>();
         QList<QStandardItem *>  items;
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-                newData.getFieldName()));
+                newData->getFieldName()));
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
-                newData.getTypeName()));
+                newData->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                newData.getDefValue()));
+                newData->getDefValue()));
         QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
-                newData.getDocment()));
+                newData->getDocment()));
         QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
-                std::to_string(newData.getAlignByte())));
+                std::to_string(newData->getAlignByte())));
         QStandardItem *  item5 = new QStandardItem(QString::fromStdString(
-                newData.getAttribute()));
+                newData->getAttribute()));
         items << item0 << item1 << item2 << item3 << item4 << item5;
 
         auto  rawDataVec = m_objPtr->getField();
-        rawDataVec.insert(rawDataVec.begin() + row, std::move(newData));
+        rawDataVec.insert(rawDataVec.begin() + row, newData);
         m_objPtr->setField(std::move(rawDataVec));
 
         m_structItemModel->insertRow(row, items);
@@ -363,8 +363,8 @@ WtMyStruct::structItem_CopyToNew_triggered()
     int const  row = index.row();
     if (index.isValid()) {
         auto  rawDataVec = m_objPtr->getField();
-        Field  newData = rawDataVec[row];
-        std::string const  oldName = rawDataVec[row].getFieldName();
+        std::shared_ptr<Field>  newData = std::make_shared<Field>(*rawDataVec[row]);
+        std::string const  oldName = rawDataVec[row]->getFieldName();
         std::string const  baseNewName = oldName + "_";
         std::string  newName;
         size_t  nameIdx = 0;
@@ -375,23 +375,23 @@ WtMyStruct::structItem_CopyToNew_triggered()
                 break;
             }
         }
-        newData.setFieldName(newName);
+        newData->setFieldName(newName);
         rawDataVec.insert(rawDataVec.begin() + row + 1, newData);
         m_objPtr->setField(std::move(rawDataVec));
 
         QList<QStandardItem *>  items;
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-                newData.getFieldName()));
+                newData->getFieldName()));
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
-                newData.getTypeName()));
+                newData->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                newData.getDefValue()));
+                newData->getDefValue()));
         QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
-                newData.getDocment()));
+                newData->getDocment()));
         QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
-                std::to_string(newData.getAlignByte())));
+                std::to_string(newData->getAlignByte())));
         QStandardItem *  item5 = new QStandardItem(QString::fromStdString(
-                newData.getAttribute()));
+                newData->getAttribute()));
         items << item0 << item1 << item2 << item3 << item4 << item5;
         m_structItemModel->insertRow(row + 1, items);
     }
@@ -473,16 +473,16 @@ WtMyStruct::structItem_BeforBehind_triggered()
     if (index.isValid()) {
         auto  rawDataVec = m_objPtr->getField();
 
-        std::string const  title("Struct item: " + rawDataVec[row].getFieldName());
+        std::string const  title("Struct item: " + rawDataVec[row]->getFieldName());
         QString const  beforeLabel("    Struct Item Insert ");
         QString const  behindLabel("    Struct Item Follow ");
-        std::string  beforeString = rawDataVec[row].getBefore();
-        std::string  behindString = rawDataVec[row].getBehind();
+        std::string  beforeString = rawDataVec[row]->getBefore();
+        std::string  behindString = rawDataVec[row]->getBehind();
 
         TwoBeforeBehind  tbe(title, beforeLabel, behindLabel, beforeString, behindString);
         tbe.exec();
-        rawDataVec[row].setBefore(std::move(beforeString));
-        rawDataVec[row].setBehind(std::move(behindString));
+        rawDataVec[row]->setBefore(std::move(beforeString));
+        rawDataVec[row]->setBehind(std::move(behindString));
 
         m_objPtr->setField(std::move(rawDataVec));
     }
@@ -503,10 +503,10 @@ WtMyStruct::structItem_itemDelegate_closeEditor()
         switch (index.column()) {
         case 0 :
             {
-                std::string const  oldVal = rawDataVec[row].getFieldName();
+                std::string const  oldVal = rawDataVec[row]->getFieldName();
                 if (oldVal == currVal)  return;
-                rawDataVec[row].setFieldName(currVal);
-                std::string const  newVal = rawDataVec[row].getFieldName();
+                rawDataVec[row]->setFieldName(currVal);
+                std::string const  newVal = rawDataVec[row]->getFieldName();
                 if (currVal != newVal) {
                     m_structItemModel->setData(index, QVariant(
                             QString::fromStdString(newVal)));
@@ -515,20 +515,20 @@ WtMyStruct::structItem_itemDelegate_closeEditor()
             }
             break;
         case 1 :
-            rawDataVec[row].setTypeName(currVal);
+            rawDataVec[row]->setTypeName(currVal);
             m_objPtr->setField(std::move(rawDataVec));
             break;
         case 2 :
-            rawDataVec[row].setDefValue(currVal);
+            rawDataVec[row]->setDefValue(currVal);
             m_objPtr->setField(std::move(rawDataVec));
             break;
         case 3 :
-            rawDataVec[row].setDocment(currVal);
+            rawDataVec[row]->setDocment(currVal);
             m_objPtr->setField(std::move(rawDataVec));
             break;
         case 4 :
             {
-                int const  oldVal = rawDataVec[row].getAlignByte();
+                int const  oldVal = rawDataVec[row]->getAlignByte();
                 int  currIntVal = 0;
                 bool  ok = false;
                 currIntVal = m_structItemModel->data(index).toInt(&ok);
@@ -537,8 +537,8 @@ WtMyStruct::structItem_itemDelegate_closeEditor()
                             QString::fromStdString(std::to_string(currIntVal))));
                 }
                 if (oldVal == currIntVal)  return;
-                rawDataVec[row].setAlignByte(currIntVal);
-                int const  newVal = rawDataVec[row].getAlignByte();
+                rawDataVec[row]->setAlignByte(currIntVal);
+                int const  newVal = rawDataVec[row]->getAlignByte();
                 if (currIntVal != newVal) {
                     m_structItemModel->setData(index, QVariant(
                             QString::fromStdString(std::to_string(newVal))));
@@ -547,7 +547,7 @@ WtMyStruct::structItem_itemDelegate_closeEditor()
             }
             break;
         case 5 :
-            rawDataVec[row].setAttribute(currVal);
+            rawDataVec[row]->setAttribute(currVal);
             m_objPtr->setField(std::move(rawDataVec));
             break;
         }
@@ -558,21 +558,21 @@ void
 WtMyStruct::repStructItem()
 {
     m_structItemModel->removeRows(0, m_structItemModel->rowCount());
-    std::vector<Field> const  item = m_objPtr->getField();
+    auto const  item = m_objPtr->getField();
     for (auto const &  it: item) {
         QList<QStandardItem *>  items;
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-                it.getFieldName()));
+                it->getFieldName()));
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
-                it.getTypeName()));
+                it->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                it.getDefValue()));
+                it->getDefValue()));
         QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
-                it.getDocment()));
+                it->getDocment()));
         QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
-                std::to_string(it.getAlignByte())));
+                std::to_string(it->getAlignByte())));
         QStandardItem *  item5 = new QStandardItem(QString::fromStdString(
-                it.getAttribute()));
+                it->getAttribute()));
         items << item0 << item1 << item2 << item3 << item4 << item5;
         m_structItemModel->appendRow(items);
     }
@@ -585,7 +585,7 @@ WtMyStruct::nameCheckDuplication(std::string const &  fnName)
 
     auto  rawDataVec = m_objPtr->getField();
     for (const auto &  fn: rawDataVec) {
-        res = fn.getFieldName() == fnName;
+        res = fn->getFieldName() == fnName;
         if (res)  return res;
     }
 

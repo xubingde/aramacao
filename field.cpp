@@ -50,6 +50,7 @@ Field::Field(const Field &  other):
         m_mutable(other.m_mutable),
         m_pointer(other.m_pointer)
 {
+    copyActionFn();
 }
 
 Field::Field(Field &&  other) noexcept:
@@ -91,6 +92,8 @@ Field::operator=(const Field &  other)
     m_alignByte = other.m_alignByte;
     m_mutable = other.m_mutable;
     m_pointer = other.m_pointer;
+
+    copyActionFn();
 
     return *this;
 }
@@ -273,6 +276,50 @@ Field::getCtorDefValue() const
     }
 
     return res;
+}
+
+void
+Field::copyActionFn()
+{
+    for (auto &  actFn: m_actionFn) {
+        std::shared_ptr<ActFn>  actPtr;
+        switch (actFn.first) {
+        case Action::get :
+            actPtr = std::make_shared<ActGetFn>(
+                    *std::dynamic_pointer_cast<ActGetFn>(actFn.second));
+            break;
+        case Action::setCopy :
+            actPtr = std::make_shared<ActSetCopyFn>(
+                    *std::dynamic_pointer_cast<ActSetCopyFn>(actFn.second));
+            break;
+        case Action::setMove :
+            actPtr = std::make_shared<ActSetMoveFn>(
+                    *std::dynamic_pointer_cast<ActSetMoveFn>(actFn.second));
+            break;
+        case Action::setConstValue :
+            actPtr = std::make_shared<ActSetConstValueFn>(
+                    *std::dynamic_pointer_cast<ActSetConstValueFn>(actFn.second));
+            break;
+        case Action::setMutValue :
+            actPtr = std::make_shared<ActSetMutValueFn>(
+                    *std::dynamic_pointer_cast<ActSetMutValueFn>(actFn.second));
+            break;
+        case Action::is :
+            actPtr = std::make_shared<ActIsFn>(
+                    *std::dynamic_pointer_cast<ActIsFn>(actFn.second));
+            break;
+        case Action::has :
+            actPtr = std::make_shared<ActHasFn>(
+                    *std::dynamic_pointer_cast<ActHasFn>(actFn.second));
+            break;
+        case Action::none :
+            actPtr = std::make_shared<ActFn>(
+                    *std::dynamic_pointer_cast<ActFn>(actFn.second));
+            break;
+        }
+        actFn.second = actPtr;
+        actFn.second->setParentFieldPtr(this);
+    }
 }
 
 std::vector<size_t>
@@ -731,9 +778,9 @@ Field::fromString(const char *  data,
     if (err.size() == 0) {
         *this = std::move(me);
         result = true;
+        updateActionPtr();
     }
     m_stringErr = std::move(err);
-    updateActionPtr();
 
     return result;
 }

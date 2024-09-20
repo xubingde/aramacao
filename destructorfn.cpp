@@ -64,11 +64,11 @@ DestructorFn::autoCode() const
 
     MyClass const *  parentPtr = getParentClassPtr();
     if (parentPtr == nullptr)  return autoCode;
-    std::vector<Field> const  vecField = parentPtr->getField();
+    std::vector<std::shared_ptr<Field>> const  vecField = parentPtr->getField();
 
     for (auto  it = vecField.rbegin(); it != vecField.rend(); ++it) {
-        if (it->isPointer()) {
-            autoCode += tab1 + "delete " + it->getPrivateName() + ";\n";
+        if ((*it)->isPointer()) {
+            autoCode += tab1 + "delete " + (*it)->getPrivateName() + ";\n";
         }
     }
 

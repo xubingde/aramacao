@@ -111,6 +111,7 @@ private:
     std::string  begin_namespaceCpp() const;
     std::string  end_namespaceH() const;
     std::string  end_namespaceCpp() const;
+    void  copyEobjList();
 
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>>  m_eobjList;
     std::string     m_filename;

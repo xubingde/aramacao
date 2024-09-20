@@ -75,6 +75,8 @@ public:
 
 private:
 
+    void  copyEobjList();
+
     std::vector<std::shared_ptr<Project>>   m_eobjList;
     int             m_id;
 };

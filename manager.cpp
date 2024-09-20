@@ -59,6 +59,7 @@ Manager::Manager(const Manager &  other):
         m_eobjList(other.m_eobjList),
         m_id(other.m_id)
 {
+    copyEobjList();
 }
 
 Manager::Manager(Manager &&  other) noexcept:
@@ -78,6 +79,8 @@ Manager::operator=(const Manager &  other)
 
     m_eobjList = other.m_eobjList;
     m_id = other.m_id;
+
+    copyEobjList();
 
     return *this;
 }
@@ -234,6 +237,16 @@ void
 Manager::clearEobjList()
 {
     m_eobjList.clear();
+}
+
+void
+Manager::copyEobjList()
+{
+    for (auto &  obj: m_eobjList) {
+        std::shared_ptr<Project>  ptr = std::make_shared<Project>(
+                *std::dynamic_pointer_cast<Project>(obj));
+        obj = ptr;
+    }
 }
 
 std::vector<std::shared_ptr<Project>>

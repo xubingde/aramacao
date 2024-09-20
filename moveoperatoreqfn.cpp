@@ -66,7 +66,7 @@ MoveOperatorEqFn::autoCode() const
 
     MyClass const *  parentPtr = getParentClassPtr();
     if (parentPtr == nullptr)  return autoCode;
-    std::vector<Field> const  vecField = parentPtr->getField();
+    std::vector<std::shared_ptr<Field>> const  vecField = parentPtr->getField();
 
     autoCode += tab1 + "if (this == &" + other + ") return *this;\n";
     if (parentPtr->getClasstype() == ClassType::cppInherit) {
@@ -91,22 +91,22 @@ MoveOperatorEqFn::autoCode() const
     const size_t  size = vecField.size();
     size_t  cnt = 0;
     for (const auto &  it: vecField) {
-        if (it.isPointer()) {
+        if (it->isPointer()) {
             if (spacePtr) {
                 autoCode += "\n";
             }
-            autoCode += tab1 + "delete " + it.getPrivateName() + ";\n";
-            autoCode += tab1 + it.getPrivateName() + " = " + other + "." +
-                    it.getPrivateName() + ";\n";
-            autoCode += tab1 + other + "." + it.getPrivateName() +
+            autoCode += tab1 + "delete " + it->getPrivateName() + ";\n";
+            autoCode += tab1 + it->getPrivateName() + " = " + other + "." +
+                    it->getPrivateName() + ";\n";
+            autoCode += tab1 + other + "." + it->getPrivateName() +
                     " = nullptr;\n";
             if (cnt != size - 1) {
                 autoCode += "\n";
             }
             spacePtr = false;
         } else {
-            autoCode += tab1 + it.getPrivateName() + " = std::move(" +
-                    other + "." + it.getPrivateName() + ");\n";
+            autoCode += tab1 + it->getPrivateName() + " = std::move(" +
+                    other + "." + it->getPrivateName() + ");\n";
             spacePtr = true;
         }
         ++cnt;

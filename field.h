@@ -103,6 +103,8 @@ public:
 
 private:
 
+    void  copyActionFn();
+
     std::vector<size_t>     m_stringErr;
     std::string     m_fieldName;
     std::string     m_docment;

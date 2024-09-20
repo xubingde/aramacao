@@ -55,6 +55,7 @@ Functions::Functions(const Functions &  other):
         m_objList(other.m_objList),
         m_parentClassPtr(other.m_parentClassPtr)
 {
+    copyObjList();
 }
 
 Functions::Functions(Functions &&  other) noexcept:
@@ -86,6 +87,8 @@ Functions::operator=(const Functions &  other)
 
     m_objList = other.m_objList;
     m_parentClassPtr = other.m_parentClassPtr;
+
+    copyObjList();
 
     return *this;
 }
@@ -302,6 +305,15 @@ Functions::procFunction(Function &  fn)
         fn.setRef(false);
         fn.setRefRef(false);
         fn.setPureVirtual(false);
+    }
+}
+
+void
+Functions::copyObjList()
+{
+    for (auto &  fn: m_objList) {
+        std::shared_ptr<Function>  fnPtr = std::make_shared<Function>(*fn);
+        fn = fnPtr;
     }
 }
 

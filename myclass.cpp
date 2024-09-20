@@ -32,50 +32,28 @@
 #include "protectedlabel.h"
 #include "privatelabel.h"
 #include "actfn.h"
+#include "basicblock.h"
+#include "staticfunctions.h"
+#include "constexprfunctions.h"
+#include "tplfunctions.h"
+#include "tplstaticfunctions.h"
+#include "tplconstexprfunctions.h"
+#include "myclassdec.h"
+#include "myenum.h"
+#include "mystruct.h"
+#include "mystructdec.h"
+#include "mytypedef.h"
+#include "constructors.h"
+#include "tplconstructors.h"
+#include "label.h"
+#include "defaultconstructorfn.h"
+#include "copyconstructorfn.h"
+#include "moveconstructorfn.h"
+#include "destructorfn.h"
+#include "copyoperatoreqfn.h"
+#include "moveoperatoreqfn.h"
 
 namespace xu {
-
-std::string
-toString(std::vector<std::shared_ptr<Field>> const &  value)
-{
-    std::string  res;
-    for (auto const &  it: value) {
-        xu::append(res, it->toString());
-    }
-    return res;
-}
-
-bool
-fromString(std::vector<std::shared_ptr<Field>> &  res,
-           std::string const &  value)
-{
-    return fromString(res, value.data(), value.size());
-}
-
-bool
-fromString(std::vector<std::shared_ptr<Field>> &  res,
-           std::string_view const &  value)
-{
-    return fromString(res, value.data(), value.size());
-}
-
-bool
-fromString(std::vector<std::shared_ptr<Field>> &  res,
-           char const *  data,
-           size_t const  size)
-{
-    std::vector<std::shared_ptr<Field>>  resTmp;
-    auto  vi = xu::viewIcode(data, size);
-    size_t const  viSize = vi.size();
-    for (size_t  i = 0; i < viSize; ++i) {
-        Field  fd;
-        if (!xu::fromString(fd, vi[i]))  return false;
-        std::shared_ptr<Field>  objPtr = std::make_shared<Field>(std::move(fd));
-        resTmp.push_back(objPtr);
-    }
-    res = std::move(resTmp);
-    return true;
-}
 
 MyClass::MyClass():
         EObject(),
@@ -178,6 +156,8 @@ MyClass::MyClass(const MyClass &  other):
         m_copyOpEq(other.m_copyOpEq),
         m_moveOpEq(other.m_moveOpEq)
 {
+    copyEobjList();
+    copyField();
 }
 
 MyClass::MyClass(MyClass &&  other) noexcept:
@@ -285,6 +265,9 @@ MyClass::operator=(const MyClass &  other)
     m_copyOpEq = other.m_copyOpEq;
     m_moveOpEq = other.m_moveOpEq;
 
+    copyEobjList();
+    copyField();
+
     return *this;
 }
 
@@ -355,7 +338,7 @@ MyClass::getEObjectPtr()
     return &m_eobjList;
 }
 
-std::vector<Field> &
+std::vector<std::shared_ptr<Field>> &
 MyClass::getFieldRef()
 {
     return m_field;
@@ -507,7 +490,7 @@ MyClass::toFCodeEq() const
         autoCode += tab1 + "if (&" + lhs + " == &" + rhs + ") return true;\n";
         autoCode += tab1 + "bool  result = false;\n";
         for (size_t i = 0; i < IDsize; ++i) {
-            autoCode += toFCodeEqIndex(m_field[sortID[i]], "", lhs, rhs);
+            autoCode += toFCodeEqIndex(*m_field[sortID[i]], "", lhs, rhs);
         }
         autoCode += "\n";
         autoCode += tab1 + "return result;\n";
@@ -515,7 +498,7 @@ MyClass::toFCodeEq() const
     case ClassType::cppBase:
         autoCode += tab1 + "bool  result = false;\n";
         for (size_t i = 0; i < IDsize; ++i) {
-            autoCode += toFCodeEqIndex(m_field[sortID[i]], "", "", sig);
+            autoCode += toFCodeEqIndex(*m_field[sortID[i]], "", "", sig);
         }
         autoCode += "\n";
         autoCode += tab1 + "return result;\n";
@@ -534,7 +517,7 @@ MyClass::toFCodeEq() const
                         " = dynamic_cast<const " + m_className + " &>(" +
                         sig + ");\n";
                 for (size_t  i = 0; i < IDsize; ++i) {
-                    autoCode += toFCodeEqIndex(m_field[sortID[i]], tab1, "", rhs);
+                    autoCode += toFCodeEqIndex(*m_field[sortID[i]], tab1, "", rhs);
                 }
                 autoCode += "\n";
                 autoCode += tab1 + "} catch (const std::bad_cast &) {\n";
@@ -557,7 +540,7 @@ MyClass::toFCodeEq() const
                         "::equal(" + sig + ");\n";
                 autoCode += tab2 + "if (!result) return result;\n";
                 for (size_t  i = 0; i < IDsize; ++i) {
-                    autoCode += toFCodeEqIndex(m_field[sortID[i]], tab1, "", rhs);
+                    autoCode += toFCodeEqIndex(*m_field[sortID[i]], tab1, "", rhs);
                 }
                 autoCode += "\n";
                 autoCode += tab1 + "} catch (const std::bad_cast &) {\n";
@@ -602,7 +585,7 @@ MyClass::toFCodeLess() const
             autoCode += tab1 + "if (&" + lhs + " == &" + rhs + ") return false;\n";
             for (size_t  i = 0; i < IDsize; ++i) {
                 autoCode += "\n";
-                autoCode += toFCodeLessIndex(m_field[sortID[i]], "", lhs, rhs);
+                autoCode += toFCodeLessIndex(*m_field[sortID[i]], "", lhs, rhs);
             }
             autoCode += "\n";
             autoCode += tab1 + "return false;\n";
@@ -614,7 +597,7 @@ MyClass::toFCodeLess() const
         } else {
             for (size_t  i = 0; i < IDsize; ++i) {
                 if (i != 0)  autoCode += "\n";
-                autoCode += toFCodeLessIndex(m_field[sortID[i]], "", "", sig);
+                autoCode += toFCodeLessIndex(*m_field[sortID[i]], "", "", sig);
             }
             autoCode += "\n";
             autoCode += tab1 + "return false;\n";
@@ -634,7 +617,7 @@ MyClass::toFCodeLess() const
                         sig + ");\n";
                 for (size_t  i = 0; i < IDsize; ++i) {
                     autoCode += "\n";
-                    autoCode += toFCodeLessIndex(m_field[sortID[i]], tab1, "", rhs);
+                    autoCode += toFCodeLessIndex(*m_field[sortID[i]], tab1, "", rhs);
                 }
                 autoCode += "\n";
                 autoCode += tab1 + "} catch (const std::bad_cast &) {\n";
@@ -658,7 +641,7 @@ MyClass::toFCodeLess() const
                         sig + ");\n";
                 for (size_t  i = 0; i < IDsize; ++i) {
                     autoCode += "\n";
-                    autoCode += toFCodeLessIndex(m_field[sortID[i]], tab1, "", rhs);
+                    autoCode += toFCodeLessIndex(*m_field[sortID[i]], tab1, "", rhs);
                 }
                 autoCode += "\n";
                 autoCode += tab1 + "} catch (const std::bad_cast &) {\n";
@@ -686,16 +669,16 @@ MyClass::toFCodeSwap() const
         res += tab1 + "if (this == &" + sig + ") return;\n";
         res += tab1 + "using std::swap;\n";
         for (size_t  i = 0; i < m_field.size(); ++i) {
-            res += tab1 + "swap(" + m_field[i].getPrivateName() + ", " +
-                    sig + "." + m_field[i].getPrivateName() + ");\n";
+            res += tab1 + "swap(" + m_field[i]->getPrivateName() + ", " +
+                    sig + "." + m_field[i]->getPrivateName() + ");\n";
         }
     } else if (m_classtype == ClassType::cppBase) {
         res += tab1 + "bool  result = false;\n";
         res += tab1 + "if (typeid(*this) == typeid(" + sig + ")) {\n";
         res += tab2 + "using std::swap;\n";
         for (size_t  i = 0; i < m_field.size(); ++i) {
-            res += tab2 + "swap(" + m_field[i].getPrivateName() + ", " +
-                    sig + "." + m_field[i].getPrivateName() + ");\n";
+            res += tab2 + "swap(" + m_field[i]->getPrivateName() + ", " +
+                    sig + "." + m_field[i]->getPrivateName() + ");\n";
         }
         res += "\n";
         res += tab2 + "result = true;\n";
@@ -714,8 +697,8 @@ MyClass::toFCodeSwap() const
         res += "\n";
         res += tab2 + "using std::swap;\n";
         for (size_t  i = 0; i < m_field.size(); ++i) {
-            res += tab2 + "swap(" + m_field[i].getPrivateName() + ", " +
-                    rhs + "." + m_field[i].getPrivateName() + ");\n";
+            res += tab2 + "swap(" + m_field[i]->getPrivateName() + ", " +
+                    rhs + "." + m_field[i]->getPrivateName() + ");\n";
         }
         res += "\n";
         res += tab2 + "result = true;\n";
@@ -743,7 +726,7 @@ MyClass::toFCodeToString() const
         res += "\n";
     }
     for (size_t  i = 0; i < m_serzField.size(); ++i) {
-        res += toFCodeToStringIndex(m_field[m_serzField[i]]);
+        res += toFCodeToStringIndex(*m_field[m_serzField[i]]);
     }
     res += "\n";
     res += tab1 + "return res;\n";
@@ -793,7 +776,7 @@ MyClass::toFCodeFromString() const
     }
 
     for (size_t  i = 0; i < serzSize; ++i) {
-        res += toFCodeFromStringIndex(m_field[m_serzField[i]], vi_index);
+        res += toFCodeFromStringIndex(*m_field[m_serzField[i]], vi_index);
         ++vi_index;
     }
 
@@ -813,14 +796,16 @@ MyClass::toFCodeFromString() const
 void
 MyClass::appendField(Field const &  value)
 {
-    m_field.push_back(value);
+    std::shared_ptr<Field>  ptr = std::make_shared<Field>(value);
+    m_field.push_back(ptr);
     appendFieldIndex();
 }
 
 void
 MyClass::appendField(Field &&  value)
 {
-    m_field.push_back(std::move(value));
+    std::shared_ptr<Field>  ptr = std::make_shared<Field>(std::move(value));
+    m_field.push_back(std::move(ptr));
     appendFieldIndex();
 }
 
@@ -828,8 +813,9 @@ bool
 MyClass::updateField(Field const &  value,
                      size_t const  index)
 {
+    std::shared_ptr<Field>  ptr = std::make_shared<Field>(value);
     if (index < m_field.size()) {
-        m_field[index] = value;
+        m_field[index] = ptr;
         updateFieldIndex(index);
         return true;
     } else {
@@ -841,8 +827,9 @@ bool
 MyClass::updateField(Field &&  value,
                      size_t const  index)
 {
+    std::shared_ptr<Field>  ptr = std::make_shared<Field>(std::move(value));
     if (index < m_field.size()) {
-        m_field[index] = std::move(value);
+        m_field[index] = std::move(ptr);
         updateFieldIndex(index);
         return true;
     } else {
@@ -857,7 +844,8 @@ MyClass::insertField(Field const &  value,
     if (index > m_field.size()) {
         index = m_field.size();
     }
-    m_field.insert(m_field.begin() + index, value);
+    std::shared_ptr<Field>  ptr = std::make_shared<Field>(value);
+    m_field.insert(m_field.begin() + index, ptr);
     insertFieldIndex(index);
 }
 
@@ -868,7 +856,8 @@ MyClass::insertField(Field &&  value,
     if (index > m_field.size()) {
         index = m_field.size();
     }
-    m_field.insert(m_field.begin() + index, std::move(value));
+    std::shared_ptr<Field>  ptr = std::make_shared<Field>(std::move(value));
+    m_field.insert(m_field.begin() + index, std::move(ptr));
     insertFieldIndex(index);
 }
 
@@ -889,7 +878,7 @@ MyClass::takeField(Field &  result,
                    size_t const  index)
 {
     if (index < m_field.size()) {
-        result = std::move(m_field[index]);
+        result = *std::move(m_field[index]);
         m_field.erase(m_field.begin() + index);
         deleteFieldIndex(index);
         return true;
@@ -1557,7 +1546,7 @@ void
 MyClass::appendFieldIndex()
 {
     size_t const  index = m_field.size() - 1;
-    Field const &  fd = m_field[index];
+    Field const &  fd = *m_field[index];
 
     m_styleField.push_back(index);
     if (m_updateToString)  m_serzField.push_back(index);
@@ -1614,7 +1603,7 @@ MyClass::appendFieldIndex()
 void
 MyClass::updateFieldIndex(size_t const  index)
 {
-    Field const &  fd = m_field[index];
+    Field const &  fd = *m_field[index];
 
     for (auto &  it: m_eobjList) {
         switch (it.first) {
@@ -1654,7 +1643,7 @@ MyClass::updateFieldIndex(size_t const  index)
 void
 MyClass::insertFieldIndex(size_t const  index)
 {
-    Field const &  fd = m_field[index];
+    Field const &  fd = *m_field[index];
 
     for (auto &  id: m_styleField) {
         if (id >= index)  id++;
@@ -2023,7 +2012,7 @@ MyClass::class_field_toHBlock(std::string const &  tabStr /* = std::string() */)
 
     std::string  fdAutoCode;
     for (auto const &  fd: m_field) {
-        fdAutoCode += fd.toHBlock(tabStr);
+        fdAutoCode += fd->toHBlock(tabStr);
     }
 
     if (fdAutoCode.size() > 0) {
@@ -2045,7 +2034,7 @@ MyClass::class_field_FnDcl(bool const  isPubLabel /* = true */,
     std::string  fdAutoCode;
     for (auto const &  fd: m_field) {
         fdAutoCode += "\n";
-        fdAutoCode += fd.hCodeDcl(tabStr);
+        fdAutoCode += fd->hCodeDcl(tabStr);
     }
 
     if (fdAutoCode.size() > 0) {
@@ -2271,6 +2260,204 @@ MyClass::classToInternal(MyClass *  myClass,
     }
 }
 
+void
+MyClass::copyEobjList()
+{
+    for (auto &  obj: m_eobjList) {
+        std::shared_ptr<EObject>  ptr;
+        switch (obj.first) {
+        case Etype::eBasicBlock :
+            ptr = std::make_shared<BasicBlock>(
+                    *std::dynamic_pointer_cast<BasicBlock>(obj.second));
+            break;
+        case Etype::eFunctions :
+            ptr = std::make_shared<Functions>(
+                    *std::dynamic_pointer_cast<Functions>(obj.second));
+            std::dynamic_pointer_cast<Functions>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eStaticFunctions :
+            ptr = std::make_shared<StaticFunctions>(
+                    *std::dynamic_pointer_cast<StaticFunctions>(obj.second));
+            std::dynamic_pointer_cast<StaticFunctions>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eConstexprFunctions :
+            ptr = std::make_shared<ConstexprFunctions>(
+                    *std::dynamic_pointer_cast<ConstexprFunctions>(obj.second));
+            std::dynamic_pointer_cast<ConstexprFunctions>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eTplFunctions :
+            ptr = std::make_shared<TplFunctions>(
+                    *std::dynamic_pointer_cast<TplFunctions>(obj.second));
+            std::dynamic_pointer_cast<TplFunctions>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eTplStaticFunctions :
+            ptr = std::make_shared<TplStaticFunctions>(
+                    *std::dynamic_pointer_cast<TplStaticFunctions>(obj.second));
+            std::dynamic_pointer_cast<TplStaticFunctions>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eTplConstexprFunctions :
+            ptr = std::make_shared<TplConstexprFunctions>(
+                    *std::dynamic_pointer_cast<TplConstexprFunctions>(obj.second));
+            std::dynamic_pointer_cast<TplConstexprFunctions>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eClass :
+            ptr = std::make_shared<MyClass>(
+                    *std::dynamic_pointer_cast<MyClass>(obj.second));
+            std::dynamic_pointer_cast<MyClass>(ptr)->setInternal(true);
+            break;
+        case Etype::eClassDeclaration :
+            ptr = std::make_shared<MyClassDec>(
+                    *std::dynamic_pointer_cast<MyClassDec>(obj.second));
+            break;
+        case Etype::eEnum :
+            ptr = std::make_shared<MyEnum>(
+                    *std::dynamic_pointer_cast<MyEnum>(obj.second));
+            break;
+        case Etype::eStruct :
+            ptr = std::make_shared<MyStruct>(
+                    *std::dynamic_pointer_cast<MyStruct>(obj.second));
+            break;
+        case Etype::eStructDeclaration :
+            ptr = std::make_shared<MyStructDec>(
+                    *std::dynamic_pointer_cast<MyStructDec>(obj.second));
+            break;
+        case Etype::eTypedef :
+            ptr = std::make_shared<MyTypedef>(
+                    *std::dynamic_pointer_cast<MyTypedef>(obj.second));
+            break;
+        case Etype::eConstructors :
+            ptr = std::make_shared<Constructors>(
+                    *std::dynamic_pointer_cast<Constructors>(obj.second));
+            std::dynamic_pointer_cast<Constructors>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eTplConstructors :
+            ptr = std::make_shared<TplConstructors>(
+                    *std::dynamic_pointer_cast<TplConstructors>(obj.second));
+            std::dynamic_pointer_cast<TplConstructors>(ptr)->setParentClassPtr(this);
+            break;
+        case Etype::eLabel :
+            ptr = std::make_shared<Label>(
+                    *std::dynamic_pointer_cast<Label>(obj.second));
+            break;
+        case Etype::ePublicLabel :
+            ptr = std::make_shared<PublicLabel>(
+                    *std::dynamic_pointer_cast<PublicLabel>(obj.second));
+            break;
+        case Etype::eProtectedLabel :
+            ptr = std::make_shared<ProtectedLabel>(
+                    *std::dynamic_pointer_cast<ProtectedLabel>(obj.second));
+            break;
+        case Etype::ePrivateLabel :
+            ptr = std::make_shared<PrivateLabel>(
+                    *std::dynamic_pointer_cast<PrivateLabel>(obj.second));
+            break;
+        case Etype::eDefaultConstructorFn :
+            ptr = std::make_shared<DefaultConstructorFn>(
+                    *std::dynamic_pointer_cast<DefaultConstructorFn>(obj.second));
+            std::dynamic_pointer_cast<DefaultConstructorFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<DefaultConstructorFn>(ptr)->init();
+            break;
+        case Etype::eCopyConstructorFn :
+            ptr = std::make_shared<CopyConstructorFn>(
+                    *std::dynamic_pointer_cast<CopyConstructorFn>(obj.second));
+            std::dynamic_pointer_cast<CopyConstructorFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<CopyConstructorFn>(ptr)->init();
+            break;
+        case Etype::eMoveConstructorFn :
+            ptr = std::make_shared<MoveConstructorFn>(
+                    *std::dynamic_pointer_cast<MoveConstructorFn>(obj.second));
+            std::dynamic_pointer_cast<MoveConstructorFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<MoveConstructorFn>(ptr)->init();
+            break;
+        case Etype::eDestructorFn :
+            ptr = std::make_shared<DestructorFn>(
+                    *std::dynamic_pointer_cast<DestructorFn>(obj.second));
+            std::dynamic_pointer_cast<DestructorFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<DestructorFn>(ptr)->init();
+            break;
+        case Etype::eCopyOperatorEqFn :
+            ptr = std::make_shared<CopyOperatorEqFn>(
+                    *std::dynamic_pointer_cast<CopyOperatorEqFn>(obj.second));
+            std::dynamic_pointer_cast<CopyOperatorEqFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<CopyOperatorEqFn>(ptr)->init();
+            break;
+        case Etype::eMoveOperatorEqFn :
+            ptr = std::make_shared<MoveOperatorEqFn>(
+                    *std::dynamic_pointer_cast<MoveOperatorEqFn>(obj.second));
+            std::dynamic_pointer_cast<MoveOperatorEqFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<MoveOperatorEqFn>(ptr)->init();
+            break;
+        case Etype::eVirtualEqFn :
+            ptr = std::make_shared<VirtualEqFn>(
+                    *std::dynamic_pointer_cast<VirtualEqFn>(obj.second));
+            std::dynamic_pointer_cast<VirtualEqFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualEqFn>(ptr)->init();
+            break;
+        case Etype::eVirtualLessFn :
+            ptr = std::make_shared<VirtualLessFn>(
+                    *std::dynamic_pointer_cast<VirtualLessFn>(obj.second));
+            std::dynamic_pointer_cast<VirtualLessFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualLessFn>(ptr)->init();
+            break;
+        case Etype::eInSwapFn :
+            ptr = std::make_shared<InSwapFn>(
+                    *std::dynamic_pointer_cast<InSwapFn>(obj.second));
+            std::dynamic_pointer_cast<InSwapFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<InSwapFn>(ptr)->init();
+            break;
+        case Etype::eVirtualExchangeFn :
+            ptr = std::make_shared<VirtualExchangeFn>(
+                    *std::dynamic_pointer_cast<VirtualExchangeFn>(obj.second));
+            std::dynamic_pointer_cast<VirtualExchangeFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualExchangeFn>(ptr)->init();
+            break;
+        case Etype::eToStringFn :
+            ptr = std::make_shared<ToStringFn>(
+                    *std::dynamic_pointer_cast<ToStringFn>(obj.second));
+            std::dynamic_pointer_cast<ToStringFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<ToStringFn>(ptr)->init();
+            break;
+        case Etype::eVirtualSerializeFn :
+            ptr = std::make_shared<VirtualSerializeFn>(
+                    *std::dynamic_pointer_cast<VirtualSerializeFn>(obj.second));
+            std::dynamic_pointer_cast<VirtualSerializeFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualSerializeFn>(ptr)->init();
+            break;
+        case Etype::eInFromStringFn :
+            ptr = std::make_shared<InFromStringFn>(
+                    *std::dynamic_pointer_cast<InFromStringFn>(obj.second));
+            std::dynamic_pointer_cast<InFromStringFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<InFromStringFn>(ptr)->init();
+            break;
+        case Etype::eDeserializeFn :
+            ptr = std::make_shared<DeserializeFn>(
+                    *std::dynamic_pointer_cast<DeserializeFn>(obj.second));
+            std::dynamic_pointer_cast<DeserializeFn>(ptr)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<DeserializeFn>(ptr)->init();
+            break;
+        default :
+            break;
+        }
+        obj.second = ptr;
+    }
+}
+
+void
+MyClass::copyField()
+{
+    for (auto &  fd: m_field) {
+        std::shared_ptr<Field>  ptr = std::make_shared<Field>(*fd);
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actFnVec =
+                ptr->getActionFnRef();
+        for (auto &  actFn: actFnVec) {
+            actFn.second->setParentClassPtr(this);
+            actFn.second->setParentFieldPtr(ptr.get());
+            actFn.second->init();
+        }
+        fd = ptr;
+    }
+}
+
 std::vector<size_t>
 MyClass::getStringErr() const
 {
@@ -2295,7 +2482,7 @@ MyClass::getEobjList() const
     return m_eobjList;
 }
 
-std::vector<Field>
+std::vector<std::shared_ptr<Field>>
 MyClass::getField() const
 {
     return m_field;
@@ -2916,9 +3103,9 @@ void
 MyClass::setSetterReturnThis(const bool  value)
 {
     m_setterReturnThis = value;
-    for (Field &  fd: m_field) {
-        auto  fns = fd.getActionFn();
-        fd.setActionFn(fns);
+    for (auto &  fd: m_field) {
+        auto  fns = fd->getActionFn();
+        fd->setActionFn(fns);
     }
 }
 
@@ -3262,6 +3449,8 @@ MyClass::deserialize(const char *  data,
     if (err.size() == 0) {
         *this = std::move(me);
         result = true;
+        copyEobjList();
+        copyField();
     }
 
     return result;

@@ -68,6 +68,8 @@ protected:
 
 private:
 
+    void  copyObjList();
+
     std::vector<std::shared_ptr<Function>>      m_objList;
     MyClass *       m_parentClassPtr;
 };

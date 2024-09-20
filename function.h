@@ -207,6 +207,7 @@ protected:
 private:
 
     std::string  multipleInh() const;
+    void  copyInsertMCode();
 
     std::vector<size_t>     m_stringErr;
     MyClass *       m_parentClassPtr;

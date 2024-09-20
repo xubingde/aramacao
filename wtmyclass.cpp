@@ -3276,8 +3276,8 @@ WtMyClass::field_CopyToNew_triggered()
     int const  row = index.row();
     if (index.isValid()) {
         auto  rawDataVec = m_objPtr->getField();
-        Field  newData = rawDataVec[row];
-        std::string const  oldName = rawDataVec[row].getFieldName();
+        Field  newData = *rawDataVec[row];
+        std::string const  oldName = rawDataVec[row]->getFieldName();
         std::string const  baseNewName = oldName + "_";
         std::string  newName;
         size_t  nameIdx = 0;
@@ -3415,7 +3415,7 @@ WtMyClass::field_BeforBehind_triggered()
     QModelIndex const  index = m_fieldView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  rawData = m_objPtr->getField()[row];
+        Field  rawData = *m_objPtr->getField()[row];
 
         std::string const  title("Field: " + rawData.getFieldName());
         QString const  beforeLabel("    Field definition Insert ");
@@ -3440,7 +3440,7 @@ WtMyClass::field_itemDelegate_closeEditor()
     QModelIndex const  index = m_fieldView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  rawData = m_objPtr->getField()[row];
+        Field  rawData = *m_objPtr->getField()[row];
         std::string const  currVal = m_fieldModel->data(index).
                 toString().toUtf8().toStdString();
 
@@ -3499,7 +3499,7 @@ WtMyClass::field_selectChanged()
 
         m_fieldIsMutable->setEnabled(true);
 
-        Field const  fd = m_objPtr->getField()[index.row()];
+        Field const  fd = *m_objPtr->getField()[index.row()];
         m_fieldDocment->setHtml(QString::fromStdString(fd.getDocment()));
         m_fieldAttribute->setText(QString::fromStdString(fd.getAttribute()));
         m_fieldAlignas->setText(QString::fromStdString(std::to_string(fd.getAlignByte())));
@@ -3528,7 +3528,7 @@ WtMyClass::field_attribute_editingFinished()
     QModelIndex const  index = m_fieldView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  fd = m_objPtr->getField()[row];
+        Field  fd = *m_objPtr->getField()[row];
         fd.setAttribute(m_fieldAttribute->text().toUtf8().toStdString());
         m_objPtr->updateField(std::move(fd), row);
     }
@@ -3542,7 +3542,7 @@ WtMyClass::field_array_editingFinished()
     QModelIndex const  index = m_fieldView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  fd = m_objPtr->getField()[row];
+        Field  fd = *m_objPtr->getField()[row];
         fd.setArray(m_fieldArray->text().toUtf8().toStdString());
         m_objPtr->updateField(std::move(fd), row);
     }
@@ -3556,7 +3556,7 @@ WtMyClass::field_alignas_editingFinished()
     QModelIndex const  index = m_fieldView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  fd = m_objPtr->getField()[row];
+        Field  fd = *m_objPtr->getField()[row];
         int const  oldVal = fd.getAlignByte();
         int  currIntVal = 0;
         bool  ok = false;
@@ -3584,7 +3584,7 @@ WtMyClass::field_docment_textChanged()
     QModelIndex const  index = m_fieldView->currentIndex();
     int const  row = index.row();
     if (index.isValid()) {
-        Field  fd = m_objPtr->getField()[row];
+        Field  fd = *m_objPtr->getField()[row];
         fd.setDocment(m_fieldDocment->toHtml().toUtf8().toStdString());
         m_objPtr->updateField(std::move(fd), row);
     }
@@ -3602,7 +3602,7 @@ WtMyClass::field_isMutable_stateChanged(int const  status)
         if (status == Qt::Checked) {
             currVal = true;
         }
-        Field  fd = m_objPtr->getField()[row];
+        Field  fd = *m_objPtr->getField()[row];
         fd.setMutable(currVal);
         m_objPtr->updateField(std::move(fd), row);
     }
@@ -4017,7 +4017,7 @@ WtMyClass::fieldAction_selectChanged()
         m_fieldActionAttribute->setReadOnly(false);
 
         std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
-                m_objPtr->getField()[index.parent().row()].getActionFnRef();
+                m_objPtr->getField()[index.parent().row()]->getActionFnRef();
         std::shared_ptr<ActFn>  fn = fnVec[row].second;
         m_fieldActionInline->setChecked(fn->isInline());
         m_fieldActionNoexcept->setChecked(fn->isNoexcept());
@@ -4052,8 +4052,8 @@ WtMyClass::fieldAction_selectChanged()
             m_fieldActionDoc->setReadOnly(false);
             m_fieldActionAttribute->setReadOnly(false);
 
-            const std::string  doc = m_objPtr->getField()[row].getDocment();
-            const std::string  attrVal = m_objPtr->getField()[row].getAttribute();
+            const std::string  doc = m_objPtr->getField()[row]->getDocment();
+            const std::string  attrVal = m_objPtr->getField()[row]->getAttribute();
             m_fieldActionDoc->setHtml(QString::fromStdString(doc));
             m_fieldActionAttribute->setText(QString::fromStdString(attrVal));
         } else {
@@ -4114,7 +4114,7 @@ WtMyClass::fieldAction_AddAction(bool const  isInline)
         bool  ok = false;
         QStringList  actions;
 
-        std::string const  currFieldType = m_objPtr->getField()[idx].getTypeName();
+        std::string const  currFieldType = m_objPtr->getField()[idx]->getTypeName();
         if (currFieldType == "bool") {
             actions << g5 << g6 << g3 << g4 << g1 << g2 << g0;
         } else if (xu::isPrmType(currFieldType)) {
@@ -4144,7 +4144,7 @@ WtMyClass::fieldAction_AddAction(bool const  isInline)
             }
             Action const  action = fromActionString(
                     myAction.toUtf8().toStdString());
-            auto  fdFs = m_objPtr->getField()[idx];
+            Field  fdFs = *m_objPtr->getField()[idx];
             std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
                     fdFs.getActionFnRef();
 
@@ -4163,31 +4163,31 @@ WtMyClass::fieldAction_AddAction(bool const  isInline)
                 switch (action) {
                 case Action::get :
                     actFn.second = std::make_shared<ActGetFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::setCopy :
                     actFn.second = std::make_shared<ActSetCopyFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::setMove :
                     actFn.second = std::make_shared<ActSetMoveFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::setConstValue :
                     actFn.second = std::make_shared<ActSetConstValueFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::setMutValue :
                     actFn.second = std::make_shared<ActSetMutValueFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::is :
                     actFn.second = std::make_shared<ActIsFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::has :
                     actFn.second = std::make_shared<ActHasFn>(m_objPtr,
-                            &(m_objPtr->getFieldRef()[idx]));
+                            m_objPtr->getFieldRef()[idx].get());
                     break;
                 case Action::none :
                     break;
@@ -5075,18 +5075,18 @@ void
 WtMyClass::repField()
 {
     m_fieldModel->removeRows(0, m_fieldModel->rowCount());
-    std::vector<Field> const  fds = m_objPtr->getField();
+    std::vector<std::shared_ptr<Field>> const  fds = m_objPtr->getField();
     size_t const  fdSize = fds.size();
     for (size_t  i = 0; i < fdSize; ++i) {
         QList<QStandardItem *>  items;
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-                fds[i].getFieldName()));
+                fds[i]->getFieldName()));
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
-                fds[i].getTypeName()));
+                fds[i]->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                fds[i].getDefValue()));
+                fds[i]->getDefValue()));
         QStandardItem *  isPtr = new QStandardItem;
-        isPtr->setData(QVariant(fds[i].isPointer()), Qt::EditRole | Qt::DisplayRole);
+        isPtr->setData(QVariant(fds[i]->isPointer()), Qt::EditRole | Qt::DisplayRole);
         items << item0 << item1 << item2 << isPtr;
         m_fieldModel->appendRow(items);
 
@@ -5101,14 +5101,14 @@ WtMyClass::repFieldIdRegular()
 {
     m_fieldIdRegularModel->removeRows(0, m_fieldIdRegularModel->rowCount());
     int const  colWidth = m_fieldIdRegularView->columnWidth(0);
-    std::vector<Field>  fdVec = m_objPtr->getField();
+    std::vector<std::shared_ptr<Field>>  fdVec = m_objPtr->getField();
     std::vector<size_t>  styleID = m_objPtr->getStyleField();
     for (auto const &  it: styleID) {
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
                 std::to_string(it)));
         item1->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                fdVec[it].getFieldName()));
+                fdVec[it]->getFieldName()));
         QList<QStandardItem *>  items;
         items << item1 << item2;
         m_fieldIdRegularModel->appendRow(items);
@@ -5121,14 +5121,14 @@ WtMyClass::repFieldId()
 {
     m_fieldIdModel->removeRows(0, m_fieldIdModel->rowCount());
     const int  colWidth = m_fieldIdView->columnWidth(0);
-    std::vector<Field>  fdVec = m_objPtr->getField();
+    std::vector<std::shared_ptr<Field>>  fdVec = m_objPtr->getField();
     std::vector<size_t>  sID = m_objPtr->getIDField();
     for (auto const &  it: sID) {
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
                 std::to_string(it)));
         item1->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                fdVec[it].getFieldName()));
+                fdVec[it]->getFieldName()));
         QList<QStandardItem *>  items;
         items << item1 << item2;
         m_fieldIdModel->appendRow(items);
@@ -5141,14 +5141,14 @@ WtMyClass::repFieldIdToString()
 {
     m_fieldIdToStringModel->removeRows(0, m_fieldIdToStringModel->rowCount());
     const int  colWidth = m_fieldIdToStringView->columnWidth(0);
-    std::vector<Field>  fdVec = m_objPtr->getField();
+    std::vector<std::shared_ptr<Field>>  fdVec = m_objPtr->getField();
     std::vector<size_t>  serzID = m_objPtr->getSerzField();
     for (auto const &  it: serzID) {
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
                 std::to_string(it)));
         item1->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                fdVec[it].getFieldName()));
+                fdVec[it]->getFieldName()));
         QList<QStandardItem *>  items;
         items << item1 << item2;
         m_fieldIdToStringModel->appendRow(items);
@@ -5168,7 +5168,7 @@ WtMyClass::repFieldAction()
 
         QStandardItem *  currItem = m_fieldActionModel->item(static_cast<int>(i), 0);
         std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actFn =
-                fdF[i].getActionFnRef();
+                fdF[i]->getActionFnRef();
         for (auto &  it: actFn) {
             QStandardItem *  itemAct1 = new QStandardItem(QString::fromStdString(
                     "    " + toActionString(it.first)));
@@ -5186,7 +5186,7 @@ WtMyClass::repFieldAction()
 void
 WtMyClass::updateActionTitle(size_t const  fieldIdx)
 {
-    Field  fd = m_objPtr->getField()[fieldIdx];
+    Field  fd = *m_objPtr->getField()[fieldIdx];
     std::string const  tab(8, '-');
     std::string const  fName = std::to_string(fieldIdx) + "  " + fd.getFieldName();
     QStandardItem *  item0 = new QStandardItem(QString::fromStdString(fName));
@@ -5210,7 +5210,7 @@ WtMyClass::updateActionTitle(size_t const  fieldIdx)
 void
 WtMyClass::updateActionChildren(size_t const  fieldIdx)
 {
-    Field  fdF = m_objPtr->getField()[fieldIdx];
+    Field  fdF = *m_objPtr->getField()[fieldIdx];
     std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
             fdF.getActionFnRef();
     for (int  i = 0; i < fnVec.size(); ++i) {
@@ -5235,7 +5235,7 @@ WtMyClass::repFieldActionDelIdx()
     QModelIndex const  index = m_fieldActionView->currentIndex();
     if (index.isValid() && index.parent().isValid()) {
         int const  row = index.parent().row();
-        Field  fdF = m_objPtr->getField()[row];
+        Field  fdF = *m_objPtr->getField()[row];
         std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
                 fdF.getActionFnRef();
         std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
@@ -5256,7 +5256,7 @@ WtMyClass::repFieldActionInsertIdx()
     QModelIndex const  index = m_fieldActionView->currentIndex();
     if (index.isValid() && index.parent().isValid()) {
         int const  row = index.parent().row();
-        Field  fdF = m_objPtr->getField()[row];
+        Field  fdF = *m_objPtr->getField()[row];
         std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
                 fdF.getActionFnRef();
         std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
@@ -5276,7 +5276,7 @@ WtMyClass::currFieldActionInsertIdx(int const  idx /* = INT_MAX */)
     QModelIndex const  indexFd = m_fieldActionView->currentIndex();
     if (indexFd.isValid() && indexFd.parent().isValid()) {
         int const  row = indexFd.parent().row();
-        Field  fdF = m_objPtr->getField()[row];
+        Field  fdF = *m_objPtr->getField()[row];
         std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
                 fdF.getActionFnRef();
         std::shared_ptr<ActFn>  fn = fnVec[indexFd.row()].second;
@@ -5377,7 +5377,7 @@ WtMyClass::nameCheckDuplication(std::string const &  fnName)
 
     auto  rawDataVec = m_objPtr->getField();
     for (const auto &  fn: rawDataVec) {
-        res = fn.getFieldName() == fnName;
+        res = fn->getFieldName() == fnName;
         if (res)  return res;
     }
 

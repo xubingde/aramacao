@@ -7,6 +7,7 @@
 #include <utility>
 #include <tuple>
 #include <vector>
+#include <memory>
 #include "eobject.h"
 #include "field.h"
 
@@ -56,9 +57,9 @@ public:
     virtual void  setBehindDcl(const std::string &  value);
     virtual void  setBehindDcl(std::string &&  value);
 
-    std::vector<Field>  getField() const;
-    virtual void  setField(const std::vector<Field> &  value);
-    virtual void  setField(std::vector<Field> &&  value);
+    std::vector<std::shared_ptr<Field>>  getField() const;
+    virtual void  setField(const std::vector<std::shared_ptr<Field>> &  value);
+    virtual void  setField(std::vector<std::shared_ptr<Field>> &&  value);
 
     int  getAlignas() const;
     virtual void  setAlignas(const int  value);
@@ -73,6 +74,8 @@ protected:
 
 private:
 
+    void  copyField();
+
     std::string     m_name;
     std::string     m_docment;
     std::string     m_attribute;
@@ -80,7 +83,7 @@ private:
     std::string     m_behind;
     std::string     m_beforeDcl;
     std::string     m_behindDcl;
-    std::vector<Field>      m_field;
+    std::vector<std::shared_ptr<Field>>     m_field;
     int             m_alignas;
 };
 

@@ -21,11 +21,6 @@ class MyClass;
 
 class Module;
 
-std::string  toString(std::vector<std::shared_ptr<Field>> const &  value);
-bool  fromString(std::vector<std::shared_ptr<Field>> &  res, std::string const &  value);
-bool  fromString(std::vector<std::shared_ptr<Field>> &  res, std::string_view const &  value);
-bool  fromString(std::vector<std::shared_ptr<Field>> &  res, char const *  data, size_t const  size);
-
 class MyClass : public EObject
 {
 
@@ -41,7 +36,7 @@ public:
 
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  getEObjectRef();
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  getEObjectPtr();
-    std::vector<Field> &  getFieldRef();
+    std::vector<std::shared_ptr<Field>> &  getFieldRef();
     virtual std::string  toHBlock(std::string const &  tabStr = std::string()) const override;
     virtual std::string  toCppBlock(std::string const & = std::string()) const override;
     virtual std::string  declaration(std::string const &  tabStr = std::string()) const override;
@@ -92,7 +87,7 @@ public:
 
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>>  getEobjList() const;
 
-    std::vector<Field>  getField() const;
+    std::vector<std::shared_ptr<Field>>  getField() const;
 
     std::vector<size_t>  getStyleField() const;
     virtual void  setStyleField(const std::vector<size_t> &  value);
@@ -255,11 +250,13 @@ private:
     std::string  class_friend(std::string const &  tabStr = std::string()) const;
     std::string  class_tplStringNotDefVal(const size_t  index = 0) const;
     void  classToInternal(MyClass *  myClass, bool const  isInternal);
+    void  copyEobjList();
+    void  copyField();
 
     std::vector<size_t>     m_stringErr;
     Module *        m_parentModulePtr;
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>>  m_eobjList;
-    std::vector<Field>      m_field;
+    std::vector<std::shared_ptr<Field>>     m_field;
     std::vector<size_t>     m_styleField;
     std::vector<size_t>     m_IDField;
     std::vector<size_t>     m_serzField;

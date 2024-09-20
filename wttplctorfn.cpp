@@ -1009,14 +1009,15 @@ WtTplCtorFn::repFieldValItem()
 {
     m_fieldValModel->removeRows(0, m_fieldValModel->rowCount());
 
-    std::vector<Field> &  fieldRef = m_objPtr->getParentClassPtr()->getFieldRef();
+    std::vector<std::shared_ptr<Field>> &  fieldRef =
+            m_objPtr->getParentClassPtr()->getFieldRef();
     std::vector<std::string>  fieldVal = m_objPtr->getDefValueCtor();
     int const  width0 = m_fieldValView->columnWidth(0);
     int const  width1 = m_fieldValView->columnWidth(1);
     int const  defSize = static_cast<int>(fieldVal.size());
     for (int i = 0; i < defSize; ++i) {
         QStandardItem *  item0 = new QStandardItem(QString::fromStdString(
-                fieldRef[i].getPrivateName()));
+                fieldRef[i]->getPrivateName()));
         item0->setFlags(Qt::NoItemFlags);
         item0->setFlags(Qt::ItemIsSelectable |
                 Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);

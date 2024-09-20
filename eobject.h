@@ -112,6 +112,7 @@ enum class Etype {
 class EObject;
 
 class ActFn;
+class Field;
 
 std::string  toString(std::vector<std::pair<Etype, std::shared_ptr<EObject>>> const &  value);
 bool  fromString(std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  res, std::string const &  value);
@@ -125,6 +126,10 @@ std::string  toString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObj
 bool  fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  res, std::string const &  value);
 bool  fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  res, std::string_view const &  value);
 bool  fromString(std::vector<std::tuple<size_t, Etype, std::shared_ptr<EObject>>> &  res, char const *  data, size_t const  size);
+std::string  toString(std::vector<std::shared_ptr<Field>> const &  value);
+bool  fromString(std::vector<std::shared_ptr<Field>> &  res, std::string const &  value);
+bool  fromString(std::vector<std::shared_ptr<Field>> &  res, std::string_view const &  value);
+bool  fromString(std::vector<std::shared_ptr<Field>> &  res, char const *  data, size_t const  size);
 std::string  toActionString(Action const  act);
 Action  fromActionString(std::string const &  val);
 

@@ -112,6 +112,7 @@ Function::Function(const Function &  other):
         m_internal(other.m_internal),
         m_decSpaceLine(other.m_decSpaceLine)
 {
+    copyInsertMCode();
 }
 
 Function::Function(Function &&  other) noexcept:
@@ -274,6 +275,8 @@ Function::operator=(const Function &  other)
     m_pureVirtual = other.m_pureVirtual;
     m_internal = other.m_internal;
     m_decSpaceLine = other.m_decSpaceLine;
+
+    copyInsertMCode();
 
     return *this;
 }
@@ -556,7 +559,7 @@ Function::definition(std::string const &  tabStr /* = std::string() */) const
         if (m_noexcept)  res += " noexcept";
 
         ClassType  ct = ClassType::cppFinal;
-        std::vector<Field>  vecField;
+        std::vector<std::shared_ptr<Field>>  vecField;
         if (m_parentClassPtr) {
             ct = m_parentClassPtr->getClasstype();
             vecField = m_parentClassPtr->getField();
@@ -577,7 +580,7 @@ Function::definition(std::string const &  tabStr /* = std::string() */) const
         }
         if (fieldSize > 0) {
             for (size_t  i = 0; i < fieldSize; ++i) {
-                res += tabStr + tab2 + vecField[i].getPrivateName() +
+                res += tabStr + tab2 + vecField[i]->getPrivateName() +
                         "(" + m_defValueCtor[i] + ")";
                 if (i != fieldSize - 1) {
                     res += ",\n";
@@ -967,6 +970,125 @@ Function::multipleInh() const
     }
 
     return res;
+}
+
+void
+Function::copyInsertMCode()
+{
+    for (auto &  obj: m_insertMCode) {
+        std::shared_ptr<EObject>  objPtr;
+        switch (std::get<1>(obj)) {
+        case Etype::eObject :
+            break;
+        case Etype::eBasicBlock :
+            break;
+        case Etype::eFunction :
+            break;
+        case Etype::eFunctions :
+            break;
+        case Etype::eStaticFunctions :
+            break;
+        case Etype::eConstexprFunctions :
+            break;
+        case Etype::eTplFunctions :
+            break;
+        case Etype::eTplStaticFunctions :
+            break;
+        case Etype::eTplConstexprFunctions :
+            break;
+        case Etype::eClass :
+            objPtr = std::make_shared<MyClass>(
+                    *std::dynamic_pointer_cast<MyClass>(std::get<2>(obj)));
+            break;
+        case Etype::eClassDeclaration :
+            break;
+        case Etype::eEnum :
+            break;
+        case Etype::eStruct :
+            break;
+        case Etype::eStructDeclaration :
+            break;
+        case Etype::eTypedef :
+            break;
+        case Etype::eConstructors :
+            break;
+        case Etype::eTplConstructors :
+            break;
+        case Etype::eLabel :
+            break;
+        case Etype::ePublicLabel :
+            break;
+        case Etype::eProtectedLabel :
+            break;
+        case Etype::ePrivateLabel :
+            break;
+        case Etype::eDefaultConstructorFn :
+            break;
+        case Etype::eCopyConstructorFn :
+            break;
+        case Etype::eMoveConstructorFn :
+            break;
+        case Etype::eDestructorFn :
+            break;
+        case Etype::eCopyOperatorEqFn :
+            break;
+        case Etype::eMoveOperatorEqFn :
+            break;
+        case Etype::eActFn :
+            break;
+        case Etype::eActGetFn :
+            break;
+        case Etype::eActSetCopyFn :
+            break;
+        case Etype::eActSetMoveFn :
+            break;
+        case Etype::eActSetConstValueFn :
+            break;
+        case Etype::eActSetMutValueFn :
+            break;
+        case Etype::eActIsFn :
+            break;
+        case Etype::eActHasFn :
+            break;
+        case Etype::eEqFn :
+            break;
+        case Etype::eNotEqFn :
+            break;
+        case Etype::eVirtualEqFn :
+            break;
+        case Etype::eLessFn :
+            break;
+        case Etype::eLessEqFn :
+            break;
+        case Etype::eVirtualLessFn :
+            break;
+        case Etype::eGreaterFn :
+            break;
+        case Etype::eGreaterEqFn :
+            break;
+        case Etype::eExtSwapFn :
+            break;
+        case Etype::eInSwapFn :
+            break;
+        case Etype::eVirtualExchangeFn :
+            break;
+        case Etype::eToStringFn :
+            break;
+        case Etype::eVirtualSerializeFn :
+            break;
+        case Etype::eExtFromStringFn :
+            break;
+        case Etype::eInFromStringFn :
+            break;
+        case Etype::eDeserializeFn :
+            break;
+        case Etype::eModule :
+            break;
+        case Etype::eProject :
+            break;
+        }
+        std::get<2>(obj) = objPtr;
+    }
 }
 
 std::vector<size_t>
@@ -2020,6 +2142,7 @@ Function::deserialize(const char *  data,
 
         *this = std::move(me);
         result = true;
+        setParentClassPtr(nullptr);
     }
     m_stringErr = std::move(err);
 

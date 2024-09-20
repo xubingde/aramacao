@@ -35,6 +35,7 @@ MyStruct::MyStruct(const MyStruct &  other):
         m_field(other.m_field),
         m_alignas(other.m_alignas)
 {
+    copyField();
 }
 
 MyStruct::MyStruct(MyStruct &&  other) noexcept:
@@ -71,6 +72,8 @@ MyStruct::operator=(const MyStruct &  other)
     m_behindDcl = other.m_behindDcl;
     m_field = other.m_field;
     m_alignas = other.m_alignas;
+
+    copyField();
 
     return *this;
 }
@@ -112,11 +115,20 @@ MyStruct::toHBlock(std::string const &  tabStr /* = std::string() */) const
 
     size_t const  size = m_field.size();
     for (size_t  i = 0; i < size; ++i) {
-        res += m_field[i].toBlockStruct(tabStr);
+        res += m_field[i]->toBlockStruct(tabStr);
     }
     res += tabStr + "};\n" + m_behind;
 
     return res;
+}
+
+void
+MyStruct::copyField()
+{
+    for (auto &  fd: m_field) {
+        std::shared_ptr<Field>  fdPtr = std::make_shared<Field>(*fd);
+        fd = fdPtr;
+    }
 }
 
 std::string
@@ -252,33 +264,33 @@ MyStruct::setBehindDcl(std::string &&  value)
     xu::procCode(m_behindDcl);
 }
 
-std::vector<Field>
+std::vector<std::shared_ptr<Field>>
 MyStruct::getField() const
 {
     return m_field;
 }
 
 void
-MyStruct::setField(const std::vector<Field> &  value)
+MyStruct::setField(const std::vector<std::shared_ptr<Field>> &  value)
 {
     m_field = value;
     for (auto &  fd: m_field) {
-        if (fd.getFieldName() == "") {
-            fd.setFieldName("Field1");
+        if (fd->getFieldName() == "") {
+            fd->setFieldName("Field1");
         }
-        fd.setActionFn({});
+        fd->setActionFn({});
     }
 }
 
 void
-MyStruct::setField(std::vector<Field> &&  value)
+MyStruct::setField(std::vector<std::shared_ptr<Field>> &&  value)
 {
     m_field = std::move(value);
     for (auto &  fd: m_field) {
-        if (fd.getFieldName() == "") {
-            fd.setFieldName("Field1");
+        if (fd->getFieldName() == "") {
+            fd->setFieldName("Field1");
         }
-        fd.setActionFn({});
+        fd->setActionFn({});
     }
 }
 

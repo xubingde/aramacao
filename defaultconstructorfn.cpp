@@ -64,14 +64,14 @@ DefaultConstructorFn::autoCode() const
 
     MyClass const *  parentPtr = getParentClassPtr();
     if (parentPtr == nullptr)  return autoCode;
-    std::vector<Field> const  vecField = parentPtr->getField();
+    std::vector<std::shared_ptr<Field>> const  vecField = parentPtr->getField();
 
     for (const auto &  fd: vecField) {
-        if (fd.isPointer()) {
-            const std::string  defv = fd.getDefValue();
+        if (fd->isPointer()) {
+            const std::string  defv = fd->getDefValue();
             if (!(defv == "nullptr" || defv.size() == 0)) {
-                autoCode += tab1 + fd.getPrivateName() + " = new " +
-                        fd.getTypeName() + "(" + defv + ");\n";
+                autoCode += tab1 + fd->getPrivateName() + " = new " +
+                        fd->getTypeName() + "(" + defv + ");\n";
             }
         }
     }
@@ -110,14 +110,14 @@ DefaultConstructorFn::init()
 void
 DefaultConstructorFn::updateDefualtValue()
 {
-    std::vector<Field>  vecField;
+    std::vector<std::shared_ptr<Field>>  vecField;
     MyClass *  parentPtr = getParentClassPtr();
     if (parentPtr) {
         vecField = parentPtr->getField();
     }
     std::vector<std::string>  defVal;
     for (const auto &  fd: vecField) {
-        defVal.push_back(fd.getCtorDefValue());
+        defVal.push_back(fd->getCtorDefValue());
     }
     setDefValueCtor(defVal);
 
