@@ -4219,6 +4219,36 @@ WtMyClass::fieldAction_DeleteAction_triggered()
 {
     if (!m_objPtr)  return;
 
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        if (index.column() != 0) {
+            index = index.sibling(index.row(), 0);
+        }
+
+        QStandardItem *  itemParent = m_fieldActionModel
+                ->itemFromIndex(index.parent());
+        itemParent->removeRow(index.row());
+
+        int const  idx = index.parent().row();
+        Field  fdF = *m_objPtr->getField()[idx];
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fdF.getActionFnRef();
+        fnVec.erase(fnVec.begin() + index.row());
+        m_objPtr->updateField(fdF, idx);
+
+        m_fieldActionView->setCurrentIndex(index.parent());
+    } else if (index.isValid() && !index.parent().isValid()) {
+        if (index.column() != 0) {
+            index = index.sibling(index.row(), 0);
+        }
+        int const  idx = index.row();
+        Field  fdF = *m_objPtr->getField()[idx];
+        fdF.setActionFn({});
+        m_objPtr->updateField(fdF, idx);
+
+        m_fieldActionModel->itemFromIndex(index)->removeRows(
+                0, m_fieldActionModel->itemFromIndex(index)->rowCount());
+    }
 }
 
 void

@@ -50,6 +50,7 @@ MyStruct::MyStruct(MyStruct &&  other) noexcept:
         m_field(std::move(other.m_field)),
         m_alignas(std::move(other.m_alignas))
 {
+    moveField();
 }
 
 MyStruct::~MyStruct() noexcept
@@ -95,6 +96,8 @@ MyStruct::operator=(MyStruct &&  other) noexcept
     m_field = std::move(other.m_field);
     m_alignas = std::move(other.m_alignas);
 
+    moveField();
+
     return *this;
 }
 
@@ -129,6 +132,11 @@ MyStruct::copyField()
         std::shared_ptr<Field>  fdPtr = std::make_shared<Field>(*fd);
         fd = fdPtr;
     }
+}
+
+void
+MyStruct::moveField()
+{
 }
 
 std::string

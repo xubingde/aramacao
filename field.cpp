@@ -68,6 +68,7 @@ Field::Field(Field &&  other) noexcept:
         m_mutable(std::move(other.m_mutable)),
         m_pointer(std::move(other.m_pointer))
 {
+    moveActionFn();
 }
 
 Field::~Field() noexcept
@@ -116,6 +117,8 @@ Field::operator=(Field &&  other) noexcept
     m_alignByte = std::move(other.m_alignByte);
     m_mutable = std::move(other.m_mutable);
     m_pointer = std::move(other.m_pointer);
+
+    moveActionFn();
 
     return *this;
 }
@@ -318,6 +321,14 @@ Field::copyActionFn()
             break;
         }
         actFn.second = actPtr;
+        actFn.second->setParentFieldPtr(this);
+    }
+}
+
+void
+Field::moveActionFn()
+{
+    for (auto &  actFn: m_actionFn) {
         actFn.second->setParentFieldPtr(this);
     }
 }

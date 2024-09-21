@@ -251,7 +251,9 @@ private:
     std::string  class_tplStringNotDefVal(const size_t  index = 0) const;
     void  classToInternal(MyClass *  myClass, bool const  isInternal);
     void  copyEobjList();
+    void  moveEobjList();
     void  copyField();
+    void  moveField();
 
     std::vector<size_t>     m_stringErr;
     Module *        m_parentModulePtr;

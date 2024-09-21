@@ -207,6 +207,8 @@ MyClass::MyClass(MyClass &&  other) noexcept:
         m_copyOpEq(std::move(other.m_copyOpEq)),
         m_moveOpEq(std::move(other.m_moveOpEq))
 {
+    moveEobjList();
+    moveField();
 }
 
 MyClass::~MyClass() noexcept
@@ -322,6 +324,9 @@ MyClass::operator=(MyClass &&  other) noexcept
     m_dtor = std::move(other.m_dtor);
     m_copyOpEq = std::move(other.m_copyOpEq);
     m_moveOpEq = std::move(other.m_moveOpEq);
+
+    moveEobjList();
+    moveField();
 
     return *this;
 }
@@ -805,7 +810,7 @@ void
 MyClass::appendField(Field &&  value)
 {
     std::shared_ptr<Field>  ptr = std::make_shared<Field>(std::move(value));
-    m_field.push_back(std::move(ptr));
+    m_field.push_back(ptr);
     appendFieldIndex();
 }
 
@@ -829,7 +834,7 @@ MyClass::updateField(Field &&  value,
 {
     std::shared_ptr<Field>  ptr = std::make_shared<Field>(std::move(value));
     if (index < m_field.size()) {
-        m_field[index] = std::move(ptr);
+        m_field[index] = ptr;
         updateFieldIndex(index);
         return true;
     } else {
@@ -857,7 +862,7 @@ MyClass::insertField(Field &&  value,
         index = m_field.size();
     }
     std::shared_ptr<Field>  ptr = std::make_shared<Field>(std::move(value));
-    m_field.insert(m_field.begin() + index, std::move(ptr));
+    m_field.insert(m_field.begin() + index, ptr);
     insertFieldIndex(index);
 }
 
@@ -2443,6 +2448,122 @@ MyClass::copyEobjList()
 }
 
 void
+MyClass::moveEobjList()
+{
+    for (auto &  obj: m_eobjList) {
+        switch (obj.first) {
+        case Etype::eFunctions :
+            std::dynamic_pointer_cast<Functions>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eStaticFunctions :
+            std::dynamic_pointer_cast<StaticFunctions>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eConstexprFunctions :
+            std::dynamic_pointer_cast<ConstexprFunctions>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eTplFunctions :
+            std::dynamic_pointer_cast<TplFunctions>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eTplStaticFunctions :
+            std::dynamic_pointer_cast<TplStaticFunctions>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eTplConstexprFunctions :
+            std::dynamic_pointer_cast<TplConstexprFunctions>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eClass :
+            std::dynamic_pointer_cast<MyClass>(obj.second)->setInternal(true);
+            break;
+        case Etype::eConstructors :
+            std::dynamic_pointer_cast<Constructors>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eTplConstructors :
+            std::dynamic_pointer_cast<TplConstructors>(
+                    obj.second)->setParentClassPtr(this);
+            break;
+        case Etype::eDefaultConstructorFn :
+            std::dynamic_pointer_cast<DefaultConstructorFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<DefaultConstructorFn>(obj.second)->init();
+            break;
+        case Etype::eCopyConstructorFn :
+            std::dynamic_pointer_cast<CopyConstructorFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<CopyConstructorFn>(obj.second)->init();
+            break;
+        case Etype::eMoveConstructorFn :
+            std::dynamic_pointer_cast<MoveConstructorFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<MoveConstructorFn>(obj.second)->init();
+            break;
+        case Etype::eDestructorFn :
+            std::dynamic_pointer_cast<DestructorFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<DestructorFn>(obj.second)->init();
+            break;
+        case Etype::eCopyOperatorEqFn :
+            std::dynamic_pointer_cast<CopyOperatorEqFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<CopyOperatorEqFn>(obj.second)->init();
+            break;
+        case Etype::eMoveOperatorEqFn :
+            std::dynamic_pointer_cast<MoveOperatorEqFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<MoveOperatorEqFn>(obj.second)->init();
+            break;
+        case Etype::eVirtualEqFn :
+            std::dynamic_pointer_cast<VirtualEqFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualEqFn>(obj.second)->init();
+            break;
+        case Etype::eVirtualLessFn :
+            std::dynamic_pointer_cast<VirtualLessFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualLessFn>(obj.second)->init();
+            break;
+        case Etype::eInSwapFn :
+            std::dynamic_pointer_cast<InSwapFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<InSwapFn>(obj.second)->init();
+            break;
+        case Etype::eVirtualExchangeFn :
+            std::dynamic_pointer_cast<VirtualExchangeFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualExchangeFn>(obj.second)->init();
+            break;
+        case Etype::eToStringFn :
+            std::dynamic_pointer_cast<ToStringFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<ToStringFn>(obj.second)->init();
+            break;
+        case Etype::eVirtualSerializeFn :
+            std::dynamic_pointer_cast<VirtualSerializeFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<VirtualSerializeFn>(obj.second)->init();
+            break;
+        case Etype::eInFromStringFn :
+            std::dynamic_pointer_cast<InFromStringFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<InFromStringFn>(obj.second)->init();
+            break;
+        case Etype::eDeserializeFn :
+            std::dynamic_pointer_cast<DeserializeFn>(
+                    obj.second)->setParentClassPtr(this);
+            std::dynamic_pointer_cast<DeserializeFn>(obj.second)->init();
+            break;
+        default :
+            break;
+        }
+    }
+}
+
+void
 MyClass::copyField()
 {
     for (auto &  fd: m_field) {
@@ -2455,6 +2576,20 @@ MyClass::copyField()
             actFn.second->init();
         }
         fd = ptr;
+    }
+}
+
+void
+MyClass::moveField()
+{
+    for (auto &  fd: m_field) {
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actFnVec =
+                fd->getActionFnRef();
+        for (auto &  actFn: actFnVec) {
+            actFn.second->setParentClassPtr(this);
+            actFn.second->setParentFieldPtr(fd.get());
+            actFn.second->init();
+        }
     }
 }
 

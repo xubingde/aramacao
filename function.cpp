@@ -164,6 +164,7 @@ Function::Function(Function &&  other) noexcept:
         m_internal(std::move(other.m_internal)),
         m_decSpaceLine(std::move(other.m_decSpaceLine))
 {
+    moveInsertMCode();
 }
 
 Function::Function(MyClass *  parent):
@@ -334,6 +335,8 @@ Function::operator=(Function &&  other) noexcept
     m_pureVirtual = std::move(other.m_pureVirtual);
     m_internal = std::move(other.m_internal);
     m_decSpaceLine = std::move(other.m_decSpaceLine);
+
+    moveInsertMCode();
 
     return *this;
 }
@@ -1089,6 +1092,11 @@ Function::copyInsertMCode()
         }
         std::get<2>(obj) = objPtr;
     }
+}
+
+void
+Function::moveInsertMCode()
+{
 }
 
 std::vector<size_t>

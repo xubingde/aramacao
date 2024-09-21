@@ -90,6 +90,7 @@ Module::Module(Module &&  other) noexcept:
         m_update(std::move(other.m_update)),
         m_headerOnly(std::move(other.m_headerOnly))
 {
+    moveEobjList();
 }
 
 Module::~Module() noexcept
@@ -140,6 +141,8 @@ Module::operator=(Module &&  other) noexcept
     m_extension = std::move(other.m_extension);
     m_update = std::move(other.m_update);
     m_headerOnly = std::move(other.m_headerOnly);
+
+    moveEobjList();
 
     return *this;
 }
@@ -827,6 +830,45 @@ Module::copyEobjList()
             break;
         }
         obj.second = ptr;
+    }
+}
+
+void
+Module::moveEobjList()
+{
+    for (auto &  obj: m_eobjList) {
+        switch (obj.first) {
+        case Etype::eFunctions :
+            std::dynamic_pointer_cast<Functions>(
+                    obj.second)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eStaticFunctions :
+            std::dynamic_pointer_cast<StaticFunctions>(
+                    obj.second)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eConstexprFunctions :
+            std::dynamic_pointer_cast<ConstexprFunctions>(
+                    obj.second)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eTplFunctions :
+            std::dynamic_pointer_cast<TplFunctions>(
+                    obj.second)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eTplStaticFunctions :
+            std::dynamic_pointer_cast<TplStaticFunctions>(
+                    obj.second)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eTplConstexprFunctions :
+            std::dynamic_pointer_cast<TplConstexprFunctions>(
+                    obj.second)->setParentClassPtr(nullptr);
+            break;
+        case Etype::eClass :
+            std::dynamic_pointer_cast<MyClass>(
+                    obj.second)->setParentModulePtr(this);
+            break;
+        default :
+            break;
+        }
     }
 }
 

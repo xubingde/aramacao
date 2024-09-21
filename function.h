@@ -208,6 +208,7 @@ private:
 
     std::string  multipleInh() const;
     void  copyInsertMCode();
+    void  moveInsertMCode();
 
     std::vector<size_t>     m_stringErr;
     MyClass *       m_parentClassPtr;

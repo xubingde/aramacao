@@ -104,6 +104,7 @@ public:
 private:
 
     void  copyActionFn();
+    void  moveActionFn();
 
     std::vector<size_t>     m_stringErr;
     std::string     m_fieldName;

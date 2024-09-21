@@ -75,6 +75,7 @@ protected:
 private:
 
     void  copyField();
+    void  moveField();
 
     std::string     m_name;
     std::string     m_docment;
