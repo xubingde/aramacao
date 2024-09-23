@@ -130,6 +130,7 @@ MyStruct::copyField()
 {
     for (auto &  fd: m_field) {
         std::shared_ptr<Field>  fdPtr = std::make_shared<Field>(*fd);
+        fdPtr->setActionFn({});
         fd = fdPtr;
     }
 }
@@ -137,6 +138,9 @@ MyStruct::copyField()
 void
 MyStruct::moveField()
 {
+    for (auto &  fd: m_field) {
+        fd->setActionFn({});
+    }
 }
 
 std::string

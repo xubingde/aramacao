@@ -253,11 +253,10 @@ std::string
 Field::hCodeDcl(std::string const &  tabStr /* = std::string() */) const
 {
     std::string  res;
-    std::string const  tab1(getDefTab());
 
     for (auto const &  it: m_actionFn) {
         auto const &  fnPtr = std::dynamic_pointer_cast<Function>(it.second);
-        res += tabStr + tab1 + fnPtr->declaration();
+        res += tabStr + fnPtr->declaration();
     }
 
     return res;

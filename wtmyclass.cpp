@@ -4256,63 +4256,335 @@ WtMyClass::fieldAction_InsBeforBehind_triggered()
 {
     if (!m_objPtr)  return;
 
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        if (index.column() != 0) {
+            index = index.sibling(index.row(), 0);
+        }
+        int const  idx = index.parent().row();
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idx]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+
+        std::string const  title("Function: " + fn->getFunctionName());
+        QString const  beforeFirstLabel("    function declaration Insert ( .h )");
+        QString const  behindFirstLabel("    function declaration Follow ( .h )");
+        QString const  beforeSecondLabel("    function definition Insert ( .cpp )");
+        QString const  behindSecondLabel("    function definition Follow ( .cpp )");
+        std::string  beforeFirstString = fn->getHBefore();
+        std::string  behindFirstString = fn->getHBehind();
+        std::string  beforeSecondString = fn->getCppBefore();
+        std::string  behindSecondString = fn->getCppBehind();
+
+        FourBeforeBehind  fbe(title, beforeFirstLabel, behindFirstLabel,
+                beforeFirstString, behindFirstString,
+                beforeSecondLabel, behindSecondLabel,
+                beforeSecondString, beforeSecondString);
+        fbe.exec();
+        fn->setHBefore(std::move(beforeFirstString));
+        fn->setHBehind(std::move(behindFirstString));
+        fn->setCppBefore(std::move(beforeSecondString));
+        fn->setCppBehind(std::move(behindSecondString));
+    } else if (index.isValid() && !index.parent().isValid()) {
+        const int  row = index.row();
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::shared_ptr<Field>  fd = fieldRef[row];
+
+        std::string const  title("Struct item: " + fd->getFieldName());
+        QString const  beforeLabel("    Struct Item Insert ");
+        QString const  behindLabel("    Struct Item Follow ");
+        std::string  beforeString = fd->getBefore();
+        std::string  behindString = fd->getBehind();
+
+        TwoBeforeBehind  tbe(title, beforeLabel, behindLabel, beforeString, behindString);
+        tbe.exec();
+        fd->setBefore(std::move(beforeString));
+        fd->setBehind(std::move(behindString));
+    }
 }
 
 void
 WtMyClass::fieldActionAutoCodeConnect()
 {
+    QAction *  actPrevious = new QAction(tr("Previous Auto Source Code"));
+    QAction *  actUpdate = new QAction(tr("Update Source Code"));
+    actPrevious->setParent(this);
+    actUpdate->setParent(this);
+    m_fieldActionAutoCode->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldActionAutoCode->addAction(actPrevious);
+    m_fieldActionAutoCode->addAction(actUpdate);
+
+    connect(actPrevious, &QAction::triggered,
+            this, &WtMyClass::fieldActionAutoCode_Previous_triggered);
+    connect(actUpdate, &QAction::triggered,
+            this, &WtMyClass::fieldActionAutoCode_Update_triggered);
+}
+
+void
+WtMyClass::fieldActionAutoCode_Previous_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  row = index.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+
+        m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                fn->autoCode()));
+    }
+}
+
+void
+WtMyClass::fieldActionAutoCode_Update_triggered()
+{
+    if (!m_objPtr)  return;
+
+    const QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        const int  row = index.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+
+        m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                fn->updateAutoCode()));
+    }
 }
 
 void
 WtMyClass::fieldActionDelIdxConnect()
 {
+    QAction *  actAdd = new QAction(tr("Add New Index"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    m_fieldActionDelIdxView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldActionDelIdxView->addAction(actAdd);
+    m_fieldActionDelIdxView->addAction(actDelete);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::fieldActionDelIdx_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::fieldActionDelIdx_Delete_triggered);
+}
+
+void
+WtMyClass::fieldActionDelIdx_Add_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  row = index.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+        std::vector<size_t>  listLine = fn->getStrike();
+
+        bool  ok = false;
+        int const  inputIdx = QInputDialog::getInt(this, "Delete row",
+                    "Delete row: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            listLine.push_back(inputIdx);
+            fn->setStrike(listLine);
+
+            repFieldActionDelIdx();
+
+            listLine = fn->getStrike();
+            auto  itF = std::find(listLine.begin(), listLine.end(), inputIdx);
+            auto const  idx = std::distance(listLine.begin(), itF);
+            m_fieldActionDelIdxView->setCurrentIndex(
+                        m_fieldActionDelIdxModel->index(idx, 0));
+            m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                        fn->updateAutoCode()));
+        }
+    }
+}
+
+void
+WtMyClass::fieldActionDelIdx_Delete_triggered()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex const  indexFn = m_fieldActionView->currentIndex();
+    QModelIndex const  indexIdx = m_fieldActionDelIdxView->currentIndex();
+    if (indexIdx.isValid() && indexFn.isValid() && indexFn.parent().isValid()) {
+        int const  row = indexFn.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[indexFn.row()].second;
+        std::vector<size_t>  listLine = fn->getStrike();
+
+        listLine.erase(listLine.begin() + indexIdx.row());
+        fn->setStrike(listLine);
+
+        repFieldActionDelIdx();
+
+        m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                    fn->updateAutoCode()));
+    }
 }
 
 void
 WtMyClass::fieldActionInsertIdxConnect()
 {
+    QAction *  actAdd = new QAction(tr("Add New Index"));
+    QAction *  actDelete = new QAction(tr("Delete"));
+    QAction *  actModify = new QAction(tr("Modify Index"));
+    actAdd->setParent(this);
+    actDelete->setParent(this);
+    actModify->setParent(this);
+    m_fieldActionInsertIdxView->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_fieldActionInsertIdxView->addAction(actAdd);
+    m_fieldActionInsertIdxView->addAction(actDelete);
+    m_fieldActionInsertIdxView->addAction(actModify);
+
+    connect(actAdd, &QAction::triggered,
+            this, &WtMyClass::fieldActionInsertIdx_Add_triggered);
+    connect(actDelete, &QAction::triggered,
+            this, &WtMyClass::fieldActionInsertIdx_Delete_triggered);
+    connect(actModify, &QAction::triggered,
+            this, &WtMyClass::fieldActionInsertIdx_Modify_triggered);
+
+    connect(m_fieldActionInsertIdxView->selectionModel(),
+            &QItemSelectionModel::currentRowChanged,
+            this, &WtMyClass::fieldActionInsertIdx_RowChanged);
 }
 
 void
-WtMyClass::fdActAttribute_editingFinished()
+WtMyClass::fieldActionInsertIdx_RowChanged()
 {
     if (!m_objPtr)  return;
 
+    int const  row = m_fieldActionInsertIdxView->currentIndex().row();
+    currFieldActionInsertIdx(row);
 }
 
 void
-WtMyClass::fdActInline_stateChanged(int const  status)
+WtMyClass::fieldActionInsertIdx_Add_triggered()
 {
     if (!m_objPtr)  return;
 
+    QModelIndex const  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  row = index.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[index.row()].second;
+        std::vector<std::pair<size_t, std::string>>  listLine = fn->getNewCode();
+
+        bool  ok = false;
+        int const  inputIdx = QInputDialog::getInt(this, "Insert row position",
+                    "Insert row position: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            auto  itF = std::find_if(listLine.begin(), listLine.end(),
+                    [inputIdx](std::pair<size_t, std::string> const &  value) ->bool {
+                if (inputIdx == value.first) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            if (itF == listLine.end()) {
+                listLine.push_back({ inputIdx, "" });
+                fn->setNewCode(listLine);
+
+                repFieldActionInsertIdx();
+                currFieldActionInsertIdx(inputIdx);
+            }
+        }
+    }
 }
 
 void
-WtMyClass::fdActNoexcept_stateChanged(int const  status)
+WtMyClass::fieldActionInsertIdx_Delete_triggered()
 {
     if (!m_objPtr)  return;
 
+    QModelIndex const  indexFn = m_fieldActionView->currentIndex();
+    QModelIndex const  indexIdx = m_fieldActionInsertIdxView->currentIndex();
+    if (indexIdx.isValid() && indexFn.isValid() && indexFn.parent().isValid()) {
+        int const  row = indexFn.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[indexFn.row()].second;
+        std::vector<std::pair<size_t, std::string>>  listLine = fn->getNewCode();
+
+        listLine.erase(listLine.begin() + indexIdx.row());
+        fn->setNewCode(listLine);
+
+        repFieldActionInsertIdx();
+
+        m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                fn->updateAutoCode()));
+    }
 }
 
 void
-WtMyClass::fdActVirtual_stateChanged(int const  status)
+WtMyClass::fieldActionInsertIdx_Modify_triggered()
 {
     if (!m_objPtr)  return;
 
-}
+    QModelIndex const  indexFn = m_fieldActionView->currentIndex();
+    QModelIndex const  indexIdx = m_fieldActionInsertIdxView->currentIndex();
+    if (indexIdx.isValid() && indexFn.isValid() && indexFn.parent().isValid()) {
+        int const  row = indexFn.parent().row();
 
-void
-WtMyClass::fdActOverride_stateChanged(int const  status)
-{
-    if (!m_objPtr)  return;
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[indexFn.row()].second;
+        std::vector<std::pair<size_t, std::string>>  listLine = fn->getNewCode();
 
-}
+        bool  ok = false;
+        int const  inputIdx = QInputDialog::getInt(this, "Modyfy to",
+                    "Modify to: ", 0, 0, 2000000, 1, &ok);
+        if (ok) {
+            auto  itF = std::find_if(listLine.begin(), listLine.end(),
+                     [inputIdx](std::pair<size_t, std::string> const &  value) ->bool {
+                if (inputIdx == value.first) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            if (itF == listLine.end()) {
+                listLine[indexIdx.row()].first = inputIdx;
+                fn->setNewCode(listLine);
 
-void
-WtMyClass::fdActFinal_stateChanged(int const  status)
-{
-    if (!m_objPtr)  return;
+                repFieldActionInsertIdx();
+                currFieldActionInsertIdx(inputIdx);
 
+                m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                        fn->updateAutoCode()));
+            }
+        }
+    }
 }
 
 void
@@ -4320,6 +4592,212 @@ WtMyClass::fdActInsertCode_textChanged()
 {
     if (!m_objPtr)  return;
 
+    QModelIndex const  indexFn = m_fieldActionView->currentIndex();
+    QModelIndex const  indexIdx = m_fieldActionInsertIdxView->currentIndex();
+    if (indexIdx.isValid() && indexFn.isValid() && indexFn.parent().isValid()) {
+        const int  row = indexFn.parent().row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[row]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[indexFn.row()].second;
+        std::vector<std::pair<size_t, std::string>>  listLine = fn->getNewCode();
+
+        std::string const  oldVal = listLine[indexIdx.row()].second;
+        std::string const  currVal = m_fieldActionInsertCode->
+                toPlainText().toUtf8().toStdString();
+        if (oldVal != currVal) {
+            listLine[indexIdx.row()].second = currVal;
+            fn->setNewCode(listLine);
+
+            m_fieldActionAutoCode->setPlainText(QString::fromStdString(
+                    fn->updateAutoCode()));
+        }
+    }
+}
+
+void
+WtMyClass::fdActAttribute_editingFinished()
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    QModelIndex  idxParent = index.parent();
+    std::string const  currVal = m_fieldActionAttribute->text().toUtf8().toStdString();
+    if (index.isValid()) {
+        if (idxParent.isValid()) {
+            int const  rowField = idxParent.row();
+            int const  rowAction = index.row();
+            std::vector<std::shared_ptr<Field>> &  fieldRef =
+                    m_objPtr->getFieldRef();
+            std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                    fieldRef[rowField]->getActionFnRef();
+            std::shared_ptr<ActFn>  fn = fnVec[rowAction].second;
+            fn->setAttribute(currVal);
+        } else {
+            int const  rowField = index.row();
+            std::vector<std::shared_ptr<Field>> &  fieldRef =
+                    m_objPtr->getFieldRef();
+            std::shared_ptr<Field>  fd = fieldRef[rowField];
+            if (fd->getAttribute() != currVal) {
+                fd->setAttribute(currVal);
+
+                if (m_fieldView->currentIndex().row() == rowField) {
+                    m_fieldAttribute->setText(QString::fromStdString(currVal));
+                }
+            }
+        }
+    }
+}
+
+void
+WtMyClass::fdActInline_stateChanged(int const  status)
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  idxField = index.parent().row();
+        int const  idxAction = index.row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idxField]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[idxAction].second;
+
+        bool  isChecked = false;
+        if (status == Qt::Checked) {
+            isChecked = true;
+        }
+        fn->setInline(isChecked);
+    }
+}
+
+void
+WtMyClass::fdActNoexcept_stateChanged(int const  status)
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  idxField = index.parent().row();
+        int const  idxAction = index.row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idxField]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[idxAction].second;
+
+        bool  isChecked = false;
+        if (status == Qt::Checked) {
+            isChecked = true;
+        }
+        fn->setNoexcept(isChecked);
+        updateFieldFnDcl();
+    }
+}
+
+void
+WtMyClass::fdActVirtual_stateChanged(int const  status)
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  idxField = index.parent().row();
+        int const  idxAction = index.row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idxField]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[idxAction].second;
+
+        bool  isChecked = false;
+        if (status == Qt::Checked) {
+            isChecked = true;
+        }
+        fn->setVirtual(isChecked);
+        updateFieldFnDcl();
+    }
+}
+
+void
+WtMyClass::fdActOverride_stateChanged(int const  status)
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  idxField = index.parent().row();
+        int const  idxAction = index.row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idxField]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[idxAction].second;
+
+        bool  isChecked = false;
+        if (status == Qt::Checked) {
+            isChecked = true;
+        }
+        fn->setOverride(isChecked);
+        updateFieldFnDcl();
+    }
+}
+
+void
+WtMyClass::fdActFinal_stateChanged(int const  status)
+{
+    if (!m_objPtr)  return;
+
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        int const  idxField = index.parent().row();
+        int const  idxAction = index.row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idxField]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[idxAction].second;
+
+        bool  isChecked = false;
+        if (status == Qt::Checked) {
+            isChecked = true;
+        }
+        fn->setFinal(isChecked);
+        updateFieldFnDcl();
+    }
+}
+
+void
+WtMyClass::mainTab_tabBarClicked(int const  index)
+{
+    if (!m_objPtr)  return;
+
+    switch (index) {
+    case 4:
+        m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+        break;
+    case 5:
+        m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
+        break;
+    }
+}
+
+void
+WtMyClass::dotHConnect()
+{
+}
+
+void
+WtMyClass::dotCppConnect()
+{
 }
 
 void
@@ -4720,6 +5198,11 @@ WtMyClass::connect_obj()
 
     connect(m_fieldActionInsertCode, &CodeEditor::textChanged,
             this, &WtMyClass::fdActInsertCode_textChanged);
+
+    connect(m_mainTab, &QTabWidget::tabBarClicked,
+            this, &WtMyClass::mainTab_tabBarClicked);
+    dotHConnect();
+    dotCppConnect();
 }
 
 void
@@ -5254,6 +5737,29 @@ WtMyClass::updateActionChildren(size_t const  fieldIdx)
         m_fieldActionModel->item(static_cast<int>(fieldIdx))->setChild(i, 0, item0);
         m_fieldActionModel->item(static_cast<int>(fieldIdx))->setChild(i, 1, item1);
         m_fieldActionView->setColumnWidth(0, width0);
+        m_fieldActionView->setColumnWidth(1, width1);
+    }
+}
+
+void
+WtMyClass::updateFieldFnDcl()
+{
+    QModelIndex  index = m_fieldActionView->currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        const auto  idxField = index.parent().row();
+        const auto  idxAction = index.row();
+
+        std::vector<std::shared_ptr<Field>> &  fieldRef =
+                m_objPtr->getFieldRef();
+        std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  fnVec =
+                fieldRef[idxField]->getActionFnRef();
+        std::shared_ptr<ActFn>  fn = fnVec[idxAction].second;
+
+        std::string  fdDcl = fn->declLabel();
+        QModelIndex  siblingIdx = index.sibling(idxAction, 1);
+        const int  width1 = m_fieldActionView->columnWidth(1);
+        m_fieldActionModel->itemFromIndex(siblingIdx)->setText(
+                QString::fromStdString(fdDcl));
         m_fieldActionView->setColumnWidth(1, width1);
     }
 }

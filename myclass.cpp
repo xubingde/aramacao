@@ -444,12 +444,15 @@ MyClass::definition(std::string const &  tabStr /* = std::string() */) const
     res += class_begin(tabStr);
     res += class_friend(tabStr);
 
+    for (auto const &  it: m_eobjList) {
+        res += it.second->toHBlock();
+    }
+
     if (m_indPublicLabel) {
         res += class_field_FnDcl(m_indPublicLabel, tabStr);
     } else {
         bool  pubLabel = true;
         for (auto const &  it: m_eobjList) {
-            res += it.second->toHBlock(tabStr);
             Etype const  etp = it.second->getBaseType();
             if (etp == Etype::ePublicLabel) {
                 pubLabel = false;
@@ -2038,8 +2041,10 @@ MyClass::class_field_FnDcl(bool const  isPubLabel /* = true */,
 
     std::string  fdAutoCode;
     for (auto const &  fd: m_field) {
-        fdAutoCode += "\n";
-        fdAutoCode += fd->hCodeDcl(tabStr);
+        if (fd->hCodeDcl(tabStr).size() > 0) {
+            fdAutoCode += "\n";
+            fdAutoCode += fd->hCodeDcl(tabStr);
+        }
     }
 
     if (fdAutoCode.size() > 0) {
