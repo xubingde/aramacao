@@ -168,7 +168,11 @@ public:
     void  fdActFinal_stateChanged(int const  status);
     void  mainTab_tabBarClicked(int const  index);
     void  dotHConnect();
+    void  dotH_Previous_triggered();
+    void  dotH_Update_triggered();
     void  dotCppConnect();
+    void  dotCpp_Previous_triggered();
+    void  dotCpp_Update_triggered();
     void  repDefCtor();
     void  repCopyCtor();
     void  repMoveCtor();

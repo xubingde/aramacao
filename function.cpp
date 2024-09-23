@@ -387,6 +387,7 @@ Function::definition(std::string const &  tabStr /* = std::string() */) const
     std::string  res;
     const std::string  tab1(getDefTab());
     const std::string  tab2(getDefTab() + getDefTab());
+    const std::string  tab3(tab1 + tab2);
 
     if (!m_enabled)  return res;
     if (m_pureVirtual)  return res;
@@ -583,8 +584,13 @@ Function::definition(std::string const &  tabStr /* = std::string() */) const
         }
         if (fieldSize > 0) {
             for (size_t  i = 0; i < fieldSize; ++i) {
-                res += tabStr + tab2 + vecField[i]->getPrivateName() +
-                        "(" + m_defValueCtor[i] + ")";
+                if (m_internal) {
+                    res += tabStr + tab3 + vecField[i]->getPrivateName() +
+                            "(" + m_defValueCtor[i] + ")";
+                } else {
+                    res += tabStr + tab2 + vecField[i]->getPrivateName() +
+                            "(" + m_defValueCtor[i] + ")";
+                }
                 if (i != fieldSize - 1) {
                     res += ",\n";
                 }
@@ -606,9 +612,17 @@ Function::definition(std::string const &  tabStr /* = std::string() */) const
     res += "{\n";
 
     if (m_autoSource) {
-        res += updateAutoCode(tabStr);
+        if (m_internal) {
+            res += updateAutoCode(tab1);
+        } else {
+            res += updateAutoCode(tabStr);
+        }
     } else {
-        res += updateMCode(m_mCode, tabStr, true);
+        if (m_internal) {
+            res += updateMCode(m_mCode, tab1, true);
+        } else {
+            res += updateMCode(m_mCode, tabStr, true);
+        }
     }
 
     if (res[res.size() - 1] != '\n') {

@@ -39,6 +39,7 @@ public:
     virtual std::string  declaration(std::string const &  tabStr = std::string()) const override;
     std::vector<std::shared_ptr<Function>> &  getFunctionRef();
     std::vector<std::shared_ptr<Function>> *  getFunctionPtr();
+    void  setInternal(bool const  isInternal);
     void  enterClass(MyClass *  classPtr);
     void  leaveClass();
     bool  getFunction(Function &  result, const size_t  index) const;

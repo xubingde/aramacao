@@ -29,6 +29,7 @@ std::string  getRhs();
 void  setRhs(std::string const &  value);
 std::string  getLhs();
 void  setLhs(std::string const &  value);
+std::string  deleteSingleLineComment(std::string const &  code);
 
 static StyleType &  primGuiStyle();
 static std::string &  primDefTab();

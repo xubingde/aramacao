@@ -367,7 +367,14 @@ MyClass::toCppBlock(std::string const & /* = std::string() */) const
     std::string  res;
 
     if (m_impl) {
-        res = definition();
+        res += definition();
+    } else {
+        for (auto &  it: m_eobjList) {
+            res += it.second->toCppBlock();
+        }
+        for (auto &  fd: m_field) {
+            res += fd->cppCodeGeneral();
+        }
     }
 
     return res;
@@ -2237,7 +2244,7 @@ MyClass::classToInternal(MyClass *  myClass,
 {
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *
             objList = myClass->getEObjectPtr();
-    if (isInternal) {
+    if (isInternal || m_impl) {
         for (auto &  it: *objList) {
             EObject *  ptr = it.second.get();
             if (Function *  fnPtr = dynamic_cast<Function *>(ptr)) {
@@ -2250,6 +2257,14 @@ MyClass::classToInternal(MyClass *  myClass,
                 }
             } else if (MyClass *  clsPtr = dynamic_cast<MyClass *>(ptr)) {
                 classToInternal(clsPtr, true);
+            }
+        }
+
+        for (auto &  fd: m_field) {
+            std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actVec =
+                    fd->getActionFnRef();
+            for (auto &  fn: actVec) {
+                fn.second->setInternal(true);
             }
         }
     } else {
@@ -2265,6 +2280,14 @@ MyClass::classToInternal(MyClass *  myClass,
                 }
             } else if (MyClass *  clsPtr = dynamic_cast<MyClass *>(ptr)) {
                 classToInternal(clsPtr, false);
+            }
+        }
+
+        for (auto &  fd: m_field) {
+            std::vector<std::pair<Action, std::shared_ptr<ActFn>>> &  actVec =
+                    fd->getActionFnRef();
+            for (auto &  fn: actVec) {
+                fn.second->setInternal(false);
             }
         }
     }
@@ -3259,6 +3282,7 @@ void
 MyClass::setImpl(const bool  value)
 {
     m_impl = value;
+    classToInternal(this, m_impl);
 }
 
 bool

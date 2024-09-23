@@ -112,7 +112,6 @@ Functions::toHBlock(std::string const & /* = std::string() */) const
     std::string  res;
     std::string  tab1;
 
-    if (m_parentClassPtr)  tab1 = xu::getDefTab();
     if (m_objList.size() > 0)  res += "\n";
     for (auto const &  it: m_objList) {
         res += it->toHBlock(tab1);
@@ -150,6 +149,14 @@ std::vector<std::shared_ptr<Function>> *
 Functions::getFunctionPtr()
 {
     return &m_objList;
+}
+
+void
+Functions::setInternal(bool const  isInternal)
+{
+    for (auto &  it: m_objList) {
+        it->setInternal(isInternal);
+    }
 }
 
 void

@@ -12,6 +12,7 @@
 #include <QAbstractScrollArea>
 #include <QFrame>
 #include <QList>
+#include "publictype.h"
 #include "field.h"
 #include "highlighter.h"
 #include "twobeforebehind.h"
@@ -279,6 +280,9 @@ WtMyClass::className_editingFinished()
             }
         }
     }
+
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void
@@ -287,6 +291,9 @@ WtMyClass::attribute_editingFinished()
     if (!m_objPtr)  return;
 
     m_objPtr->setAttribute(m_attribute->text().toUtf8().toStdString());
+
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void
@@ -308,6 +315,9 @@ WtMyClass::alignas_editingFinished()
     if (currVal != newVal) {
         m_alignas->setText(QString::fromStdString(std::to_string(newVal)));
     }
+
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void
@@ -333,6 +343,9 @@ WtMyClass::beforBehindPb_clicked()
     m_objPtr->setHBeginBehind(hBeginBehind);
     m_objPtr->setHEndBefore(hEndBefore);
     m_objPtr->setHEndBehind(hEndBehind);
+
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void
@@ -4793,11 +4806,61 @@ WtMyClass::mainTab_tabBarClicked(int const  index)
 void
 WtMyClass::dotHConnect()
 {
+    QAction *  actPrevious = new QAction(tr("Previous Auto Source Code"));
+    QAction *  actUpdate = new QAction(tr("Update Source Code"));
+    actPrevious->setParent(this);
+    actUpdate->setParent(this);
+    m_dotH->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_dotH->addAction(actPrevious);
+    m_dotH->addAction(actUpdate);
+
+    connect(actPrevious, &QAction::triggered,
+            this, &WtMyClass::dotH_Previous_triggered);
+    connect(actUpdate, &QAction::triggered,
+            this, &WtMyClass::dotH_Update_triggered);
+}
+
+void
+WtMyClass::dotH_Previous_triggered()
+{
+    m_dotH->setPlainText(QString::fromStdString(deleteSingleLineComment(
+            m_objPtr->toHBlock())));
+}
+
+void
+WtMyClass::dotH_Update_triggered()
+{
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
 }
 
 void
 WtMyClass::dotCppConnect()
 {
+    QAction *  actPrevious = new QAction(tr("Previous Auto Source Code"));
+    QAction *  actUpdate = new QAction(tr("Update Source Code"));
+    actPrevious->setParent(this);
+    actUpdate->setParent(this);
+    m_dotCpp->setContextMenuPolicy(Qt::ActionsContextMenu);
+    m_dotCpp->addAction(actPrevious);
+    m_dotCpp->addAction(actUpdate);
+
+    connect(actPrevious, &QAction::triggered,
+            this, &WtMyClass::dotCpp_Previous_triggered);
+    connect(actUpdate, &QAction::triggered,
+            this, &WtMyClass::dotCpp_Update_triggered);
+}
+
+void
+WtMyClass::dotCpp_Previous_triggered()
+{
+    m_dotCpp->setPlainText(QString::fromStdString(
+            deleteSingleLineComment(m_objPtr->toCppBlock())));
+}
+
+void
+WtMyClass::dotCpp_Update_triggered()
+{
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void
@@ -5582,6 +5645,9 @@ WtMyClass::fillData()
     repMulInhClass();
     repTemplateClass();
     repFriendClass();
+
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void

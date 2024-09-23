@@ -242,7 +242,6 @@ Field::cppCodeGeneral(std::string const &  tabStr /* = std::string() */) const
 
     for (auto const &  it: m_actionFn) {
         auto const &  fnPtr = std::dynamic_pointer_cast<Function>(it.second);
-        res += "\n";
         res += fnPtr->toCppBlock(tabStr);
     }
 
@@ -256,7 +255,7 @@ Field::hCodeDcl(std::string const &  tabStr /* = std::string() */) const
 
     for (auto const &  it: m_actionFn) {
         auto const &  fnPtr = std::dynamic_pointer_cast<Function>(it.second);
-        res += tabStr + fnPtr->declaration();
+        res += fnPtr->toHBlock(tabStr);
     }
 
     return res;
