@@ -234,6 +234,7 @@ private:
     std::string  toFCodeLessIndex(Field const &  fd, std::string const &  tab, std::string const &  lhsName, std::string const &  rhsName) const;
     std::string  toFCodeToStringIndex(Field const &  fd) const;
     std::string  toFCodeFromStringIndex(Field const &  fd, size_t const  vi_index) const;
+    void  updateBaseClassName();
     void  appendFieldIndex();
     void  updateFieldIndex(size_t const  index);
     void  insertFieldIndex(size_t const  index);

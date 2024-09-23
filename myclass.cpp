@@ -1558,6 +1558,46 @@ MyClass::toFCodeFromStringIndex(Field const &  fd,
 }
 
 void
+MyClass::updateBaseClassName()
+{
+    auto  itEq = std::find_if(m_eobjList.begin(), m_eobjList.end(), [](
+            std::pair<Etype, std::shared_ptr<EObject>> const &  val) -> bool {
+                if (val.first == Etype::eVirtualEqFn) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+    if (itEq != m_eobjList.end()) {
+        std::dynamic_pointer_cast<VirtualEqFn>(itEq->second)->setParam({});
+    }
+
+    auto  itLess = std::find_if(m_eobjList.begin(), m_eobjList.end(), [](
+            std::pair<Etype, std::shared_ptr<EObject>> const &  val) -> bool {
+                if (val.first == Etype::eVirtualLessFn) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+    if (itLess != m_eobjList.end()) {
+        std::dynamic_pointer_cast<VirtualLessFn>(itLess->second)->setParam({});
+    }
+
+    auto  itSwap = std::find_if(m_eobjList.begin(), m_eobjList.end(), [](
+            std::pair<Etype, std::shared_ptr<EObject>> const &  val) -> bool {
+                if (val.first == Etype::eVirtualExchangeFn) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+    if (itSwap != m_eobjList.end()) {
+        std::dynamic_pointer_cast<VirtualExchangeFn>(itSwap->second)->setParam({});
+    }
+}
+
+void
 MyClass::appendFieldIndex()
 {
     size_t const  index = m_field.size() - 1;
@@ -2957,6 +2997,8 @@ MyClass::setClasstype(const ClassType  value)
     } else if (m_classtype == ClassType::cppBase) {
         m_finalClass = false;
     }
+    updateBaseClassName();
+
 }
 
 int
@@ -2989,6 +3031,7 @@ MyClass::setBaseClassPrarm(const std::string &  value)
     if (!xu::checkReg(m_baseClassPrarm)) {
         m_baseClassPrarm = "";
     }
+    updateBaseClassName();
 }
 
 std::pair<std::string, bool>
@@ -3005,6 +3048,7 @@ MyClass::setBaseClassFirst(const std::pair<std::string, bool> &  value)
     if (!checkReg(std::get<0>(m_baseClassFirst))) {
         m_baseClassFirst.first = "";
     }
+    updateBaseClassName();
 }
 
 std::vector<std::tuple<std::string, Purview, bool>>
