@@ -1655,6 +1655,18 @@ Function::setConstructor(const bool  value)
         m_returnType = "";
         if (m_parentClassPtr) {
             m_functionName = m_parentClassPtr->getClassName();
+            size_t const  fieldSize = m_parentClassPtr->getField().size();
+            if (m_defValueCtor.size() != fieldSize) {
+                m_defValueCtor.clear();
+                m_defValueCtor.insert(m_defValueCtor.begin(),
+                        fieldSize, "");
+            }
+            size_t const  inhSize = m_parentClassPtr->getMulInhClass().size();
+            if (m_inhValueBaseClass.size() != inhSize) {
+                m_inhValueBaseClass.clear();
+                m_inhValueBaseClass.insert(m_inhValueBaseClass.begin(),
+                        inhSize, "");
+            }
         }
         setTreeLabel("F   Constructor");
     } else {
