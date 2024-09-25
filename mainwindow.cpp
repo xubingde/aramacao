@@ -95,7 +95,8 @@ MainWindow::MainWindow(QWidget *  parent /* = nullptr */):
         m_wtMyStructDec(nullptr),
         m_wtMyStruct(nullptr),
         m_wtAutoFnEdit(nullptr),
-        m_wtMyClass(nullptr)
+        m_wtMyClass(nullptr),
+        m_wtModule(nullptr)
 {
     setWindowTitle("AraMacao");
     init_obj();
@@ -222,6 +223,13 @@ MainWindow::mainTreeView_clicked(QModelIndex const &  index)
         m_wtProject->setObjPtr(static_cast<Project *>(selfPtr));
         if (m_spvMain->widget(1) != m_wtProject) {
             m_spvMain->replaceWidget(1, m_wtProject);
+        }
+        break;
+    case Etype::eModule :
+        m_wtModule->setItemPtr(selfItem);
+        m_wtModule->setObjPtr(static_cast<Module *>(selfPtr));
+        if (m_spvMain->widget(1) != m_wtModule) {
+            m_spvMain->replaceWidget(1, m_wtModule);
         }
         break;
     case Etype::eDefaultConstructorFn :
@@ -4012,6 +4020,7 @@ MainWindow::init_obj()
     m_wtMyStruct = new WtMyStruct;
     m_wtAutoFnEdit = new WtAutoFnEdit;
     m_wtMyClass = new WtMyClass;
+    m_wtModule = new WtModule;
 }
 
 void

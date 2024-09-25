@@ -43,7 +43,7 @@ Module::Module():
         m_cppGlobalCode(),
         m_cppEndCode(),
         m_hStart(),
-        m_testCode(),
+        m_docment(),
         m_hInclude(),
         m_cppInclude(),
         m_namespace(),
@@ -64,7 +64,7 @@ Module::Module(const Module &  other):
         m_cppGlobalCode(other.m_cppGlobalCode),
         m_cppEndCode(other.m_cppEndCode),
         m_hStart(other.m_hStart),
-        m_testCode(other.m_testCode),
+        m_docment(other.m_docment),
         m_hInclude(other.m_hInclude),
         m_cppInclude(other.m_cppInclude),
         m_namespace(other.m_namespace),
@@ -82,7 +82,7 @@ Module::Module(Module &&  other) noexcept:
         m_cppGlobalCode(std::move(other.m_cppGlobalCode)),
         m_cppEndCode(std::move(other.m_cppEndCode)),
         m_hStart(std::move(other.m_hStart)),
-        m_testCode(std::move(other.m_testCode)),
+        m_docment(std::move(other.m_docment)),
         m_hInclude(std::move(other.m_hInclude)),
         m_cppInclude(std::move(other.m_cppInclude)),
         m_namespace(std::move(other.m_namespace)),
@@ -109,7 +109,7 @@ Module::operator=(const Module &  other)
     m_cppGlobalCode = other.m_cppGlobalCode;
     m_cppEndCode = other.m_cppEndCode;
     m_hStart = other.m_hStart;
-    m_testCode = other.m_testCode;
+    m_docment = other.m_docment;
     m_hInclude = other.m_hInclude;
     m_cppInclude = other.m_cppInclude;
     m_namespace = other.m_namespace;
@@ -134,7 +134,7 @@ Module::operator=(Module &&  other) noexcept
     m_cppGlobalCode = std::move(other.m_cppGlobalCode);
     m_cppEndCode = std::move(other.m_cppEndCode);
     m_hStart = std::move(other.m_hStart);
-    m_testCode = std::move(other.m_testCode);
+    m_docment = std::move(other.m_docment);
     m_hInclude = std::move(other.m_hInclude);
     m_cppInclude = std::move(other.m_cppInclude);
     m_namespace = std::move(other.m_namespace);
@@ -969,23 +969,21 @@ Module::setHStart(std::string &&  value)
 }
 
 std::string
-Module::getTestCode() const
+Module::getDocment() const
 {
-    return m_testCode;
+    return m_docment;
 }
 
 void
-Module::setTestCode(const std::string &  value)
+Module::setDocment(const std::string &  value)
 {
-    m_testCode = value;
-    xu::procCode(m_testCode);
+    m_docment = value;
 }
 
 void
-Module::setTestCode(std::string &&  value)
+Module::setDocment(std::string &&  value)
 {
-    m_testCode = std::move(value);
-    xu::procCode(m_testCode);
+    m_docment = std::move(value);
 }
 
 std::vector<IncludeItem>
@@ -1123,7 +1121,7 @@ Module::equal(const EObject &  value) const
         result = ( m_headerOnly == rhs.m_headerOnly );
         if (!result) return result;
 
-        result = ( m_testCode == rhs.m_testCode );
+        result = ( m_docment == rhs.m_docment );
         if (!result) return result;
 
     } catch (const std::bad_cast &) {
@@ -1174,8 +1172,8 @@ Module::less(const EObject &  value) const
         if (m_headerOnly < rhs.m_headerOnly) return true;
         if (rhs.m_headerOnly < m_headerOnly) return false;
 
-        if (m_testCode < rhs.m_testCode) return true;
-        if (rhs.m_testCode < m_testCode) return false;
+        if (m_docment < rhs.m_docment) return true;
+        if (rhs.m_docment < m_docment) return false;
 
     } catch (const std::bad_cast &) {
         ;
@@ -1195,7 +1193,7 @@ Module::serialize() const
     xu::append(res, xu::toString(m_cppGlobalCode));
     xu::append(res, xu::toString(m_cppEndCode));
     xu::append(res, xu::toString(m_hStart));
-    xu::append(res, xu::toString(m_testCode));
+    xu::append(res, xu::toString(m_docment));
     xu::append(res, xu::toString(m_hInclude));
     xu::append(res, xu::toString(m_cppInclude));
     xu::append(res, xu::toString(m_namespace));
@@ -1222,7 +1220,7 @@ Module::deserialize(const char *  data,
         if (!xu::fromString(me.m_cppGlobalCode, vi[3]))  err.push_back({3});
         if (!xu::fromString(me.m_cppEndCode, vi[4]))  err.push_back({4});
         if (!xu::fromString(me.m_hStart, vi[5]))  err.push_back({5});
-        if (!xu::fromString(me.m_testCode, vi[6]))  err.push_back({6});
+        if (!xu::fromString(me.m_docment, vi[6]))  err.push_back({6});
         if (!xu::fromString(me.m_hInclude, vi[7]))  err.push_back({7});
         if (!xu::fromString(me.m_cppInclude, vi[8]))  err.push_back({8});
         if (!xu::fromString(me.m_namespace, vi[9]))  err.push_back({9});
@@ -1233,9 +1231,9 @@ Module::deserialize(const char *  data,
     bool  result = false;
 
     if (err.size() == 0) {
-        refreshPtr();
         *this = std::move(me);
         result = true;
+        refreshPtr();
     }
 
     return result;
@@ -1255,7 +1253,7 @@ Module::exchange(EObject &  value) noexcept
         swap(m_cppGlobalCode, rhs.m_cppGlobalCode);
         swap(m_cppEndCode, rhs.m_cppEndCode);
         swap(m_hStart, rhs.m_hStart);
-        swap(m_testCode, rhs.m_testCode);
+        swap(m_docment, rhs.m_docment);
         swap(m_hInclude, rhs.m_hInclude);
         swap(m_cppInclude, rhs.m_cppInclude);
         swap(m_namespace, rhs.m_namespace);

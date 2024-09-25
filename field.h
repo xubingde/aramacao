@@ -74,6 +74,10 @@ public:
     void  setDefValue(const std::string &  value);
     void  setDefValue(std::string &&  value);
 
+    std::string  getStructDefValue() const;
+    void  setStructDefValue(const std::string &  value);
+    void  setStructDefValue(std::string &&  value);
+
     std::string  getArray() const;
     void  setArray(const std::string &  value);
 
@@ -111,6 +115,7 @@ private:
     std::string     m_docment;
     std::string     m_typeName;
     std::string     m_defValue;
+    std::string     m_structDefValue;
     std::string     m_array;
     std::string     m_attribute;
     std::string     m_before;

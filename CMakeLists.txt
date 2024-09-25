@@ -198,6 +198,8 @@ set(PROJECT_SOURCES
         wtautofnedit.h
         wtmyclass.cpp
         wtmyclass.h
+        wtmodule.cpp
+        wtmodule.h
         ${TS_FILES}
 )
 

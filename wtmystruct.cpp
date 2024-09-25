@@ -279,7 +279,7 @@ WtMyStruct::structItem_AddItem_triggered()
     QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
             newData->getTypeName()));
     QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-            newData->getDefValue()));
+            newData->getStructDefValue()));
     QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
             newData->getDocment()));
     QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
@@ -310,7 +310,7 @@ WtMyStruct::structItem_InsertNew_triggered()
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
                 newData->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                newData->getDefValue()));
+                newData->getStructDefValue()));
         QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
                 newData->getDocment()));
         QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
@@ -385,7 +385,7 @@ WtMyStruct::structItem_CopyToNew_triggered()
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
                 newData->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                newData->getDefValue()));
+                newData->getStructDefValue()));
         QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
                 newData->getDocment()));
         QStandardItem *  item4 = new QStandardItem(QString::fromStdString(
@@ -519,7 +519,7 @@ WtMyStruct::structItem_itemDelegate_closeEditor()
             m_objPtr->setField(std::move(rawDataVec));
             break;
         case 2 :
-            rawDataVec[row]->setDefValue(currVal);
+            rawDataVec[row]->setStructDefValue(currVal);
             m_objPtr->setField(std::move(rawDataVec));
             break;
         case 3 :
@@ -566,7 +566,7 @@ WtMyStruct::repStructItem()
         QStandardItem *  item1 = new QStandardItem(QString::fromStdString(
                 it->getTypeName()));
         QStandardItem *  item2 = new QStandardItem(QString::fromStdString(
-                it->getDefValue()));
+                it->getStructDefValue()));
         QStandardItem *  item3 = new QStandardItem(QString::fromStdString(
                 it->getDocment()));
         QStandardItem *  item4 = new QStandardItem(QString::fromStdString(

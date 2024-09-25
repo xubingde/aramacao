@@ -7,7 +7,7 @@
 namespace xu {
 
 NamespaceItem::NamespaceItem():
-        m_namespaceValue(),
+        m_namespaceValue("std5"),
         m_hBeginBefor(),
         m_hBeginBehind(),
         m_hEndBefor(),

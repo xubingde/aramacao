@@ -24,6 +24,7 @@ Field::Field():
         m_docment(),
         m_typeName("std::string"),
         m_defValue(),
+        m_structDefValue(),
         m_array(),
         m_attribute(),
         m_before(),
@@ -41,6 +42,7 @@ Field::Field(const Field &  other):
         m_docment(other.m_docment),
         m_typeName(other.m_typeName),
         m_defValue(other.m_defValue),
+        m_structDefValue(other.m_structDefValue),
         m_array(other.m_array),
         m_attribute(other.m_attribute),
         m_before(other.m_before),
@@ -59,6 +61,7 @@ Field::Field(Field &&  other) noexcept:
         m_docment(std::move(other.m_docment)),
         m_typeName(std::move(other.m_typeName)),
         m_defValue(std::move(other.m_defValue)),
+        m_structDefValue(std::move(other.m_structDefValue)),
         m_array(std::move(other.m_array)),
         m_attribute(std::move(other.m_attribute)),
         m_before(std::move(other.m_before)),
@@ -85,6 +88,7 @@ Field::operator=(const Field &  other)
     m_docment = other.m_docment;
     m_typeName = other.m_typeName;
     m_defValue = other.m_defValue;
+    m_structDefValue = other.m_structDefValue;
     m_array = other.m_array;
     m_attribute = other.m_attribute;
     m_before = other.m_before;
@@ -92,9 +96,9 @@ Field::operator=(const Field &  other)
     m_actionFn = other.m_actionFn;
     m_alignByte = other.m_alignByte;
     m_mutable = other.m_mutable;
-    m_pointer = other.m_pointer;
 
     copyActionFn();
+    m_pointer = other.m_pointer;
 
     return *this;
 }
@@ -109,6 +113,7 @@ Field::operator=(Field &&  other) noexcept
     m_docment = std::move(other.m_docment);
     m_typeName = std::move(other.m_typeName);
     m_defValue = std::move(other.m_defValue);
+    m_structDefValue = std::move(other.m_structDefValue);
     m_array = std::move(other.m_array);
     m_attribute = std::move(other.m_attribute);
     m_before = std::move(other.m_before);
@@ -116,9 +121,9 @@ Field::operator=(Field &&  other) noexcept
     m_actionFn = std::move(other.m_actionFn);
     m_alignByte = std::move(other.m_alignByte);
     m_mutable = std::move(other.m_mutable);
-    m_pointer = std::move(other.m_pointer);
 
     moveActionFn();
+    m_pointer = std::move(other.m_pointer);
 
     return *this;
 }
@@ -176,8 +181,8 @@ Field::toHBlock(std::string const &  tabStr /* = std::string() */) const
     if (m_array.size() > 0) {
         lineStr += "[" + m_array + "]";
     }
-    if (m_defValue.size() > 0) {
-        lineStr += " = " + m_defValue;
+    if (m_structDefValue.size() > 0) {
+        lineStr += " = " + m_structDefValue;
     }
     lineStr += ";\n";
 
@@ -401,6 +406,24 @@ void
 Field::setDefValue(std::string &&  value)
 {
     m_defValue = std::move(value);
+}
+
+std::string
+Field::getStructDefValue() const
+{
+    return m_structDefValue;
+}
+
+void
+Field::setStructDefValue(const std::string &  value)
+{
+    m_structDefValue = value;
+}
+
+void
+Field::setStructDefValue(std::string &&  value)
+{
+    m_structDefValue = std::move(value);
 }
 
 std::string
@@ -756,6 +779,7 @@ Field::toString() const
     xu::append(res, xu::toString(m_mutable));
     xu::append(res, xu::toString(m_pointer));
     xu::append(res, xu::toString(m_actionFn));
+    xu::append(res, xu::toString(m_structDefValue));
 
     return res;
 }
@@ -768,7 +792,7 @@ Field::fromString(const char *  data,
     std::vector<size_t>  err;
     const auto  vi { xu::viewIcode(data, size) };
 
-    if (vi.size() > 11) {
+    if (vi.size() > 12) {
         if (!xu::fromString(me.m_fieldName, vi[0]))  err.push_back({0});
         if (!xu::fromString(me.m_docment, vi[1]))  err.push_back({1});
         if (!xu::fromString(me.m_typeName, vi[2]))  err.push_back({2});
@@ -781,15 +805,16 @@ Field::fromString(const char *  data,
         if (!xu::fromString(me.m_mutable, vi[9]))  err.push_back({9});
         if (!xu::fromString(me.m_pointer, vi[10]))  err.push_back({10});
         if (!xu::fromString(me.m_actionFn, vi[11]))  err.push_back({11});
+        if (!xu::fromString(me.m_structDefValue, vi[12]))  err.push_back({12});
     }
     bool  result = false;
 
     if (err.size() == 0) {
         *this = std::move(me);
-        result = true;
         updateActionPtr();
-    }
+        result = true;
     m_stringErr = std::move(err);
+    }
 
     return result;
 }
@@ -819,6 +844,7 @@ Field::swap(Field &  value) noexcept
     swap(m_docment, value.m_docment);
     swap(m_typeName, value.m_typeName);
     swap(m_defValue, value.m_defValue);
+    swap(m_structDefValue, value.m_structDefValue);
     swap(m_array, value.m_array);
     swap(m_attribute, value.m_attribute);
     swap(m_before, value.m_before);

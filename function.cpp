@@ -346,11 +346,17 @@ Function::toHBlock(std::string const &  tabStr /* = std::string() */) const
 {
     std::string  res;
 
-    if (m_internal) {
+    if (!m_enabled)  return res;
+    if (!m_internal) {
+        res += declaration(tabStr);
+        return res;
+    }
+
+    if (m_eqDefault || m_eqDelete || m_pureVirtual) {
+        res += declaration(tabStr);
+    } else {
         res += "\n";
         res += definition(tabStr);
-    } else {
-        res = declaration(tabStr);
     }
 
     return res;
@@ -360,6 +366,9 @@ std::string
 Function::toCppBlock(std::string const &  tabStr /* = std::string() */) const
 {
     std::string  res;
+
+    if (!m_enabled)  return res;
+    if (m_eqDefault || m_eqDelete || m_pureVirtual)  return res;
 
     if (!m_internal) {
         res += "\n";

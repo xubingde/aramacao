@@ -32,6 +32,7 @@
 #include "wtmystruct.h"
 #include "wtautofnedit.h"
 #include "wtmyclass.h"
+#include "wtmodule.h"
 
 namespace xu {
 
@@ -291,6 +292,7 @@ private:
     WtMyStruct *    m_wtMyStruct;
     WtAutoFnEdit *      m_wtAutoFnEdit;
     WtMyClass *     m_wtMyClass;
+    WtModule *      m_wtModule;
 };
 
 template <typename T> inline

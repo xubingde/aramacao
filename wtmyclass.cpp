@@ -5062,7 +5062,7 @@ WtMyClass::init_obj()
     m_fieldModel->setHorizontalHeaderItem(1,
             new QStandardItem(tr("Type")));
     m_fieldModel->setHorizontalHeaderItem(2,
-            new QStandardItem(tr("Default Value")));
+            new QStandardItem(tr("Default_Ctor Value")));
     m_fieldModel->setHorizontalHeaderItem(3,
             new QStandardItem(tr("isPointer")));
     m_fieldView->setModel(m_fieldModel);

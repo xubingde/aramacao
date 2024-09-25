@@ -67,9 +67,9 @@ public:
     void  setHStart(const std::string &  value);
     void  setHStart(std::string &&  value);
 
-    std::string  getTestCode() const;
-    void  setTestCode(const std::string &  value);
-    void  setTestCode(std::string &&  value);
+    std::string  getDocment() const;
+    void  setDocment(const std::string &  value);
+    void  setDocment(std::string &&  value);
 
     std::vector<IncludeItem>  getHInclude() const;
     void  setHInclude(const std::vector<IncludeItem> &  value);
@@ -119,7 +119,7 @@ private:
     std::string     m_cppGlobalCode;
     std::string     m_cppEndCode;
     std::string     m_hStart;
-    std::string     m_testCode;
+    std::string     m_docment;
     std::vector<IncludeItem>    m_hInclude;
     std::vector<IncludeItem>    m_cppInclude;
     std::vector<NamespaceItem>      m_namespace;

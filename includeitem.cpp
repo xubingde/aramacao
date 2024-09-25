@@ -7,7 +7,7 @@
 namespace xu {
 
 IncludeItem::IncludeItem():
-        m_includeValue(),
+        m_includeValue("<string>"),
         m_before(),
         m_behind()
 {
