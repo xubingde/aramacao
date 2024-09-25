@@ -34,8 +34,8 @@ public:
     Module &  operator=(const Module &  other);
     Module &  operator=(Module &&  other) noexcept;
 
-    std::string  toHCode() const;
-    std::string  toCppCode() const;
+    virtual std::string  toHBlock(std::string const & = std::string()) const override;
+    virtual std::string  toCppBlock(std::string const & = std::string()) const override;
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> &  getEObjectListRef();
     std::vector<std::pair<Etype, std::shared_ptr<EObject>>> *  getEObjectListPtr();
     bool  appendEobjList(std::pair<Etype, std::shared_ptr<EObject>> const &  value);

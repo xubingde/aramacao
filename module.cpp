@@ -54,7 +54,7 @@ Module::Module():
     setBaseType(Etype::eModule);
     setFilename("file1");
 
-    m_hStart = "#pragma once\n";
+    m_hStart = "#pragma once";
 }
 
 Module::Module(const Module &  other):
@@ -148,16 +148,20 @@ Module::operator=(Module &&  other) noexcept
 }
 
 std::string
-Module::toHCode() const
+Module::toHBlock(std::string const & /* = std::string() */) const
 {
     std::string  res;
 
     res += m_hStart;
-    res += "\n";
+    if (m_hStart.size() > 0) {
+        res += "\n\n";
+    }
     res += begin_ifndef();
     res += "\n";
     res += h_include();
-    res += "\n";
+    if (h_include().size() > 0) {
+        res += "\n";
+    }
     res += begin_namespaceH();
 
     for (auto const &  it: m_eobjList) {
@@ -173,7 +177,7 @@ Module::toHCode() const
 }
 
 std::string
-Module::toCppCode() const
+Module::toCppBlock(std::string const & /* = std::string() */) const
 {
     std::string  res;
 
@@ -663,7 +667,7 @@ Module::h_include() const
     std::string  res;
 
     for (auto const &  it : m_hInclude) {
-        res += it.toHCode();
+        res += it.toHBlock();
     }
 
     return res;
@@ -675,7 +679,7 @@ Module::cpp_include() const
     std::string  res;
 
     for (auto const &  it : m_cppInclude) {
-        res += it.toHCode();
+        res += it.toHBlock();
     }
 
     return res;

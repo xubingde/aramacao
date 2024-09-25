@@ -8,40 +8,16 @@
 #include <QTextEdit>
 #include <QLabel>
 #include <QComboBox>
-#include <QPushButton>
-#include <QRadioButton>
-#include <QButtonGroup>
-#include <QGroupBox>
 #include <QCheckBox>
-#include <QTreeView>
-#include <QListView>
 #include <QTableView>
 #include <QStandardItemModel>
 #include "wtbase.h"
 #include "codeeditor.h"
 #include "module.h"
-#include "comboboxdelegate.h"
 
 namespace xu {
 
 class WtModule;
-
-class EqFn;
-class NotEqFn;
-class VirtualEqFn;
-class LessFn;
-class LessEqFn;
-class VirtualLessFn;
-class GreaterFn;
-class GreaterEqFn;
-class ExtSwapFn;
-class InSwapFn;
-class VirtualExchangeFn;
-class ToStringFn;
-class VirtualSerializeFn;
-class ExtFromStringFn;
-class InFromStringFn;
-class DeserializeFn;
 
 class WtModule : public WtBase
 {

@@ -9,7 +9,6 @@
 #include <QVBoxLayout>
 #include <QSplitter>
 #include <QAction>
-#include <QAbstractScrollArea>
 #include <QFrame>
 #include <QList>
 #include "wtmodule.h"
@@ -23,41 +22,6 @@
 #include "mystructdec.h"
 #include "myclassdec.h"
 #include "module.h"
-#include "defaultconstructorfn.h"
-#include "copyconstructorfn.h"
-#include "moveconstructorfn.h"
-#include "destructorfn.h"
-#include "copyoperatoreqfn.h"
-#include "moveoperatoreqfn.h"
-#include "actfn.h"
-#include "actgetfn.h"
-#include "actsetcopyfn.h"
-#include "actsetmovefn.h"
-#include "actsetconstvaluefn.h"
-#include "actsetmutvaluefn.h"
-#include "actisfn.h"
-#include "acthasfn.h"
-#include "publiclabel.h"
-#include "protectedlabel.h"
-#include "privatelabel.h"
-#include "eqfn.h"
-#include "noteqfn.h"
-#include "virtualeqfn.h"
-#include "lessfn.h"
-#include "lesseqfn.h"
-#include "virtuallessfn.h"
-#include "greaterfn.h"
-#include "greatereqfn.h"
-#include "extswapfn.h"
-#include "inswapfn.h"
-#include "virtualexchangefn.h"
-#include "tostringfn.h"
-#include "virtualserializefn.h"
-#include "extfromstringfn.h"
-#include "infromstringfn.h"
-#include "deserializefn.h"
-#include "module.h"
-#include "project.h"
 
 namespace xu {
 

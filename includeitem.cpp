@@ -56,7 +56,7 @@ IncludeItem::operator=(IncludeItem &&  other) noexcept
 }
 
 std::string
-IncludeItem::toHCode() const
+IncludeItem::toHBlock() const
 {
     std::string  res(m_before + "#include " + m_includeValue + "\n" + m_behind);
     return res;

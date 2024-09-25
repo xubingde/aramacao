@@ -41,7 +41,7 @@ public:
     bool  fromString(const char *  data, const size_t  size);
     void  swap(IncludeItem &  value) noexcept;
 
-    std::string  toHCode() const;
+    std::string  toHBlock() const;
 
     std::string  getIncludeValue() const;
     void  setIncludeValue(const std::string &  value);
