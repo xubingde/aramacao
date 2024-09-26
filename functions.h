@@ -40,6 +40,7 @@ public:
     std::vector<std::shared_ptr<Function>> &  getFunctionRef();
     std::vector<std::shared_ptr<Function>> *  getFunctionPtr();
     void  setInternal(bool const  isInternal);
+    void  setInline(bool const  isInline);
     void  enterClass(MyClass *  classPtr);
     void  leaveClass();
     bool  getFunction(Function &  result, const size_t  index) const;

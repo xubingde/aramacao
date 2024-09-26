@@ -160,6 +160,14 @@ Functions::setInternal(bool const  isInternal)
 }
 
 void
+Functions::setInline(bool const  isInline)
+{
+    for (auto &  it: m_objList) {
+        it->setInline(isInline);
+    }
+}
+
+void
 Functions::enterClass(MyClass *  classPtr)
 {
     m_parentClassPtr = classPtr;

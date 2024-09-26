@@ -79,6 +79,8 @@ WtModule::hStart_editingFinished()
     if (!m_objPtr)  return;
 
     m_objPtr->setHStart(m_hStart->text().toUtf8().toStdString());
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void
@@ -155,6 +157,9 @@ WtModule::isHeaderOnly_stateChanged(int  state)
 
     int const  index = static_cast<int>(m_objPtr->getExtension());
     extension_currentIndexChanged(index);
+
+    m_dotH->setPlainText(QString::fromStdString(m_objPtr->toHBlock()));
+    m_dotCpp->setPlainText(QString::fromStdString(m_objPtr->toCppBlock()));
 }
 
 void

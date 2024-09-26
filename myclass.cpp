@@ -369,10 +369,19 @@ MyClass::toCppBlock(std::string const & /* = std::string() */) const
     if (m_impl) {
         res += definition();
     } else {
-        for (auto &  it: m_eobjList) {
-            res += it.second->toCppBlock();
+        for (auto const &  it: m_eobjList) {
+            switch (it.first) {
+            case Etype::eTplFunctions :
+            case Etype::eTplStaticFunctions :
+            case Etype::eTplConstexprFunctions :
+            case Etype::eTplConstructors :
+                break;
+            default :
+                res += it.second->toCppBlock();
+                break;
+            }
         }
-        for (auto &  fd: m_field) {
+        for (auto const &  fd: m_field) {
             res += fd->cppCodeGeneral();
         }
     }
@@ -474,6 +483,19 @@ MyClass::definition(std::string const &  tabStr /* = std::string() */) const
 
     res += class_field_toHBlock(tabStr);
     res += class_end(tabStr);
+
+    for (auto const &  it: m_eobjList) {
+        switch (it.first) {
+        case Etype::eTplFunctions :
+        case Etype::eTplStaticFunctions :
+        case Etype::eTplConstexprFunctions :
+        case Etype::eTplConstructors :
+            res += it.second->toCppBlock();
+            break;
+        default :
+            break;
+        }
+    }
 
     return res;
 }
@@ -1427,6 +1449,44 @@ MyClass::moveEobjList(size_t &  indexFrom,
         return true;
     }
     return false;
+}
+
+void
+MyClass::setInline(bool const  isInline)
+{
+    for (auto &  it: m_eobjList) {
+        switch (it.first) {
+        case Etype::eFunctions :
+        case Etype::eStaticFunctions :
+        case Etype::eConstructors :
+            std::dynamic_pointer_cast<Functions>(it.second)->setInline(isInline);
+            break;
+        case Etype::eClass :
+            std::dynamic_pointer_cast<MyClass>(it.second)->setInline(isInline);
+            break;
+        case Etype::eDefaultConstructorFn :
+        case Etype::eCopyConstructorFn :
+        case Etype::eMoveConstructorFn :
+        case Etype::eDestructorFn :
+        case Etype::eCopyOperatorEqFn :
+        case Etype::eMoveOperatorEqFn :
+        case Etype::eVirtualEqFn :
+        case Etype::eVirtualLessFn :
+        case Etype::eInSwapFn :
+        case Etype::eVirtualExchangeFn :
+        case Etype::eToStringFn :
+        case Etype::eVirtualSerializeFn :
+        case Etype::eInFromStringFn :
+        case Etype::eDeserializeFn :
+            std::dynamic_pointer_cast<Function>(it.second)->setInline(isInline);
+            break;
+        default :
+            break;
+        }
+    }
+    for (auto &  fd: m_field) {
+        fd->setInline(isInline);
+    }
 }
 
 std::string
@@ -3657,8 +3717,8 @@ MyClass::deserialize(const char *  data,
     if (err.size() == 0) {
         *this = std::move(me);
         result = true;
-        copyEobjList();
-        copyField();
+        moveEobjList();
+        moveField();
     }
 
     return result;

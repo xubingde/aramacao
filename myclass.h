@@ -79,6 +79,7 @@ public:
     virtual bool  takeEobjList(std::pair<Etype, std::shared_ptr<EObject>> &  result, size_t const  index);
     virtual bool  swapEobjList(size_t const  indexLhs, size_t const  indexRhs);
     virtual bool  moveEobjList(size_t &  indexFrom, size_t &  indexTo);
+    void  setInline(bool const  isInline);
 
     std::vector<size_t>  getStringErr() const;
 

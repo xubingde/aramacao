@@ -285,6 +285,14 @@ Field::getCtorDefValue() const
 }
 
 void
+Field::setInline(bool const  isInline)
+{
+    for (auto &  it: m_actionFn) {
+        it.second->setInline(isInline);
+    }
+}
+
+void
 Field::copyActionFn()
 {
     for (auto &  actFn: m_actionFn) {

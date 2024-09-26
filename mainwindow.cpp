@@ -2398,6 +2398,9 @@ MainWindow::deleteRowValue_triggered()
         void *  selfPtr = selfItem->data(Qt::UserRole + 2).value<void *>();
 
         QStandardItem *  parentItem = selfItem->parent();
+        Etype const  parentEtp = static_cast<Etype>(parentItem->data(
+                Qt::UserRole + 1).toInt());
+        void *  parentPtr = parentItem->data(Qt::UserRole + 2).value<void *>();
 
         switch (selfEtp) {
         case Etype::eFunctions :
@@ -2414,7 +2417,7 @@ MainWindow::deleteRowValue_triggered()
             break;
         case Etype::eClass :
             {
-                int const  count = parentItem->rowCount();
+                int  count = parentItem->rowCount();
                 for (int  i = 0; i < count; ++i) {
                     QStandardItem *  item = parentItem->child(i);
                     Etype const  etp = static_cast<Etype>(item->data(
@@ -2429,6 +2432,150 @@ MainWindow::deleteRowValue_triggered()
                     }
                 }
                 deleteRowValue(index);
+
+                MyClass *  delPtr = static_cast<MyClass *>(selfPtr);
+                if (delPtr->hasEqFunction() && parentEtp == Etype::eModule) {
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eEqFn) {
+                            if (static_cast<EqFn *>(ptr)->getParentClassPtr() == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eNotEqFn) {
+                            if (static_cast<NotEqFn *>(ptr)->getParentClassPtr() == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (delPtr->hasLessFunction() && parentEtp == Etype::eModule) {
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eLessFn) {
+                            if (static_cast<LessFn *>(ptr)->getParentClassPtr()
+                                    == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eLessEqFn) {
+                            if (static_cast<LessEqFn *>(ptr)->getParentClassPtr()
+                                    == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eGreaterFn) {
+                            if (static_cast<GreaterFn *>(ptr)->getParentClassPtr()
+                                    == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eGreaterEqFn) {
+                            if (static_cast<GreaterEqFn *>(ptr)->getParentClassPtr()
+                                    == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (delPtr->hasSwapFunction() && parentEtp == Etype::eModule) {
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eExtSwapFn) {
+                            if (static_cast<ExtSwapFn *>(ptr)->getParentClassPtr()
+                                    == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (delPtr->hasToStringFunction() && parentEtp == Etype::eModule) {
+                    count = parentItem->rowCount();
+                    for (int  i = 0; i < count; ++i) {
+                        QStandardItem *  item = parentItem->child(i);
+                        Etype const  etp = static_cast<Etype>(item->data(
+                                Qt::UserRole + 1).toInt());
+                        void *  ptr = item->data(Qt::UserRole + 2).value<void *>();
+                        if (etp == Etype::eExtFromStringFn) {
+                            if (static_cast<ExtFromStringFn *>(ptr)->getParentClassPtr()
+                                    == delPtr) {
+                                parentItem->removeRow(i);
+                                auto &  vecRef =
+                                        static_cast<Module *>(parentPtr)->getEObjectListRef();
+                                vecRef.erase(vecRef.begin() + i);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             break;
         case Etype::eStruct :

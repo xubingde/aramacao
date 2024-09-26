@@ -56,6 +56,7 @@ public:
     std::string  hCodeDcl(std::string const &  tabStr = std::string()) const;
     std::string  getPrivateName() const;
     std::string  getCtorDefValue() const;
+    void  setInline(bool const  isInline);
 
     std::vector<size_t>  getStringErr() const;
 

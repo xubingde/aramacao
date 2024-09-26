@@ -168,6 +168,25 @@ Module::toHBlock(std::string const & /* = std::string() */) const
         res += it.second->toHBlock();
     }
 
+    if (m_headerOnly) {
+        for (auto const &  it: m_eobjList) {
+            res += it.second->toCppBlock();
+        }
+    } else {
+        for (auto const &  it: m_eobjList) {
+            switch (it.first) {
+            case Etype::eTplFunctions :
+            case Etype::eTplStaticFunctions :
+            case Etype::eTplConstexprFunctions :
+            case Etype::eTplConstructors :
+                res += it.second->toCppBlock();
+                break;
+            default :
+                break;
+            }
+        }
+    }
+
     res += "\n";
     res += end_namespaceH();
     res += "\n";
@@ -187,8 +206,19 @@ Module::toCppBlock(std::string const & /* = std::string() */) const
     if (m_cppGlobalCode.size() > 0)  res += "\n";
     res += m_cppGlobalCode;
 
-    for (auto const &  it: m_eobjList) {
-        res += it.second->toCppBlock();
+    if (!m_headerOnly) {
+        for (auto const &  it: m_eobjList) {
+            switch (it.first) {
+            case Etype::eTplFunctions :
+            case Etype::eTplStaticFunctions :
+            case Etype::eTplConstexprFunctions :
+            case Etype::eTplConstructors :
+                break;
+            default :
+                res += it.second->toCppBlock();
+                break;
+            }
+        }
     }
 
     if (m_cppEndCode.size() > 0)  res += "\n";
@@ -1080,6 +1110,31 @@ Module::setHeaderOnly(const bool  value)
 {
     m_headerOnly = value;
     m_update = true;
+
+    for (auto &  it: m_eobjList) {
+        switch (it.first) {
+        case Etype::eFunctions :
+        case Etype::eStaticFunctions :
+        case Etype::eConstructors :
+            std::dynamic_pointer_cast<Functions>(it.second)->setInline(m_headerOnly);
+            break;
+        case Etype::eClass :
+            std::dynamic_pointer_cast<MyClass>(it.second)->setInline(m_headerOnly);
+            break;
+        case Etype::eEqFn :
+        case Etype::eNotEqFn :
+        case Etype::eLessFn :
+        case Etype::eLessEqFn :
+        case Etype::eGreaterFn :
+        case Etype::eGreaterEqFn :
+        case Etype::eExtSwapFn :
+        case Etype::eExtFromStringFn :
+            std::dynamic_pointer_cast<Function>(it.second)->setInline(m_headerOnly);
+            break;
+        default :
+            break;
+        }
+    }
 }
 
 bool
